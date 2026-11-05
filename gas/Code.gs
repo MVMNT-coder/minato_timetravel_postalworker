@@ -105,7 +105,7 @@ function callClaude_(imageBase64, world) {
   if (!key) throw new Error('ANTHROPIC_API_KEY が未設定です');
   const payload = {
     model: PROPS.getProperty('MODEL') || 'claude-sonnet-5-5',
-    max_tokens: 1024,
+    max_tokens: 8000,
     messages: [{
       role: 'user',
       content: [
@@ -124,9 +124,11 @@ function callClaude_(imageBase64, world) {
   const code = res.getResponseCode();
   if (code === 429 || code === 529) throw new Error('rate limited by API');
   if (code !== 200) throw new Error('Claude API error ' + code + ': ' + res.getContentText().slice(0, 300));
-  const text = JSON.parse(res.getContentText()).content.filter(function (c) { return c.type === 'text'; }).map(function (c) { return c.text; }).join('');
+  const data = JSON.parse(res.getContentText());
+  if (data.stop_reason === 'max_tokens') console.warn('max_tokens に達しました', JSON.stringify(data.usage));
+  const text = data.content.filter(function (c) { return c.type === 'text'; }).map(function (c) { return c.text; }).join('');
   const s = text.indexOf('{'), t = text.lastIndexOf('}');
-  if (s < 0 || t < s) throw new Error('JSONが見つかりません: ' + text.slice(0, 200));
+  if (s < 0 || t < s) throw new Error('JSONが見つかりません（stop_reason: ' + data.stop_reason + '）: ' + text.slice(0, 200));
   return JSON.parse(text.slice(s, t + 1));
 }
 
