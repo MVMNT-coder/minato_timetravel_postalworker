@@ -1,0 +1,51 @@
+# gas/ を変更して main に push すると、GAS を自動で更新し、既存のデプロイを新バージョンにする（URLは変わらない）
+# 必要な Secrets：CLASPRC_JSON / GAS_SCRIPT_ID / GAS_DEPLOYMENT_ID（README参照）
+name: Deploy GAS
+
+on:
+  push:
+    branches: [main]
+    paths: ['gas/**']
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-gas
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install clasp
+        run: npm install -g @google/clasp@2.4.2
+
+      - name: Write credentials
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+          GAS_SCRIPT_ID: ${{ secrets.GAS_SCRIPT_ID }}
+        run: |
+          if [ -z "$CLASPRC_JSON" ] || [ -z "$GAS_SCRIPT_ID" ]; then
+            echo "::error::Secrets CLASPRC_JSON / GAS_SCRIPT_ID が未設定です（README の「GASの自動デプロイ」を参照）"; exit 1
+          fi
+          printf '%s' "$CLASPRC_JSON" > ~/.clasprc.json
+          printf '{"scriptId":"%s","rootDir":"."}' "$GAS_SCRIPT_ID" > gas/.clasp.json
+
+      - name: Push code
+        working-directory: gas
+        run: clasp push --force
+
+      - name: Deploy new version
+        working-directory: gas
+        env:
+          GAS_DEPLOYMENT_ID: ${{ secrets.GAS_DEPLOYMENT_ID }}
+        run: |
+          if [ -z "$GAS_DEPLOYMENT_ID" ]; then
+            echo "::error::Secret GAS_DEPLOYMENT_ID が未設定です"; exit 1
+          fi
+          clasp deploy --deploymentId "$GAS_DEPLOYMENT_ID" --description "GitHub Actions ${GITHUB_SHA::7}"

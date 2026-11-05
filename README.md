@@ -66,3 +66,36 @@ AIの最適化で停滞した2060年。そこに住む未来人・minatoから�
 - **GAS の上限**：無料の Google アカウントでは外部通信が1日2万回まで、同時実行は30件程度までです。展示の規模なら通常は足ります。
 - **プロンプトの調整**：未来救出局のAIへの指示は `gas/Code.gs` の `PROMPT_MISSION`、停滞の設定とリクエストは `MISSION_STORIES` にあります。`MISSION_STORIES` は `index.html` の `STORIES` と同じ順番にそろえてください。書き換えたら新バージョンとしてデプロイし直します。
 - **集計のリセット**：`mission_log_v2` シートの2行目以降を消すと、TOPの世界の数が0に戻ります。
+
+## GASの自動デプロイ（GitHub Actions）
+
+`gas/` の中を変更して `main` に push すると、GitHub Actions が Apps Script のコードを更新し、既存のウェブアプリを新バージョンでデプロイし直します。ウェブアプリのURLは変わりません。Actions タブの「Deploy GAS」から手動で実行することもできます。
+
+最初に一度だけ、次の設定が必要です。
+
+1. **Apps Script API をオンにする**：<https://script.google.com/home/usersettings> を開き、「Google Apps Script API」をオンにします。
+2. **clasp でログインする**：Mac のターミナルで次を実行し、開いたブラウザで GAS を作った Google アカウントを許可します。
+   ```
+   npx @google/clasp@2.4.2 login
+   ```
+   ログインできたら、次のコマンドで認証情報を表示してコピーします。
+   ```
+   cat ~/.clasprc.json
+   ```
+3. **ID を2つ控える**
+   - スクリプトID：Apps Script エディタの「プロジェクトの設定（歯車）」→「スクリプト ID」
+   - デプロイID：「デプロイ > デプロイを管理」→ 今使っているウェブアプリの「デプロイ ID」
+4. **GitHub に Secrets を登録する**：リポジトリの「Settings > Secrets and variables > Actions > New repository secret」で、次の3つを登録します。
+
+| Name | 値 |
+|---|---|
+| `CLASPRC_JSON` | 手順2でコピーした `~/.clasprc.json` の中身すべて |
+| `GAS_SCRIPT_ID` | スクリプトID |
+| `GAS_DEPLOYMENT_ID` | デプロイID |
+
+> `CLASPRC_JSON` は、あなたの Google アカウントで Apps Script を操作できる鍵です。チャットや Issue などには貼らず、GitHub の Secrets にだけ登録してください。
+
+設定が済んだら、Actions タブの「Deploy GAS」→「Run workflow」で一度実行し、緑のチェックが付けば完了です。以後は `gas/` を push するたびに自動で反映されます。
+
+- 自動デプロイでは、`gas/appsscript.json` の設定（実行ユーザー：自分、アクセス：全員）が使われます。
+- Apps Script 側で直接コードを書き換えても、次の自動デプロイで GitHub の内容に上書きされます。
