@@ -102,15 +102,35 @@ body{margin:0}
 img{max-width:100%}
 [hidden]{display:none!important}
 :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+
+/* 通信不安定のグリッチ */
+.gl{animation:glt .38s steps(1) both}
+@keyframes glt{
+  0%{transform:translate(0);text-shadow:none;clip-path:none}
+  15%{transform:translate(-3px,0);text-shadow:2px 0 rgba(255,40,0,.85),-2px 0 rgba(0,229,255,.7);clip-path:inset(10% 0 55% 0)}
+  30%{transform:translate(4px,1px);text-shadow:-3px 0 rgba(255,40,0,.85),3px 0 rgba(0,229,255,.7);clip-path:inset(48% 0 12% 0)}
+  45%{transform:translate(-1px,0);clip-path:none;opacity:.55}
+  60%{transform:translate(2px,-1px);text-shadow:1px 0 rgba(255,40,0,.85),-1px 0 rgba(0,229,255,.7);clip-path:inset(0 0 70% 0);opacity:1}
+  80%{transform:translate(0);clip-path:inset(30% 0 30% 0)}
+  100%{transform:none;text-shadow:none;clip-path:none;opacity:1}
+}
+.wrap.pg{animation:pg .32s steps(1) both}
+@keyframes pg{0%{transform:none}20%{transform:translate(-6px,0) skewX(-2deg)}40%{transform:translate(5px,2px);filter:contrast(1.4)}60%{transform:translate(-2px,-1px);opacity:.8}80%{transform:translate(3px,0)}100%{transform:none;filter:none;opacity:1}}
+.static{position:fixed;inset:0;z-index:40;pointer-events:none;opacity:0;
+  background:repeating-linear-gradient(0deg,rgba(255,92,0,.10) 0 1px,transparent 1px 3px),repeating-linear-gradient(0deg,transparent 0 37%,rgba(241,241,241,.08) 37% 39%,transparent 39% 71%,rgba(255,92,0,.12) 71% 72%,transparent 72%)}
+.static.on{animation:st .3s steps(3) both}
+@keyframes st{0%{opacity:1;background-position:0 0}33%{opacity:.7;background-position:0 23px}66%{opacity:1;background-position:0 -41px}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.gl,.wrap.pg,.static.on{animation:none}}
 </style>
 <script src="config.js"></script>
 </head>
 <body>
 
 <canvas id="bg" aria-hidden="true"></canvas>
-<div class="hud l" id="hudL" aria-hidden="true"></div><div class="hud r" id="hudR" aria-hidden="true"></div>
+<div class="hud l" id="hudL" aria-hidden="true" data-fx="css"></div><div class="hud r" id="hudR" aria-hidden="true" data-fx="css"></div>
+<div class="static" id="static" aria-hidden="true"></div>
 <div class="wrap">
-  <header><div class="logo">未来便<em>.</em></div><div class="hr"><button class="snd" id="snd" aria-pressed="false">SOUND OFF</button><div class="lbl">Tokyo 2060</div></div></header>
+  <header><div class="logo">未来便<em>.</em></div><div class="hr"><button class="snd" id="snd" aria-pressed="false">SOUND OFF</button><div class="lbl" data-fx="text">Tokyo 2060</div></div></header>
   <main class="card" id="card"></main>
 </div>
 
@@ -131,9 +151,9 @@ function render(html){card.style.animation="none";card.offsetHeight;card.style.a
 function home(){
   stopCam();
   const log=loadLog();
-  render(`<h1 class="hero">品物を撮って、<br><em>2060年</em>のminatoに送ろう。</h1>
+  render(`<h1 class="hero">品物を撮って、<br><em data-fx="text">2060年</em>のminatoに送ろう。</h1>
     <dl class="who">
-      <dt>MINATO</dt><dd>29歳。時間郵便局の受付係</dd>
+      <dt data-fx="text">MINATO</dt><dd>29歳。時間郵便局の受付係</dd>
       <dt>住まい</dt><dd>東京・渋谷のマンション22階</dd>
       <dt>暮らし</dt><dd>メガネ型端末、40℃の夏、家事はロボット</dd>
     </dl>
@@ -275,9 +295,9 @@ function step1(r){
     <div class="morph">
       <div><div class="ph"><img src="${r.thumb}" alt=""></div><div class="yr mute">2026 / ${esc(r.item_name)}</div></div>
       <div class="arrow">→</div>
-      <div><div class="ph"><canvas id="gl"></canvas></div><div class="yr" style="color:var(--or)">2060</div></div>
+      <div><div class="ph"><canvas id="gl"></canvas></div><div class="yr" style="color:var(--or)" data-fx="text">2060</div></div>
     </div>
-    <h2 class="big">${esc(r.future_name)}</h2>
+    <h2 class="big" data-fx="text">${esc(r.future_name)}</h2>
     ${r.change?`<p class="lead">${esc(r.change)}</p><p class="lead mute">${esc(r.reason)}</p>`:`<p class="lead">${esc(r.future_form)}</p>`}
     <div><button class="btn" id="next">minatoに渡す</button></div>`);
   glitch($("#gl"),r.thumb);SND.glitch();
@@ -288,9 +308,9 @@ function step1(r){
 function step2(r){
   render(`<div class="dots"><i class="on"></i><i class="on"></i></div>
     <div class="lbl">${esc(r.future_name)} を受け取ったminato</div>
-    ${r.scene?`<div class="scene"><div class="lbl">2060年では</div><p>${esc(r.scene)}</p></div>`:""}
-    <p class="quote">${esc(r.tsukkomi)}</p>
-    <div class="punch"><q>${esc(r.punchline)}</q><div class="stamp pop">${esc(r.destination)}</div></div>
+    ${r.scene?`<div class="scene" data-fx="css"><div class="lbl">2060年では</div><p>${esc(r.scene)}</p></div>`:""}
+    <p class="quote" data-fx="css">${esc(r.tsukkomi)}</p>
+    <div class="punch"><q>${esc(r.punchline)}</q><div class="stamp pop" data-fx="css">${esc(r.destination)}</div></div>
     <div class="row"><button class="btn" id="again">次の品物を撮る</button><button class="btn ghost" id="home">最初に戻る</button></div>`);
   setTimeout(()=>SND.stamp(),520);
   $("#again").onclick=openCamera;$("#home").onclick=home;
@@ -438,8 +458,52 @@ const SND=(()=>{
     },
     glitch(){for(let i=0;i<7;i++)tone(200+Math.random()*1800,.05,{type:"square",vol:.06,at:i*.09})},
     stamp(){tone(90,.25,{vol:.5,slide:50});noise(.1,{vol:.4,f:1200,q:.8})},
+    static(){noise(.22,{vol:.06,f:2600,q:.6});tone(60,.15,{type:"square",vol:.03})},
+    tick(){noise(.06,{vol:.035,f:4000,q:1})},
     error(){tone(330,.25,{type:"sawtooth",vol:.12,slide:165});tone(220,.4,{type:"sawtooth",vol:.12,at:.22,slide:110});bgmDuck(1,1)}
   };
+})();
+
+/* 未来の要素にときどきグリッチをかける（通信が不安定な感じ） */
+(function(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const GL="▓▒░#%&@$01ﾐﾅﾄ█▚▞";
+  function glitchEl(el){
+    if(el.classList.contains("gl"))return;
+    el.classList.remove("gl");void el.offsetWidth;el.classList.add("gl");
+    if(el.dataset.fx==="text"&&el.children.length===0){
+      const orig=el.textContent;let n=0;
+      const iv=setInterval(()=>{
+        if(!el.isConnected){clearInterval(iv);return}
+        el.textContent=[...orig].map(c=>c.trim()&&Math.random()<.35?GL[Math.random()*GL.length|0]:c).join("");
+        if(++n>5){clearInterval(iv);el.textContent=orig}
+      },55);
+    }
+    setTimeout(()=>el.classList.remove("gl"),400);
+  }
+  function visible(el){const r=el.getBoundingClientRect();return r.width>0&&r.bottom>0&&r.top<innerHeight}
+  function small(){
+    if(!document.querySelector(".view.warp")){
+      const els=[...document.querySelectorAll("[data-fx]")].filter(visible);
+      if(els.length){
+        const n=Math.random()<.3?2:1;
+        for(let i=0;i<n;i++)glitchEl(els[Math.random()*els.length|0]);
+        SND.tick();
+      }
+    }
+    setTimeout(small,3500+Math.random()*6000);
+  }
+  function big(){
+    if(!document.querySelector(".view.warp")){
+      const w=document.querySelector(".wrap"),st=$("#static");
+      w.classList.remove("pg");st.classList.remove("on");void w.offsetWidth;
+      w.classList.add("pg");st.classList.add("on");SND.static();
+      setTimeout(()=>{w.classList.remove("pg");st.classList.remove("on")},360);
+    }
+    setTimeout(big,18000+Math.random()*20000);
+  }
+  setTimeout(small,2500);
+  setTimeout(big,12000);
 })();
 
 home();
