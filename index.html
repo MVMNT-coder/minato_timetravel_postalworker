@@ -180,9 +180,10 @@ async function send(srcCanvas){
     if(!window.GAS_URL) throw {code:"no_config"};
     const image=img.toDataURL("image/jpeg",.85).split(",")[1];
     const req=fetch(window.GAS_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({image})})
-      .then(r=>r.json()).then(d=>{if(!d.ok)throw {code:d.error||"server_error"};return d.result});
+      .then(async r=>{const t=await r.text();try{return JSON.parse(t)}catch{throw {code:"bad_response",detail:"GASからJSON以外の応答（"+r.status+"）。デプロイのアクセス権が「全員」か、URLが /exec で終わっているか確認してください。"}}})
+      .then(d=>{if(!d.ok)throw {code:d.error||"server_error",detail:d.detail};return d.result});
     [res]=await Promise.all([req,minWait]);
-  }catch(e){err=e;await minWait}
+  }catch(e){err=e&&e.code?e:{code:"network",detail:String(e&&e.message||e)};await minWait}
   clearInterval(ti);clearInterval(ci);stop();
   flash();
   if(err||!res) return fail(err);
@@ -295,7 +296,7 @@ function fail(e){
     :code==="no_config"?"送信先が設定されていません（config.js の GAS_URL を設定してください）。"
     :code==="bad_image"?"写真をうまく受け取れませんでした。もう一度撮ってください。"
     :"転送に失敗しました。もう一度送ってください。";
-  render(`<div class="err">${esc(msg)}</div><div><button class="btn" id="go">もう一度撮る</button></div>`);
+  render(`<div class="err">${esc(msg)}</div>${e?.detail?`<div class="mute" style="font-size:12px;word-break:break-all">詳細：${esc(e.detail)}</div>`:""}<div><button class="btn" id="go">もう一度撮る</button></div>`);
   $("#go").onclick=openCamera;
 }
 

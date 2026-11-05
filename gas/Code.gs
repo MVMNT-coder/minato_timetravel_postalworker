@@ -70,6 +70,11 @@ const PROMPT = `あなたは2060年の東京・渋谷に住む29歳のminatoで�
 品物がわからない場合は item_name を "よくわからない物" にし、2060年の人が何と勘違いして使っているかを場面にする。`;
 
 function doPost(e) {
+  if (!e || !e.postData) {
+    // エディタの「実行」で doPost を直接動かした場合。動作確認は testClaude を使う
+    console.log('doPost はページからの送信でだけ動きます。エディタでの確認は testClaude を実行してください。');
+    return out_({ ok: false, error: 'no_request' });
+  }
   try {
     if (!rateOk_()) return out_({ ok: false, error: 'rate_limited' });
     const body = JSON.parse(e.postData.contents || '{}');
@@ -85,7 +90,8 @@ function doPost(e) {
     return out_({ ok: true, result: result });
   } catch (err) {
     console.error(err);
-    return out_({ ok: false, error: String(err.message || err).indexOf('rate') >= 0 ? 'rate_limited' : 'server_error' });
+    const msg = String(err.message || err);
+    return out_({ ok: false, error: msg.indexOf('rate') >= 0 ? 'rate_limited' : 'server_error', detail: msg.slice(0, 300) });
   }
 }
 
@@ -95,7 +101,7 @@ function doGet() {
 }
 
 function callClaude_(imageBase64, world) {
-  const key = PROPS.getProperty('ANTHROPIC_API_KEY');
+  const key = (PROPS.getProperty('ANTHROPIC_API_KEY') || '').trim();
   if (!key) throw new Error('ANTHROPIC_API_KEY が未設定です');
   const payload = {
     model: PROPS.getProperty('MODEL') || 'claude-sonnet-5-5',
@@ -175,4 +181,19 @@ function setupCheck() {
   logRow_({ item_name: '（動作確認）' }, 0, '');
   UrlFetchApp.fetch('https://api.anthropic.com', { muteHttpExceptions: true });
   DriveApp.getRootFolder();
+}
+
+// エディタから実行して、Claude API への接続を確認する（ログに結果が出る）
+function testClaude() {
+  const key = (PROPS.getProperty('ANTHROPIC_API_KEY') || '').trim();
+  console.log('API key set:', !!key, 'length:', key.length, 'starts:', key.slice(0, 7));
+  const res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+    payload: JSON.stringify({ model: PROPS.getProperty('MODEL') || 'claude-sonnet-5-5', max_tokens: 20, messages: [{ role: 'user', content: 'ping' }] }),
+    muteHttpExceptions: true
+  });
+  console.log('status:', res.getResponseCode());
+  console.log(res.getContentText().slice(0, 500));
 }
