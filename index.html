@@ -348,6 +348,28 @@ header{padding-bottom:calc(var(--u)*.7)}
   .line{min-height:0}
   .resgrid{align-items:start}
 }
+
+/* 結果画面（物語の順：困りごと→送った物→起きたこと→minato→判定） */
+.res2{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:calc(var(--u)*3.4);align-items:center}
+.res2 .resl,.res2 .resr{display:flex;flex-direction:column;gap:calc(var(--u)*1.5);min-width:0}
+.r-need{display:flex;flex-direction:column;gap:calc(var(--u)*.5)}
+.r-sit{margin:0;color:var(--mute);font-size:clamp(14px,calc(var(--u)*1.05),22px);line-height:1.6}
+.r-req{margin:0;font-family:var(--f-disp);font-weight:900;font-size:clamp(18px,calc(var(--u)*1.9),40px);line-height:1.5;text-wrap:balance}
+.r-sent{display:grid;grid-template-columns:clamp(56px,calc(var(--u)*7),140px) 1fr;gap:calc(var(--u)*1);align-items:center;border-top:1px solid var(--line);padding-top:calc(var(--u)*1.2)}
+.r-sent .ph{aspect-ratio:1;background:var(--or)}
+.r-sent .ph img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.15);mix-blend-mode:multiply;display:block}
+.r-sent b{font-size:clamp(15px,calc(var(--u)*1.2),26px)}
+.r-hap p{margin:.2em 0 0;font-family:var(--f-disp);font-weight:700;font-size:clamp(20px,calc(var(--u)*2.2),46px);line-height:1.55;text-wrap:pretty}
+.r-talk{display:grid;grid-template-columns:clamp(64px,calc(var(--u)*6),130px) 1fr;gap:calc(var(--u)*1.2);align-items:start}
+.bubble{position:relative;border:2px solid var(--or);background:rgba(255,92,0,.07);padding:calc(var(--u)*.9) calc(var(--u)*1.2);display:flex;flex-direction:column;gap:.35em;min-width:0}
+.bubble::before{content:"";position:absolute;left:calc(var(--u)*-1);top:calc(var(--u)*1.6);border:calc(var(--u)*.5) solid transparent;border-right-color:var(--or);border-left:0}
+.r-tk{margin:0;font-family:var(--f-disp);font-weight:700;font-size:clamp(17px,calc(var(--u)*1.6),34px);line-height:1.55;color:var(--fg)}
+.bubble q{font-family:var(--f-disp);font-weight:900;font-size:clamp(17px,calc(var(--u)*1.6),34px);color:var(--or);quotes:"「" "」"}
+.r-ver{border-top:2px solid var(--line);padding-top:calc(var(--u)*1)}
+.r-ver.saved{border-color:var(--or)}
+.r-ver .vlbl{color:var(--mute)}.r-ver.saved .vlbl{color:var(--or)}
+.r-ver .verdict{font-size:clamp(30px,calc(var(--u)*4),84px);line-height:1.25}
+@media (max-width:820px),(max-aspect-ratio:1/1){.res2{grid-template-columns:1fr;align-items:start}}
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0}
 img{max-width:100%}
@@ -383,12 +405,11 @@ const FIG=(cls="")=>`<div class="fig ${cls}" data-fx="css"><canvas id="fig"></ca
 
 /* 停滞した2060年の説明（minatoの口調）。毎回ひとつ選ぶ */
 const STORIES=[
-  {q:"失敗したり、寄り道したくなったりする物を送って。",theme:"AIが何でも最適化してくれるので、失敗も寄り道もなく、新しいものが生まれなくなった",text:"2060年は、AIが全部最適化してくれる。失敗も寄り道もしないから、新しいものが何も生まれなくなった。正直、退屈で止まりそう。"},
-  {q:"人によって好みが分かれて、「自分だけの好き」が見つかる物を送って。",theme:"みんなが同じおすすめを見て同じものを好きになり、街の色も流行も全部同じになった",text:"みんな同じおすすめを見て、同じ服を着て、同じ店に行く。渋谷の街の色が、ぜんぶ同じになっちゃった。"},
-  {q:"思わず手を動かして、何か作りたくなる物を送って。",theme:"便利すぎて誰も手を動かさなくなり、作り方・直し方を覚えている人がいなくなった",text:"便利すぎて、誰も手を動かさなくなった。料理も、字を書くのも、直すのも。作り方を覚えてる人が、もういない。"},
-  {q:"届くまで、わかるまで、楽しみに待てる物を送って。",theme:"待ち時間がゼロになり、楽しみに待つ気持ちやワクワクが消えた",text:"待ち時間がゼロになった。届くのも、わかるのも、全部一瞬。おかげで、楽しみに待つって気持ちが消えた。"},
-  {q:"知らない誰かと、偶然出会うきっかけになる物を送って。",theme:"出会いはAIが完璧にマッチングするので、偶然の出会いや予想外の出来事が起きなくなった",text:"出会いはAIが完璧に決めてくれる。偶然ぶつかるとか、たまたま隣になるとか、そういうのがもう起きない。"},
-  {q:"忘れたり、あとで思い出したりできる物を送って。",theme:"すべての記録がクラウドに残るので誰も何も忘れず、思い出すことも新しい思い出も増えなくなった",text:"全部の記録がクラウドに残るから、誰も何も忘れない。忘れないから、思い出すこともない。新しい思い出が増えないんだ。"}
+  {q:"海の上の暮らしを、ちょっとでも人間らしくする物を送って。",sit:"海上都市へ引っ越し中。思い出の品は、AIに「不要」と判定されて全部捨てられた。",theme:"陸地が暑すぎて、人々は海上都市へ引っ越している。持っていけるのは、AIが「必要」と判定した1人1箱分だけ。思い出の品はすべて「不要」と判定されて捨てられた",text:"陸が暑すぎて、今みんな海の上の街に引っ越してる。持っていけるのは、AIが『必要』って判定した1人1箱だけ。思い出の品は全部『不要』で処分。効率的でしょ？"},
+  {q:"夜の暮らしが楽しくなる物を送って。",sit:"昼の気温は45℃。散歩も外遊びも、AIに「危険」として禁止されている。",theme:"昼の気温は45℃。AIが生活を夜型に最適化し、散歩や外遊びは「危険」として禁止されている。夜は安全だが、やることがない",text:"昼の気温は45℃。AIが暮らしを全部夜型に最適化して、散歩も外遊びも『危険』で禁止。夜は安全。安全なだけで、やることは何もない。"},
+  {q:"水びたしの渋谷で、移動が楽しくなる物を送って。",sit:"渋谷駅は水没した。AIのボートは最短ルートしか通らず、寄り道できない。",theme:"海面が上がって渋谷駅は水没した。移動はAIが自動運転するボートで、最短ルートしか通らないので寄り道ができない",text:"海面が上がって、渋谷駅は水の底。移動はAIが運転するボートで、最短ルートしか通らない。寄り道？ AIいわく『非効率』だって。"},
+  {q:"電気なしで楽しめる物を送って。",sit:"電気は1日3時間だけ。使い道はAIが決めていて、娯楽はいつも後回し。",theme:"電気は配給制で、1日3時間だけ。使い道はAIが決めていて、娯楽は「生存に不要」としていつも後回しにされる",text:"電気は配給制で、1日3時間だけ。何に使うかはAIが決めてて、娯楽はいつも後回し。『生存に不要』なんだってさ。"},
+  {q:"味や香り、食べる楽しさを思い出させる物を送って。",sit:"食べ物は全部工場製。AIが栄養を最適化した結果、味は3種類しかない。",theme:"食べ物は全部工場製。AIが栄養を最適化した結果、味は3種類しかない。食事は「栄養補給の作業」になった",text:"食べ物は全部工場製。AIが栄養を最適化した結果、味は3種類だけ。しょっぱい、甘い、無。…いちばん多いのは『無』。"}
 ];
 let story=STORIES[0],storyIdx=0,lastStory=-1;
 function pickStory(){let i;do{i=Math.floor(Math.random()*STORIES.length)}while(i===lastStory&&STORIES.length>1);lastStory=i;storyIdx=i;story=STORIES[i]}
@@ -432,7 +453,7 @@ function pageStory(){
   const line=$("#line");let alive=true;cleanup.push(()=>alive=false);
   (async()=>{
     await sleep(700);
-    const intro="2060年の時間郵便局で働く、minatoです。",txt=story.text;
+    const intro="2060年の時間郵便局で働いてる、minato。",txt=story.text;
     const type=async(pre,t)=>{for(let i=1;i<=t.length&&alive;i++){
       line.innerHTML=pre+esc(t.slice(0,i))+'<span class="cur"></span>';
       if(i%2)SND.type();
@@ -485,7 +506,7 @@ async function pageCamera(){
     </div>
     <div class="camside">
       <div class="camq"><div class="lbl">minatoからのリクエスト</div><p>「${esc(story.q)}」</p></div>
-      <p class="camhint">物を枠の真ん中に映して、ボタンを押してください。</p>
+      <p class="camhint">minato「枠の真ん中に映して。ブレてたら受け取らないから」</p>
       <div class="shootbox"><button class="shoot" id="shot" aria-label="撮影して未来へ送る"></button><span class="shootlbl">TAP TO TRANSMIT</span></div>
     </div></div>
     <input type="file" id="file" accept="image/*" capture="environment" hidden>`);
@@ -506,7 +527,7 @@ async function pageCamera(){
 }
 
 /* 5. 時空転送 */
-const WAIT_LINES=["今届いた。開けてみる…","え、なにこれ","ちょっと待って、調べてる","2026年の人って、こういうの使ってたんだ…","うーん、これで世界、動くかな","よし、試してみる"];
+const WAIT_LINES=["はいはい、届いた。開けるよ","……なにこれ","ちょっと待って。AIに見せたら『不要』って言われた","2026年の人って、これで本気だったの？","まあ、試すだけ試してみる","……期待はしてないけど"];
 async function send(srcCanvas){
   const img=scaled(srcCanvas,1024),thumb=square(srcCanvas,360);
   render(`<div class="warpbox"><div class="view warp"><canvas id="fx"></canvas></div>
@@ -549,30 +570,32 @@ async function send(srcCanvas){
 /* 6. 未来の変化 */
 function outcomeOf(n){return n>=75?"saved":n>=50?"partial":"lost"}
 const VERDICT={
-  saved:{t:"2060年の世界は<br>救われた",m:"MISSION COMPLETE"},
-  partial:{t:"あと一歩<br>だった…",m:"MISSION INCOMPLETE"},
-  lost:{t:"世界は停滞したまま、<br>徐々に色を失った…",m:"MISSION FAILED"}
+  saved:{t:"2060年の世界は<br>救われた",m:"MISSION COMPLETE · 救われた"},
+  partial:{t:"あと一歩<br>だった…",m:"MISSION INCOMPLETE · あと一歩"},
+  lost:{t:"世界は停滞したまま、<br>徐々に色を失った…",m:"MISSION FAILED · 救えなかった"}
 };
 function pageResult(r){
   const n=Math.max(0,Math.min(100,Number(r.score)||0)),o=outcomeOf(n),V=VERDICT[o];
-  render(`<div class="resgrid">
+  const T=[200,1000,1700,3000,4400,5400]; // 上から順に出す（最後に判定）
+  render(`<div class="res2">
     <div class="resl">
-      <div class="vlbl" style="color:${o==="saved"?"var(--or)":"var(--mute)"}" data-fx="text">${V.m}</div>
-      <h1 class="verdict ${o}">${V.t}</h1>
-      <div class="sent fade-in" style="animation-delay:900ms"><div class="ph"><img src="${r.thumb}" alt=""></div>
-        <div><div class="lbl">送った物</div><b>${esc(r.item_name)}</b><div class="mute sentsub">${r.vanished===false?"2060年にもまだある":`2060年では ${esc(r.vanished_year)}年に消滅`}</div></div></div>
+      <div class="r-need fade-in" style="animation-delay:${T[0]}ms"><div class="lbl">minatoが困っていたこと</div>
+        <p class="r-sit">${esc(story.sit)}</p><p class="r-req">「${esc(story.q)}」</p></div>
+      <div class="r-sent fade-in" style="animation-delay:${T[1]}ms"><div class="ph"><img src="${r.thumb}" alt=""></div>
+        <div><div class="lbl">あなたが送った物</div><b>${esc(r.item_name)}</b></div></div>
     </div>
     <div class="resr">
-      <div class="change fade-in" style="animation-delay:1200ms"><div class="lbl">minatoのリクエスト</div><p class="mute req">「${esc(story.q)}」</p>${r.answer?`<div class="lbl">あなたの物がどう応えたか</div><p>${esc(r.answer)}</p>`:""}</div>
-      <div class="change fade-in" style="animation-delay:1600ms"><div class="lbl">2060年はこう変わった</div><p>${esc(r.change)}</p></div>
-      <div class="talk fade-in" style="animation-delay:2000ms">${FIG("sm")}<div style="min-width:0"><div class="figname" data-fx="text">MINATO-2060</div><p class="quote">${esc(r.tsukkomi)}</p></div></div>
-      <div class="punch fade-in" style="animation-delay:2600ms"><q>${esc(r.punchline)}</q></div>
-      <div class="row fade-in" style="animation-delay:3000ms"><button class="btn" id="again">もう一度挑戦する</button><button class="btn ghost" id="top">TOPへ</button></div>
+      <div class="r-hap fade-in" style="animation-delay:${T[2]}ms"><div class="lbl">2060年で起きたこと</div><p>${esc(r.happened)}</p></div>
+      <div class="r-talk fade-in" style="animation-delay:${T[3]}ms">${FIG("sm")}
+        <div class="bubble"><div class="figname" data-fx="text">MINATO-2060</div><p class="r-tk">${esc(r.tsukkomi)}</p><q>${esc(r.punchline)}</q></div></div>
+      <div class="r-ver ${o} fade-in" style="animation-delay:${T[4]}ms"><div class="vlbl" data-fx="text">${V.m}</div><h1 class="verdict ${o}">${V.t}</h1></div>
+      <div class="row fade-in" style="animation-delay:${T[5]}ms"><button class="btn" id="again">もう一度挑戦する</button><button class="btn ghost" id="top">TOPへ</button></div>
     </div></div>`);
   card.dataset.page="result";document.body.dataset.calm="1";
   unmountFig=minatoFigure($("#fig"),{talk:true});
-  setTimeout(()=>{o==="lost"?SND.lose():SND.win(o==="saved")},400);
-  if(o==="lost")setTimeout(()=>document.body.classList.add("desat"),1200);
+  let alive=true;cleanup.push(()=>alive=false);
+  setTimeout(()=>{if(!alive)return;o==="lost"?SND.lose():SND.win(o==="saved")},T[4]+150);
+  if(o==="lost")setTimeout(()=>{if(alive)document.body.classList.add("desat")},T[4]+600);
   $("#again").onclick=()=>{document.body.classList.remove("desat");pageQuestion()};
   $("#top").onclick=pageTitle;
 }
