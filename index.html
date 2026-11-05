@@ -20,6 +20,10 @@ html,body{background:var(--bk);color:var(--fg);height:100%}
 body{font-family:var(--f-body);font-size:15px;line-height:1.75}
 .wrap{max-width:640px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;gap:20px;padding-block:18px 40px;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.hr{display:flex;gap:14px;align-items:center}
+.snd{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;color:var(--mute);background:transparent;border:1px solid var(--line);padding:4px 8px;cursor:pointer}
+.snd[aria-pressed="true"]{color:#000;background:var(--or);border-color:var(--or)}
+.snd:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
 header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--or);padding-bottom:10px}
 .logo{font-family:var(--f-disp);font-weight:900;font-size:26px;line-height:1;letter-spacing:.04em}
 .logo em{font-style:normal;color:var(--or)}
@@ -106,7 +110,7 @@ img{max-width:100%}
 <canvas id="bg" aria-hidden="true"></canvas>
 <div class="hud l" id="hudL" aria-hidden="true"></div><div class="hud r" id="hudR" aria-hidden="true"></div>
 <div class="wrap">
-  <header><div class="logo">未来便<em>.</em></div><div class="lbl">Tokyo 2060</div></header>
+  <header><div class="logo">未来便<em>.</em></div><div class="hr"><button class="snd" id="snd" aria-pressed="false">SOUND OFF</button><div class="lbl">Tokyo 2060</div></div></header>
   <main class="card" id="card"></main>
 </div>
 
@@ -149,7 +153,7 @@ async function openCamera(){
       <div class="row center"><button class="shutter" id="shot" aria-label="撮影して送る"></button></div>
       <div class="row center"><button class="btn ghost" id="back">やめる</button></div>`);
     const v=$("#v");v.srcObject=stream;
-    $("#shot").onclick=()=>{const c=document.createElement("canvas");c.width=v.videoWidth;c.height=v.videoHeight;c.getContext("2d").drawImage(v,0,0);stopCam();send(c)};
+    $("#shot").onclick=()=>{const c=document.createElement("canvas");c.width=v.videoWidth;c.height=v.videoHeight;c.getContext("2d").drawImage(v,0,0);SND.shutter();stopCam();send(c)};
     $("#back").onclick=home;
   }catch(e){uploadMode()}
 }
@@ -170,6 +174,7 @@ async function send(srcCanvas){
   const img=scaled(srcCanvas,1024), thumb=square(srcCanvas,320);
   render(`<div class="view warp"><canvas id="fx"></canvas></div><div class="status" id="st">時空の歪みを通過中</div><div class="coord" id="co"></div>`);
   const stop=warp($("#fx"),img);
+  const stopWarpSnd=SND.warp();
   const msgs=["時空の歪みを通過中","品物が変化しています","2060年に到着"];
   let i=0;const ti=setInterval(()=>{i=Math.min(i+1,msgs.length-1);const s=$("#st");if(s)s.textContent=msgs[i]},1500);
   const t0=performance.now();
@@ -184,8 +189,8 @@ async function send(srcCanvas){
       .then(d=>{if(!d.ok)throw {code:d.error||"server_error",detail:d.detail};return d.result});
     [res]=await Promise.all([req,minWait]);
   }catch(e){err=e&&e.code?e:{code:"network",detail:String(e&&e.message||e)};await minWait}
-  clearInterval(ti);clearInterval(ci);stop();
-  flash();
+  clearInterval(ti);clearInterval(ci);stop();stopWarpSnd();
+  flash();SND.arrive();
   if(err||!res) return fail(err);
   const entry={...res,thumb,at:Date.now()};
   const log=loadLog();log.unshift(entry);saveLog(log);
@@ -275,7 +280,7 @@ function step1(r){
     <h2 class="big">${esc(r.future_name)}</h2>
     ${r.change?`<p class="lead">${esc(r.change)}</p><p class="lead mute">${esc(r.reason)}</p>`:`<p class="lead">${esc(r.future_form)}</p>`}
     <div><button class="btn" id="next">minatoに渡す</button></div>`);
-  glitch($("#gl"),r.thumb);
+  glitch($("#gl"),r.thumb);SND.glitch();
   $("#next").onclick=()=>step2(r);
 }
 
@@ -287,10 +292,12 @@ function step2(r){
     <p class="quote">${esc(r.tsukkomi)}</p>
     <div class="punch"><q>${esc(r.punchline)}</q><div class="stamp pop">${esc(r.destination)}</div></div>
     <div class="row"><button class="btn" id="again">次の品物を撮る</button><button class="btn ghost" id="home">最初に戻る</button></div>`);
+  setTimeout(()=>SND.stamp(),520);
   $("#again").onclick=openCamera;$("#home").onclick=home;
 }
 
 function fail(e){
+  SND.error();
   const code=e?.code;
   const msg=code==="rate_limited"?"混み合っています。少し待ってからもう一度送ってください。"
     :code==="no_config"?"送信先が設定されていません（config.js の GAS_URL を設定してください）。"
@@ -341,6 +348,97 @@ function fail(e){
     if(!reduce)requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
+})();
+
+/* サウンド（Web Audioで合成。音声ファイルなし） */
+const SND=(()=>{
+  let ac=null,master=null,bgmBus=null,sfxBus=null,on=false,bgmNodes=null,arpTimer=null;
+  try{on=localStorage.getItem("miraibin_sound")==="on"}catch{}
+  const btn=$("#snd");
+  function ui(){btn.textContent=on?"SOUND ON":"SOUND OFF";btn.setAttribute("aria-pressed",on)}
+  function init(){
+    if(ac)return;
+    ac=new (window.AudioContext||window.webkitAudioContext)();
+    master=ac.createGain();master.gain.value=.8;master.connect(ac.destination);
+    // 空間っぽさ用のディレイ
+    const dl=ac.createDelay(1),fb=ac.createGain(),wet=ac.createGain();
+    dl.delayTime.value=.33;fb.gain.value=.38;wet.gain.value=.35;
+    dl.connect(fb);fb.connect(dl);dl.connect(wet);wet.connect(master);
+    bgmBus=ac.createGain();bgmBus.gain.value=0;bgmBus.connect(master);bgmBus.connect(dl);
+    sfxBus=ac.createGain();sfxBus.gain.value=.9;sfxBus.connect(master);sfxBus.connect(dl);
+  }
+  function noiseBuf(sec){const b=ac.createBuffer(1,ac.sampleRate*sec,ac.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;return b}
+  function tone(freq,dur,{type="sine",vol=.3,at=0,slide=0,bus=sfxBus}={}){
+    if(!ac||!on)return;const t=ac.currentTime+at,o=ac.createOscillator(),g=ac.createGain();
+    o.type=type;o.frequency.setValueAtTime(freq,t);if(slide)o.frequency.exponentialRampToValueAtTime(slide,t+dur);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    o.connect(g);g.connect(bus);o.start(t);o.stop(t+dur+.05);
+  }
+  function noise(dur,{vol=.3,f=2000,q=1,type="bandpass",at=0,fTo=0}={}){
+    if(!ac||!on)return;const t=ac.currentTime+at,n=ac.createBufferSource(),fl=ac.createBiquadFilter(),g=ac.createGain();
+    n.buffer=noiseBuf(dur+.1);fl.type=type;fl.frequency.setValueAtTime(f,t);if(fTo)fl.frequency.exponentialRampToValueAtTime(fTo,t+dur);fl.Q.value=q;
+    g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    n.connect(fl);fl.connect(g);g.connect(sfxBus);n.start(t);n.stop(t+dur+.05);
+  }
+  /* BGM：低いドローン＋ゆっくりしたアルペジオ */
+  function bgmStart(){
+    if(!ac||bgmNodes)return;
+    const fl=ac.createBiquadFilter();fl.type="lowpass";fl.frequency.value=420;fl.Q.value=6;
+    const lfo=ac.createOscillator(),lg=ac.createGain();lfo.frequency.value=.07;lg.gain.value=260;lfo.connect(lg);lg.connect(fl.frequency);lfo.start();
+    const g=ac.createGain();g.gain.value=.16;fl.connect(g);g.connect(bgmBus);
+    const oscs=[55,55*1.5,110.4].map((f,i)=>{const o=ac.createOscillator();o.type=i===2?"triangle":"sawtooth";o.frequency.value=f;o.detune.value=(i-1)*7;o.connect(fl);o.start();return o});
+    bgmNodes={oscs,lfo};
+    const scale=[220,261.6,293.7,329.6,392,440,523.3];let k=0;
+    arpTimer=setInterval(()=>{if(!on)return;if(Math.random()<.35)return;
+      const f=scale[(k*3+Math.floor(Math.random()*3))%scale.length]*(Math.random()<.2?2:1);k++;
+      tone(f,1.6,{type:"triangle",vol:.05,bus:bgmBus})},700);
+    bgmBus.gain.cancelScheduledValues(ac.currentTime);bgmBus.gain.setTargetAtTime(1,ac.currentTime,1.2);
+  }
+  function bgmDuck(v,tc=.3){if(ac)bgmBus.gain.setTargetAtTime(on?v:0,ac.currentTime,tc)}
+  function setOn(v){
+    on=v;try{localStorage.setItem("miraibin_sound",on?"on":"off")}catch{}ui();
+    if(on){init();ac.resume();bgmStart();bgmDuck(1,1)}else if(ac){bgmDuck(0,.2)}
+  }
+  btn.onclick=()=>setOn(!on);
+  ui();
+  // ブラウザは操作前に音を鳴らせないので、最初のクリックで開始
+  document.addEventListener("pointerdown",()=>{if(on){init();ac.resume();bgmStart()}},{once:true});
+  // ボタンのクリック音
+  document.addEventListener("click",e=>{if(e.target.closest(".btn,.li"))tone(880,.08,{type:"square",vol:.06,slide:1320})});
+  return{
+    shutter(){noise(.12,{vol:.5,f:3000,q:.7,type:"highpass"});tone(1600,.05,{type:"square",vol:.12})},
+    warp(){
+      if(!ac||!on)return()=>{};
+      bgmDuck(.15,.4);
+      const t=ac.currentTime,D=5.5;
+      // 上昇するうなり
+      const o=ac.createOscillator(),o2=ac.createOscillator(),og=ac.createGain(),fl=ac.createBiquadFilter();
+      o.type="sawtooth";o2.type="sawtooth";o.frequency.setValueAtTime(60,t);o.frequency.exponentialRampToValueAtTime(880,t+D);
+      o2.frequency.setValueAtTime(61.5,t);o2.frequency.exponentialRampToValueAtTime(905,t+D);
+      fl.type="lowpass";fl.frequency.setValueAtTime(300,t);fl.frequency.exponentialRampToValueAtTime(5000,t+D);fl.Q.value=8;
+      const wob=ac.createOscillator(),wg=ac.createGain();wob.frequency.setValueAtTime(3,t);wob.frequency.linearRampToValueAtTime(18,t+D);wg.gain.value=600;wob.connect(wg);wg.connect(fl.frequency);
+      og.gain.setValueAtTime(0,t);og.gain.linearRampToValueAtTime(.14,t+1.2);
+      o.connect(fl);o2.connect(fl);fl.connect(og);og.connect(sfxBus);
+      // 風切り音
+      const n=ac.createBufferSource(),nf=ac.createBiquadFilter(),ng=ac.createGain();
+      n.buffer=noiseBuf(2);n.loop=true;nf.type="bandpass";nf.Q.value=2;nf.frequency.setValueAtTime(400,t);nf.frequency.exponentialRampToValueAtTime(6000,t+D);
+      ng.gain.setValueAtTime(0,t);ng.gain.linearRampToValueAtTime(.22,t+D*.8);
+      n.connect(nf);nf.connect(ng);ng.connect(sfxBus);
+      [o,o2,wob,n].forEach(x=>x.start(t));
+      // 年号が進む電子音
+      let i=0;const beep=setInterval(()=>{tone(900+Math.min(i,40)*30,.04,{type:"square",vol:.05});i++},220);
+      return()=>{clearInterval(beep);const e=ac.currentTime;og.gain.cancelScheduledValues(e);ng.gain.cancelScheduledValues(e);
+        og.gain.setTargetAtTime(0,e,.05);ng.gain.setTargetAtTime(0,e,.08);[o,o2,wob,n].forEach(x=>x.stop(e+.6))};
+    },
+    arrive(){
+      tone(110,1.2,{vol:.45,slide:40});noise(.8,{vol:.35,f:800,q:.5,type:"lowpass",fTo:100});
+      [523.3,659.3,784,1046.5].forEach((f,i)=>tone(f,1.8,{type:"triangle",vol:.08,at:.05+i*.04}));
+      setTimeout(()=>bgmDuck(1,1.5),900);
+    },
+    glitch(){for(let i=0;i<7;i++)tone(200+Math.random()*1800,.05,{type:"square",vol:.06,at:i*.09})},
+    stamp(){tone(90,.25,{vol:.5,slide:50});noise(.1,{vol:.4,f:1200,q:.8})},
+    error(){tone(330,.25,{type:"sawtooth",vol:.12,slide:165});tone(220,.4,{type:"sawtooth",vol:.12,at:.22,slide:110});bgmDuck(1,1)}
+  };
 })();
 
 home();
