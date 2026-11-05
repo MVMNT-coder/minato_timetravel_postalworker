@@ -570,9 +570,9 @@ async function send(srcCanvas){
 /* 6. 未来の変化 */
 function outcomeOf(n){return n>=75?"saved":n>=50?"partial":"lost"}
 const VERDICT={
-  saved:{t:"2060年の世界は<br>救われた",m:"MISSION COMPLETE · 救われた"},
-  partial:{t:"あと一歩<br>だった…",m:"MISSION INCOMPLETE · あと一歩"},
-  lost:{t:"世界は停滞したまま、<br>徐々に色を失った…",m:"MISSION FAILED · 救えなかった"}
+  saved:{t:"2060年の世界は<br>救われた",m:"MISSION COMPLETE"},
+  partial:{t:"あと一歩<br>だった…",m:"MISSION INCOMPLETE"},
+  lost:{t:"世界は停滞したまま、<br>徐々に色を失った…",m:"MISSION FAILED"}
 };
 function pageResult(r){
   const n=Math.max(0,Math.min(100,Number(r.score)||0)),o=outcomeOf(n),V=VERDICT[o];
@@ -587,7 +587,7 @@ function pageResult(r){
     <div class="resr">
       <div class="r-hap fade-in" style="animation-delay:${T[2]}ms"><div class="lbl">2060年で起きたこと</div><p>${esc(r.happened)}</p></div>
       <div class="r-talk fade-in" style="animation-delay:${T[3]}ms">${FIG("sm")}
-        <div class="bubble"><div class="figname" data-fx="text">MINATO-2060</div><p class="r-tk">${esc(r.tsukkomi)}</p><q>${esc(r.punchline)}</q></div></div>
+        <div class="bubble"><div class="figname" data-fx="text">MINATO-2060</div><p class="r-tk">${esc(r.tsukkomi)}</p></div></div>
       <div class="r-ver ${o} fade-in" style="animation-delay:${T[4]}ms"><div class="vlbl" data-fx="text">${V.m}</div><h1 class="verdict ${o}">${V.t}</h1></div>
       <div class="row fade-in" style="animation-delay:${T[5]}ms"><button class="btn" id="again">もう一度挑戦する</button><button class="btn ghost" id="top">TOPへ</button></div>
     </div></div>`);
