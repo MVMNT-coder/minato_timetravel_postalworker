@@ -7,7 +7,7 @@ AIの最適化で停滞した2060年。そこに住む未来人・minatoから�
 | ファイル | 内容 |
 |---|---|
 | `index.html` | **メイン：未来救出局**。タイトル → minatoの説明 → ミッション → minatoのリクエスト → カメラ → 時空転送 → 結果 |
-| `gift.html` | 旧バージョン：未来便。品物が2060年でどう変わるかをminatoがツッコむ（`gift.html?mode=rescue` で旧・救済モード） |
+| `gift.html` | 旧バージョン：未来便。品物が2060年でどう変わるかをminatoがツッコむ |
 
 ## 構成
 
@@ -15,7 +15,7 @@ AIの最適化で停滞した2060年。そこに住む未来人・minatoから�
 - 中継：Google Apps Script（`gas/Code.gs`）。Claude API のキーはここに隠します
 - 記録：スプレッドシートに1回ずつ追記し、写真は Google ドライブに保存します
   - `mission_log`：未来救出局（index.html）。TOPの「救われた世界／救えなかった世界」の数はこのシートから集計
-  - `log`／`rescue_log`：旧バージョン（gift.html）
+  - `log`：旧バージョン（gift.html）
 
 ```
 ブラウザ（カメラ） ──写真──▶ GAS ──▶ Claude API
