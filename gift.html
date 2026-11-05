@@ -1,0 +1,700 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>未来便 minato</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@700;900&family=Noto+Sans+JP:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+/* Layout: 1画面1枚のカード送り。黒地＋蛍光オレンジ。上に細いヘッダー、中央に1枚だけ表示 */
+:root{
+  --bk:#0a0a0a; --line:#2b2b2b;
+  --fg:#f1f1f1; --mute:#8c8c8c; --or:#ff5c00;
+  --f-disp:"Zen Kaku Gothic New","Noto Sans JP",system-ui,sans-serif;
+  --f-body:"Noto Sans JP","Hiragino Sans",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,monospace;
+  color-scheme:dark;
+}
+html,body{background:var(--bk);color:var(--fg);height:100%}
+body{font-family:var(--f-body);font-size:15px;line-height:1.75}
+.wrap{max-width:640px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;gap:20px;padding-block:18px 40px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.hr{display:flex;gap:14px;align-items:center}
+.snd{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;color:var(--mute);background:transparent;border:1px solid var(--line);padding:4px 8px;cursor:pointer}
+.snd[aria-pressed="true"]{color:#000;background:var(--or);border-color:var(--or)}
+.snd:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--or);padding-bottom:10px}
+.logo{font-family:var(--f-disp);font-weight:900;font-size:26px;line-height:1;letter-spacing:.04em}
+.logo em{font-style:normal;color:var(--or)}
+.lbl{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;color:var(--or);text-transform:uppercase}
+.mute{color:var(--mute)}
+
+.card{flex:1;display:flex;flex-direction:column;justify-content:center;gap:22px;animation:in .45s ease both}
+@keyframes in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.card,.pop{animation:none!important}}
+
+.btn{font-family:var(--f-disp);font-weight:900;font-size:20px;letter-spacing:.04em;border:0;cursor:pointer;padding:16px 28px;background:var(--or);color:#000;display:inline-block;text-align:center}
+.btn:hover{background:#ff7a2e}
+.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--f-body);font-size:14px;padding:12px 20px}
+.btn.ghost:hover{border-color:var(--or)}
+.btn:focus-visible,.shutter:focus-visible,.li:focus-visible{outline:2px solid var(--fg);outline-offset:3px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.center{justify-content:center}
+
+/* 受付 */
+.hero{font-family:var(--f-disp);font-weight:900;font-size:clamp(30px,7vw,48px);line-height:1.4;letter-spacing:.02em;margin:0;text-wrap:balance}
+.hero em{font-style:normal;color:var(--or)}
+.who{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:12px 0;font-size:14px}
+.who dt{font-family:var(--f-mono);font-size:11px;color:var(--mute);letter-spacing:.1em;padding-top:3px}
+.who dd{margin:0}
+
+/* 撮影・転送 */
+.view{position:relative;width:100%;max-width:100%;aspect-ratio:4/3;background:#000;border:1px solid var(--line);overflow:hidden}
+.view video,.view canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.view .tag{position:absolute;left:10px;top:10px;font-family:var(--f-mono);font-size:11px;color:var(--or);background:#000;padding:2px 6px}
+.shutter{width:72px;height:72px;border-radius:50%;border:3px solid var(--fg);background:var(--or);cursor:pointer}
+input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
+.status{font-family:var(--f-disp);font-weight:900;font-size:22px;color:var(--or)}
+.coord{font-family:var(--f-mono);font-size:12px;color:var(--mute);font-variant-numeric:tabular-nums}
+
+/* 結果カード */
+.dots{display:flex;gap:6px}
+.dots i{width:22px;height:3px;background:var(--line)}
+.dots i.on{background:var(--or)}
+.morph{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center}
+.morph .ph{position:relative;aspect-ratio:1;background:var(--or);overflow:hidden}
+.morph .ph canvas,.morph .ph img{width:100%;height:100%;object-fit:cover;display:block;filter:grayscale(1) contrast(1.15);mix-blend-mode:multiply}
+.morph .arrow{font-family:var(--f-mono);color:var(--or);font-size:22px}
+.morph .yr{font-family:var(--f-mono);font-size:12px;margin-top:6px}
+.big{font-family:var(--f-disp);font-weight:900;font-size:clamp(26px,6vw,40px);line-height:1.4;margin:0;text-wrap:balance}
+.lead{font-size:17px;margin:0;max-width:34em}
+.scene{border-left:2px solid var(--line);padding-left:12px}
+.scene p{margin:4px 0 0;font-size:16px;color:var(--mute)}
+.quote{font-family:var(--f-disp);font-weight:700;font-size:clamp(20px,5vw,28px);line-height:1.7;margin:0;text-wrap:pretty}
+.quote::before{content:"minato";display:block;font-family:var(--f-mono);font-size:12px;color:var(--or);letter-spacing:.14em;margin-bottom:6px}
+.punch{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;border-top:2px solid var(--or);padding-top:16px}
+.punch q{font-family:var(--f-disp);font-weight:900;font-size:clamp(20px,4.6vw,28px);color:var(--or);quotes:"「" "」";flex:1 1 240px;line-height:1.4}
+.stamp{font-family:var(--f-mono);font-weight:700;font-size:13px;letter-spacing:.12em;border:2px solid var(--or);color:var(--or);padding:6px 12px;white-space:nowrap}
+.pop{animation:pop .4s cubic-bezier(.2,1.5,.4,1) both .5s}
+@keyframes pop{from{opacity:0;transform:scale(1.8) rotate(-6deg)}to{opacity:1;transform:none}}
+
+/* ログ */
+.log{display:flex;flex-direction:column;gap:10px}
+.loglist{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.li{flex:0 0 84px;background:var(--or);border:0;padding:0;cursor:pointer;aspect-ratio:1}
+.li img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.15);mix-blend-mode:multiply;display:block}
+.err{color:var(--or);font-size:16px}
+.flash{position:fixed;inset:0;background:#fff;pointer-events:none;z-index:50;animation:fl .7s ease-out forwards}
+@keyframes fl{0%{opacity:1}20%{opacity:.9;background:#ff5c00}100%{opacity:0;background:#ff5c00}}
+@media (prefers-reduced-motion:reduce){.flash{display:none}}
+.view.warp{border-color:var(--or);box-shadow:0 0 40px rgba(255,92,0,.35)}
+
+/* 背景：計器の方眼＋走査線 */
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.wrap{position:relative;z-index:1}
+.hud{position:fixed;z-index:0;pointer-events:none;font-family:var(--f-mono);font-size:10px;line-height:1.6;letter-spacing:.08em;color:var(--or);opacity:.45;font-variant-numeric:tabular-nums;white-space:pre}
+.hud.l{left:max(12px,env(safe-area-inset-left,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+.hud.r{right:max(12px,env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));text-align:right}
+@media (max-width:520px){.hud.r{display:none}}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+
+/* 通信不安定のグリッチ */
+.gl{animation:glt .38s steps(1) both}
+@keyframes glt{
+  0%{transform:translate(0);text-shadow:none;clip-path:none}
+  15%{transform:translate(-3px,0);text-shadow:2px 0 rgba(255,40,0,.85),-2px 0 rgba(0,229,255,.7);clip-path:inset(10% 0 55% 0)}
+  30%{transform:translate(4px,1px);text-shadow:-3px 0 rgba(255,40,0,.85),3px 0 rgba(0,229,255,.7);clip-path:inset(48% 0 12% 0)}
+  45%{transform:translate(-1px,0);clip-path:none;opacity:.55}
+  60%{transform:translate(2px,-1px);text-shadow:1px 0 rgba(255,40,0,.85),-1px 0 rgba(0,229,255,.7);clip-path:inset(0 0 70% 0);opacity:1}
+  80%{transform:translate(0);clip-path:inset(30% 0 30% 0)}
+  100%{transform:none;text-shadow:none;clip-path:none;opacity:1}
+}
+.wrap.pg{animation:pg .32s steps(1) both}
+@keyframes pg{0%{transform:none}20%{transform:translate(-6px,0) skewX(-2deg)}40%{transform:translate(5px,2px);filter:contrast(1.4)}60%{transform:translate(-2px,-1px);opacity:.8}80%{transform:translate(3px,0)}100%{transform:none;filter:none;opacity:1}}
+.static{position:fixed;inset:0;z-index:40;pointer-events:none;opacity:0;
+  background:repeating-linear-gradient(0deg,rgba(255,92,0,.10) 0 1px,transparent 1px 3px),repeating-linear-gradient(0deg,transparent 0 37%,rgba(241,241,241,.08) 37% 39%,transparent 39% 71%,rgba(255,92,0,.12) 71% 72%,transparent 72%)}
+.static.on{animation:st .3s steps(3) both}
+@keyframes st{0%{opacity:1;background-position:0 0}33%{opacity:.7;background-position:0 23px}66%{opacity:1;background-position:0 -41px}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.gl,.wrap.pg,.static.on{animation:none}}
+
+/* minato（粒子の人影） */
+.intro{display:grid;grid-template-columns:minmax(0,260px) 1fr;gap:28px;align-items:center}
+.introtext{display:flex;flex-direction:column;gap:18px;min-width:0}
+.intro .hero{font-size:clamp(26px,4vw,36px)}
+@media (max-width:560px){.intro{grid-template-columns:1fr;gap:16px}.intro .fig{max-width:200px}}
+.fig{position:relative;width:100%;max-width:100%;aspect-ratio:3/4;background:#000}
+.fig canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.fig i{position:absolute;width:16px;height:16px;border:1px solid var(--or);opacity:.7}
+.fig .c1{top:0;left:0;border-right:0;border-bottom:0}.fig .c2{top:0;right:0;border-left:0;border-bottom:0}
+.fig .c3{bottom:22px;left:0;border-right:0;border-top:0}.fig .c4{bottom:22px;right:0;border-left:0;border-top:0}
+.figid{position:absolute;left:0;right:0;bottom:0;text-align:center;font-family:var(--f-mono);font-size:10px;letter-spacing:.2em;color:var(--mute)}
+.fig.sm{width:84px;flex:0 0 84px}
+.fig.sm .c3,.fig.sm .c4{bottom:0}
+.speaker{display:flex;gap:14px;align-items:center}
+.figname{font-family:var(--f-mono);font-size:13px;letter-spacing:.18em;color:var(--fg);margin-top:2px}
+
+/* 未来救済モード */
+a.btn{text-decoration:none}
+.lbl.alert{color:var(--or);animation:blink 1.6s steps(2) infinite}
+@keyframes blink{50%{opacity:.35}}
+.story{font-size:14px;line-height:1.85;margin:0;color:var(--fg);max-width:34em}
+.meter{border:1px solid var(--line);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.mhd{display:flex;justify-content:space-between;align-items:baseline}
+.mhd b{font-family:var(--f-mono);font-size:22px;color:var(--or);font-variant-numeric:tabular-nums}
+.bar{height:6px;background:var(--line);position:relative;overflow:hidden}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:var(--or);box-shadow:0 0 12px var(--or)}
+.msub{font-size:12px}
+.regain{display:flex;flex-direction:column;gap:2px}
+.regainv{font-family:var(--f-disp);font-weight:900;font-size:clamp(24px,5.5vw,36px);color:var(--or);line-height:1.35}
+@media (prefers-reduced-motion:reduce){.lbl.alert{animation:none}}
+
+/* ステップ表示 */
+.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.steps li{display:flex;flex-direction:column;gap:2px;border-top:3px solid var(--line);padding-top:6px;min-width:0}
+.steps b{font-family:var(--f-mono);font-size:11px;color:var(--mute)}
+.steps span{font-size:11px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.steps li.done{border-color:var(--or-dim,#7a2c00)}
+.steps li.done b,.steps li.done span{color:var(--fg)}
+.steps li.now{border-color:var(--or)}
+.steps li.now b,.steps li.now span{color:var(--or);font-weight:700}
+@media (max-width:420px){.steps span{font-size:10px}}
+.or{font-style:normal;color:var(--or)}
+.hints{display:flex;flex-direction:column;gap:8px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips span{border:1px solid var(--line);padding:4px 10px;font-size:13px}
+.judge{display:flex;flex-direction:column;gap:2px;border-left:3px solid var(--or);padding-left:12px}
+.judge.ng{border-color:var(--mute)}.judge.ng .lbl{color:var(--mute)}
+.result{border:2px solid var(--or);padding:14px 16px;display:grid;grid-template-columns:1fr auto;align-items:end;gap:2px 12px}
+.result .lbl{grid-column:1/-1}
+.rbig{font-family:var(--f-disp);font-weight:900;font-size:clamp(34px,8vw,54px);line-height:1.1;color:var(--or)}
+.rpt{font-family:var(--f-mono);font-weight:700;font-size:16px;color:var(--or)}
+.result.mid{border-color:var(--fg)}.result.mid .rbig{color:var(--fg)}
+.result.lose{border-color:var(--line)}.result.lose .rbig,.result.lose .rpt,.result.lose .lbl{color:var(--mute)}
+.result.win{animation:pop .45s cubic-bezier(.2,1.5,.4,1) both .15s}
+.quote.nolabel::before{display:none}
+.quote.nolabel{font-size:clamp(18px,4.4vw,24px);margin-top:4px}
+.speaker{align-items:flex-start}
+</style>
+<script src="config.js"></script>
+</head>
+<body>
+
+<canvas id="bg" aria-hidden="true"></canvas>
+<div class="hud l" id="hudL" aria-hidden="true" data-fx="css"></div><div class="hud r" id="hudR" aria-hidden="true" data-fx="css"></div>
+<div class="static" id="static" aria-hidden="true"></div>
+<div class="wrap">
+  <header><div class="logo">未来便<em>.</em></div><div class="hr"><button class="snd" id="snd" aria-pressed="false">SOUND OFF</button><div class="lbl" data-fx="text">Tokyo 2060</div></div></header>
+  <main class="card" id="card"></main>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const card=$("#card");
+const MODE=new URLSearchParams(location.search).get("mode")==="rescue"?"rescue":"gift";
+const LKEY=MODE==="rescue"?"miraibin_rescue_2060":"miraibin_log_2060";
+let rescueStats=null;
+function modeHref(m){const u=new URL(location.href);if(m==="rescue")u.searchParams.set("mode","rescue");else u.searchParams.delete("mode");return u.pathname+u.search}
+let stream=null;
+
+function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function loadLog(){try{return JSON.parse(localStorage.getItem(LKEY)||"[]")}catch{return[]}}
+function saveLog(a){try{localStorage.setItem(LKEY,JSON.stringify(a.slice(0,24)))}catch{}}
+function stopCam(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}}
+let unmountFig=null;
+function render(html){if(unmountFig){unmountFig();unmountFig=null}card.style.animation="none";card.offsetHeight;card.style.animation="";card.innerHTML=html}
+
+
+/* 受付 */
+function home(){
+  stopCam();
+  const log=loadLog(),R=MODE==="rescue";
+  const fig=`<div class="fig" data-fx="css"><canvas id="fig"></canvas><i class="c1"></i><i class="c2"></i><i class="c3"></i><i class="c4"></i><div class="figid">SUBJECT ID · MINATO-2060</div></div>`;
+  const text=R?`<div class="introtext"><div class="lbl alert" data-fx="text">EMERGENCY · 2060 STAGNATION</div>
+    <h1 class="hero">あなたは<br><em data-fx="text">未来</em>を救えるか!?</h1>
+    <p class="story">2060年は、AIがすべてを最適化した結果、失敗も寄り道もない世界になった。新しいものが生まれず、街は止まりかけている。<br><b>ミッション：</b>2060年までに消えてしまった「今の品物」を見つけて、未来へ送れ。</p>
+    <div class="meter" id="meter"><div class="mhd"><span class="lbl">未来の回復率</span><b id="mrate">--%</b></div><div class="bar"><i id="mbar" style="width:0%"></i></div><div class="msub mute" id="msub">集計を読み込み中</div></div></div>`
+   :`<div class="introtext"><h1 class="hero">品物を撮って、<br><em data-fx="text">2060年</em>のminatoに送ろう。</h1>
+    <dl class="who">
+      <dt data-fx="text">MINATO</dt><dd>29歳。時間郵便局の受付係</dd>
+      <dt>住まい</dt><dd>東京・渋谷のマンション22階</dd>
+      <dt>暮らし</dt><dd>メガネ型端末、40℃の夏、家事はロボット</dd>
+    </dl></div>`;
+  render(`${stepBar(0)}<div class="intro">${fig}${text}</div>
+    <div class="row"><button class="btn" id="go">${R?"ミッションを始める":"品物を撮る"}</button><a class="btn ghost" href="${modeHref(R?"gift":"rescue")}">${R?"通常の贈り物モードへ":"未来救済モードへ"}</a></div>
+    <div class="mute" style="font-size:12px">撮影した写真と結果は、記録のため保存されます。人の顔が写らないように撮ってください。</div>
+    ${log.length?`<div class="log"><div class="lbl">${R?"これまでに送った遺物":"これまでの贈り物"}</div><div class="loglist">${log.map((r,i)=>`<button class="li" data-i="${i}" aria-label="${esc(r.future_name||r.item_name)}"><img src="${r.thumb}" alt=""></button>`).join("")}</div></div>`:""}`);
+  unmountFig=minatoFigure($("#fig"));
+  $("#go").onclick=R?missionSearch:openCamera;
+  card.querySelectorAll(".li").forEach(b=>b.onclick=()=>step1(log[+b.dataset.i]));
+  if(R)loadStats();
+}
+
+function showMeter(st,from){
+  const rate=$("#mrate"),bar=$("#mbar"),sub=$("#msub");if(!rate||!st)return;
+  const to=Math.max(0,Math.min(100,st.rate));let v=from??to;
+  bar.style.width=v+"%";rate.textContent=v.toFixed(1)+"%";
+  sub.textContent=`これまでに ${st.count} 個の遺物が届いています`;
+  if(from!=null&&from!==to){const t0=performance.now();(function f(n){const k=Math.min(1,(n-t0)/1600);v=from+(to-from)*(1-Math.pow(1-k,3));bar.style.width=v+"%";rate.textContent=v.toFixed(1)+"%";if(k<1)requestAnimationFrame(f)})(t0)}
+}
+async function loadStats(){
+  if(!window.GAS_URL)return;
+  try{const r=await fetch(window.GAS_URL+"?stats=rescue");const d=await r.json();if(d.ok&&d.stats){rescueStats=d.stats;showMeter(d.stats)}}
+  catch{const s=$("#msub");if(s)s.textContent="集計を読み込めませんでした"}
+}
+
+/* 撮影 */
+async function openCamera(){
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment",width:{ideal:1280}},audio:false});
+    render(`${stepBar(1)}<div class="lbl">品物を真ん中に映してください</div>
+      <div class="view"><video id="v" autoplay playsinline muted></video><div class="tag">● 2026</div></div>
+      <div class="row center"><button class="shutter" id="shot" aria-label="撮影して送る"></button></div>
+      <div class="row center"><button class="btn ghost" id="back">やめる</button></div>`);
+    const v=$("#v");v.srcObject=stream;
+    $("#shot").onclick=()=>{const c=document.createElement("canvas");c.width=v.videoWidth;c.height=v.videoHeight;c.getContext("2d").drawImage(v,0,0);SND.shutter();stopCam();send(c)};
+    $("#back").onclick=home;
+  }catch(e){uploadMode()}
+}
+function uploadMode(){
+  render(`${stepBar(1)}<div class="lbl">品物を撮影してください</div>
+    <div><label class="btn" for="file">撮影する / 写真を選ぶ</label><input type="file" id="file" accept="image/*" capture="environment"></div>
+    <div class="mute" style="font-size:13px">カメラを起動できませんでした。ブラウザのカメラ許可を確認するか、カメラアプリ・画像ファイルから送ってください。</div>
+    <div><button class="btn ghost" id="back">やめる</button></div>`);
+  $("#back").onclick=home;
+  $("#file").onchange=e=>{const f=e.target.files[0];if(!f)return;const img=new Image();img.onload=()=>{const c=document.createElement("canvas");c.width=img.naturalWidth;c.height=img.naturalHeight;c.getContext("2d").drawImage(img,0,0);URL.revokeObjectURL(img.src);send(c)};img.src=URL.createObjectURL(f)};
+}
+
+function scaled(src,max){const k=Math.min(1,max/Math.max(src.width,src.height));const c=document.createElement("canvas");c.width=Math.round(src.width*k);c.height=Math.round(src.height*k);c.getContext("2d").drawImage(src,0,0,c.width,c.height);return c}
+function square(src,size){const s=Math.min(src.width,src.height);const c=document.createElement("canvas");c.width=c.height=size;c.getContext("2d").drawImage(src,(src.width-s)/2,(src.height-s)/2,s,s,0,0,size,size);return c.toDataURL("image/jpeg",.75)}
+
+/* 転送 */
+async function send(srcCanvas){
+  const img=scaled(srcCanvas,1024), thumb=square(srcCanvas,320);
+  render(`${stepBar(2)}<div class="view warp"><canvas id="fx"></canvas></div><div class="status" id="st">時空の歪みを通過中</div><div class="coord" id="co"></div>`);
+  const stop=warp($("#fx"),img);
+  const stopWarpSnd=SND.warp();
+  const msgs=["時空の歪みを通過中","品物が変化しています","2060年に到着"];
+  let i=0;const ti=setInterval(()=>{i=Math.min(i+1,msgs.length-1);const s=$("#st");if(s)s.textContent=msgs[i]},1500);
+  const t0=performance.now();
+  const ci=setInterval(()=>{const c=$("#co");if(c)c.textContent=`YEAR ${Math.min(2060,2026+((performance.now()-t0)/5000)*34).toFixed(2)}`},60);
+  const minWait=new Promise(r=>setTimeout(r,5000));
+  let res,err;
+  try{
+    if(!window.GAS_URL) throw {code:"no_config"};
+    const image=img.toDataURL("image/jpeg",.85).split(",")[1];
+    const req=fetch(window.GAS_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({image,mode:MODE})})
+      .then(async r=>{const t=await r.text();try{return JSON.parse(t)}catch{throw {code:"bad_response",detail:"GASからJSON以外の応答（"+r.status+"）。デプロイのアクセス権が「全員」か、URLが /exec で終わっているか確認してください。"}}})
+      .then(d=>{if(!d.ok)throw {code:d.error||"server_error",detail:d.detail};if(d.stats){d.result._prevRate=rescueStats?rescueStats.rate:null;d.result._stats=d.stats;rescueStats=d.stats}return d.result});
+    [res]=await Promise.all([req,minWait]);
+  }catch(e){err=e&&e.code?e:{code:"network",detail:String(e&&e.message||e)};await minWait}
+  clearInterval(ti);clearInterval(ci);stop();stopWarpSnd();
+  flash();SND.arrive();
+  if(err||!res) return fail(err);
+  const entry={...res,mode:MODE,thumb,at:Date.now()};
+  const log=loadLog();log.unshift(entry);saveLog(log);
+  step1(entry);
+}
+
+function warp(cv,img){
+  const W=cv.width=960,H=cv.height=720,ctx=cv.getContext("2d"),cx=W/2,cy=H/2;
+  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // 色ずれ用に赤・シアンの写真を用意
+  const tint=c=>{const o=document.createElement("canvas");o.width=img.width;o.height=img.height;const g=o.getContext("2d");
+    g.drawImage(img,0,0);g.globalCompositeOperation="multiply";g.fillStyle=c;g.fillRect(0,0,o.width,o.height);
+    g.globalCompositeOperation="destination-in";g.drawImage(img,0,0);return o};
+  const R=tint("#ff2a00"),C=tint("#00e5ff");
+  const fit=Math.max(W/img.width,H/img.height);
+  const stars=Array.from({length:260},()=>({a:Math.random()*Math.PI*2,z:Math.random(),w:Math.random()<.25}));
+  const t0=performance.now();let raf,pz=0;
+  function photo(t){
+    // 0〜1.1s 揺れ・色ずれ → 1.1〜2.6s 渦を巻きながら中心へ吸い込まれる
+    const suck=Math.max(0,Math.min(1,(t-1.1)/1.5)),e=suck*suck*suck;
+    if(suck>=1)return;
+    const sc=fit*(1-e*.97),rot=e*Math.PI*3,shift=6+Math.min(t,1.1)*22+e*40;
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(rot);ctx.scale(sc,sc);ctx.globalAlpha=1-e*.4;
+    const iw=img.width,ih=img.height;
+    ctx.drawImage(img,-iw/2,-ih/2);
+    ctx.globalCompositeOperation="lighter";ctx.globalAlpha=.55;
+    ctx.drawImage(R,-iw/2+shift/sc,-ih/2);ctx.drawImage(C,-iw/2-shift/sc,-ih/2);
+    ctx.globalCompositeOperation="source-over";ctx.globalAlpha=1;
+    // 横ずれの帯
+    const n=Math.round(3+Math.min(t,2)*6);
+    for(let i=0;i<n;i++){const y=(Math.random()*ih)|0,h=(4+Math.random()*ih*.06)|0,dx=(Math.random()-.5)*iw*(.08+e*.3);
+      ctx.drawImage(img,0,y,iw,h,-iw/2+dx,-ih/2+y,iw,h)}
+    ctx.restore();
+  }
+  (function f(now){
+    const t=(now-t0)/1000,sp=reduce?.004:Math.min(.045,.004+t*t*.006);
+    // 残像を残して流れを出す
+    ctx.fillStyle=`rgba(0,0,0,${t<1.1?1:.28})`;ctx.fillRect(0,0,W,H);
+    // トンネルの輪
+    pz=(pz+sp*1.6)%1;
+    for(let k=0;k<10;k++){
+      const z=((k/10)+pz)%1,r=Math.pow(z,2.2)*W*.9;if(r<4)continue;
+      ctx.save();ctx.translate(cx,cy);ctx.rotate(t*.6+k*.35);
+      ctx.strokeStyle=`rgba(255,92,0,${Math.min(1,z*1.4)*.9})`;ctx.lineWidth=1+z*5;
+      ctx.strokeRect(-r,-r*.75,r*2,r*1.5);ctx.restore();
+    }
+    // 光の筋
+    for(const s of stars){
+      const z0=s.z;s.z+=sp*(1+s.z*3);if(s.z>1){s.z=Math.random()*.1;s.a=Math.random()*Math.PI*2;continue}
+      const r0=Math.pow(z0,2)*W*.8,r1=Math.pow(s.z,2)*W*.8,ca=Math.cos(s.a+t*.3),sa=Math.sin(s.a+t*.3);
+      ctx.strokeStyle=s.w?`rgba(255,255,255,${s.z})`:`rgba(255,92,0,${s.z})`;ctx.lineWidth=.5+s.z*3;
+      ctx.beginPath();ctx.moveTo(cx+ca*r0,cy+sa*r0);ctx.lineTo(cx+ca*r1,cy+sa*r1);ctx.stroke();
+    }
+    photo(t);
+    // 中心の特異点
+    const g=ctx.createRadialGradient(cx,cy,0,cx,cy,60+Math.sin(t*9)*10+Math.min(t,3)*20);
+    g.addColorStop(0,"rgba(255,255,255,.95)");g.addColorStop(.3,"rgba(255,92,0,.7)");g.addColorStop(1,"rgba(255,92,0,0)");
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    // 走査線
+    ctx.fillStyle="rgba(0,0,0,.18)";for(let y=(t*120)%4;y<H;y+=4)ctx.fillRect(0,y,W,1);
+    raf=requestAnimationFrame(f);
+  })(t0);
+  return()=>cancelAnimationFrame(raf);
+}
+
+function flash(){const d=document.createElement("div");d.className="flash";document.body.appendChild(d);setTimeout(()=>d.remove(),700)}
+
+/* 歪んだ写真（静止グリッチ） */
+function glitch(cv,src){
+  const im=new Image();im.onload=()=>{
+    const S=cv.width=cv.height=320,ctx=cv.getContext("2d");ctx.drawImage(im,0,0,S,S);
+    const step=()=>{ctx.drawImage(im,0,0,S,S);
+      for(let i=0;i<9;i++){const y=Math.random()*S|0,h=4+Math.random()*26|0,dx=(Math.random()-.5)*60|0;ctx.drawImage(im,0,y,S,h,dx,y,S,h)}};
+    step();let n=0;const iv=setInterval(()=>{step();if(++n>14)clearInterval(iv)},90);
+  };im.src=src;
+}
+
+/* 1枚目：変化 */
+function step1(r){
+  if(r.mode==="rescue")return rescue1(r);
+  render(`<div class="dots"><i class="on"></i><i></i></div>
+    <div class="lbl">時空の歪みで、こう変化した</div>
+    <div class="morph">
+      <div><div class="ph"><img src="${r.thumb}" alt=""></div><div class="yr mute">2026 / ${esc(r.item_name)}</div></div>
+      <div class="arrow">→</div>
+      <div><div class="ph"><canvas id="gl"></canvas></div><div class="yr" style="color:var(--or)" data-fx="text">2060</div></div>
+    </div>
+    <h2 class="big" data-fx="text">${esc(r.future_name)}</h2>
+    ${r.change?`<p class="lead">${esc(r.change)}</p><p class="lead mute">${esc(r.reason)}</p>`:`<p class="lead">${esc(r.future_form)}</p>`}
+    <div><button class="btn" id="next">minatoに渡す</button></div>`);
+  glitch($("#gl"),r.thumb);SND.glitch();
+  $("#next").onclick=()=>step2(r);
+}
+
+/* 2枚目：minatoのツッコミ */
+function step2(r){
+  if(r.mode==="rescue")return rescue2(r);
+  render(`<div class="dots"><i class="on"></i><i class="on"></i></div>
+    <div class="speaker"><div class="fig sm" data-fx="css"><canvas id="fig"></canvas><i class="c1"></i><i class="c2"></i><i class="c3"></i><i class="c4"></i></div>
+      <div><div class="lbl">${esc(r.future_name)} を受け取った</div><div class="figname" data-fx="text">MINATO-2060</div></div></div>
+    ${r.scene?`<div class="scene" data-fx="css"><div class="lbl">2060年では</div><p>${esc(r.scene)}</p></div>`:""}
+    <p class="quote" data-fx="css">${esc(r.tsukkomi)}</p>
+    <div class="punch"><q>${esc(r.punchline)}</q><div class="stamp pop" data-fx="css">${esc(r.destination)}</div></div>
+    <div class="row"><button class="btn" id="again">次の品物を撮る</button><button class="btn ghost" id="home">最初に戻る</button></div>`);
+  unmountFig=minatoFigure($("#fig"),{talk:true});
+  setTimeout(()=>SND.stamp(),520);
+  $("#again").onclick=openCamera;$("#home").onclick=home;
+}
+
+/* 未来救済モード：ステップ表示 */
+const STEPS=["ミッション","品物を探す","時空転送","判定","未来の変化"];
+function stepBar(i){
+  if(MODE!=="rescue")return"";
+  return `<ol class="steps" aria-label="ステップ ${i+1} / ${STEPS.length}">${STEPS.map((n,k)=>`<li class="${k<i?"done":k===i?"now":""}"><b>${String(k+1).padStart(2,"0")}</b><span>${n}</span></li>`).join("")}</ol>`;
+}
+const HINTS=["紙の地図","鍵","小銭・お札","手紙・はがき","ハンコ","乾電池","レシート","切符","USBメモリ","腕時計","ボールペン","CD","名刺","折りたたみ傘","付箋","目覚まし時計","イヤホンのコード","紙の本"];
+function missionSearch(){
+  const h=[...HINTS].sort(()=>Math.random()-.5).slice(0,6);
+  render(`${stepBar(1)}
+    <div class="lbl">STEP 02 · 品物を探す</div>
+    <h2 class="big">2060年に<em class="or">消えていそうな物</em>を探せ。</h2>
+    <p class="lead">身の回りやカバンの中から、2060年には無くなっていそうな物を1つ選んでください。消えている物ほど、未来を大きく動かせます。</p>
+    <div class="hints"><div class="lbl">ヒント：2060年で消えたと言われている物</div><div class="chips">${h.map(x=>`<span>${esc(x)}</span>`).join("")}</div></div>
+    <div class="row"><button class="btn" id="cam">見つけた！撮影する</button><button class="btn ghost" id="back">戻る</button></div>`);
+  $("#cam").onclick=openCamera;$("#back").onclick=home;
+}
+function verdict(n){return n>=60?{k:"win",t:"救出成功",m:"MISSION COMPLETE"}:n>=30?{k:"mid",t:"あと一歩",m:"PARTIAL RECOVERY"}:{k:"lose",t:"救出失敗",m:"MISSION FAILED"}}
+
+/* 未来救済モード：1枚目「2060年では消えていた」 */
+function rescue1(r){
+  const gone=r.vanished!==false;
+  render(`${stepBar(3)}
+    <div class="lbl">STEP 04 · 判定　${esc(r.item_name)} は2060年にあるか？</div>
+    <div class="morph">
+      <div><div class="ph"><img src="${r.thumb}" alt=""></div><div class="yr mute">2026 / ${esc(r.item_name)}</div></div>
+      <div class="arrow">→</div>
+      <div><div class="ph"><canvas id="gl"></canvas></div><div class="yr" style="color:var(--or)" data-fx="text">2060</div></div>
+    </div>
+    <div class="judge ${gone?"ok":"ng"}"><span class="lbl">${gone?"消滅を確認":"消滅していない"}</span><h2 class="big" data-fx="text">${gone?`${esc(r.vanished_year)}年に消滅`:"まだ残っていた…"}</h2></div>
+    <p class="lead">${esc(r.why_vanished)}</p>
+    <div><button class="btn" id="next">${gone?"未来はどう変わった？":"それでも届けてみる"}</button></div>`);
+  glitch($("#gl"),r.thumb);SND.glitch();
+  $("#next").onclick=()=>rescue2(r);
+}
+function rescue2(r){
+  const n=Number(r.recovery)||0,v=verdict(n);
+  render(`${stepBar(4)}
+    <div class="result ${v.k}"><div class="lbl">${v.m}</div><div class="rbig" data-fx="text">${v.t}</div><div class="rpt">回復 +${n}</div></div>
+    <div class="scene" data-fx="css"><div class="lbl">${esc(r.item_name)} が届いた2060年で</div><p>${esc(r.scene)}</p></div>
+    <div class="regain"><div class="lbl">未来が取り戻したもの</div><div class="regainv" data-fx="text">${esc(r.lost_value)}</div></div>
+    <div class="speaker"><div class="fig sm" data-fx="css"><canvas id="fig"></canvas><i class="c1"></i><i class="c2"></i><i class="c3"></i><i class="c4"></i></div>
+      <div style="min-width:0"><div class="figname" data-fx="text">MINATO-2060</div><p class="quote nolabel" data-fx="css">${esc(r.tsukkomi)}</p></div></div>
+    <div class="punch"><q>${esc(r.punchline)}</q></div>
+    ${r._stats?`<div class="meter" id="meter"><div class="mhd"><span class="lbl">みんなで救った未来の回復率</span><b id="mrate">--%</b></div><div class="bar"><i id="mbar" style="width:0%"></i></div><div class="msub mute" id="msub"></div></div>`:""}
+    <div class="row"><button class="btn" id="again">${v.k==="win"?"もう1つ未来を救う":"別の品物で再挑戦"}</button><button class="btn ghost" id="home">最初に戻る</button></div>`);
+  unmountFig=minatoFigure($("#fig"),{talk:true});
+  setTimeout(()=>{v.k==="lose"?SND.lose():SND.win(v.k==="win")},350);
+  if(r._stats){setTimeout(()=>{showMeter(r._stats,r._prevRate??r._stats.rate);delete r._prevRate},1100)}
+  $("#again").onclick=missionSearch;$("#home").onclick=home;
+}
+
+function fail(e){
+  SND.error();
+  const code=e?.code;
+  const msg=code==="rate_limited"?"混み合っています。少し待ってからもう一度送ってください。"
+    :code==="no_config"?"送信先が設定されていません（config.js の GAS_URL を設定してください）。"
+    :code==="bad_image"?"写真をうまく受け取れませんでした。もう一度撮ってください。"
+    :"転送に失敗しました。もう一度送ってください。";
+  render(`<div class="err">${esc(msg)}</div>${e?.detail?`<div class="mute" style="font-size:12px;word-break:break-all">詳細：${esc(e.detail)}</div>`:""}<div><button class="btn" id="go">もう一度撮る</button></div>`);
+  $("#go").onclick=openCamera;
+}
+
+/* 背景アニメーション */
+(function(){
+  const cv=$("#bg"),ctx=cv.getContext("2d"),L=$("#hudL"),Rr=$("#hudR");
+  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let W,H,dpr;
+  function size(){dpr=Math.min(2,devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
+  size();addEventListener("resize",size);
+  const G=48,t0=performance.now();
+  function grid(){
+    ctx.lineWidth=1;
+    ctx.strokeStyle="rgba(255,92,0,.07)";ctx.beginPath();
+    for(let x=(W/2)%G;x<W;x+=G){ctx.moveTo(x+.5,0);ctx.lineTo(x+.5,H)}
+    for(let y=(H/2)%G;y<H;y+=G){ctx.moveTo(0,y+.5);ctx.lineTo(W,y+.5)}
+    ctx.stroke();
+    ctx.strokeStyle="rgba(255,92,0,.22)";ctx.beginPath();
+    for(let x=(W/2)%G;x<W;x+=G)for(let y=(H/2)%G;y<H;y+=G){ctx.moveTo(x-3,y+.5);ctx.lineTo(x+4,y+.5);ctx.moveTo(x+.5,y-3);ctx.lineTo(x+.5,y+4)}
+    ctx.stroke();
+  }
+  function frame(now){
+    const t=(now-t0)/1000;
+    ctx.clearRect(0,0,W,H);grid();
+    if(!reduce){
+      // 走査線（上から下へ、6秒周期）
+      const y=((t/6)%1)*(H+160)-80;
+      const g=ctx.createLinearGradient(0,y-120,0,y);
+      g.addColorStop(0,"rgba(255,92,0,0)");g.addColorStop(1,"rgba(255,92,0,.10)");
+      ctx.fillStyle=g;ctx.fillRect(0,y-120,W,120);
+      ctx.fillStyle="rgba(255,92,0,.55)";ctx.fillRect(0,y,W,1);
+      // 走査線が通った交点を光らせる
+      ctx.fillStyle="rgba(255,92,0,.8)";
+      const gy=Math.round((y-(H/2)%G)/G)*G+(H/2)%G;
+      if(Math.abs(gy-y)<10)for(let x=(W/2)%G;x<W;x+=G)ctx.fillRect(x-1,gy-1,3,3);
+      // 横に流れる細いノイズ帯（たまに）
+      if((t%4)<.12){ctx.fillStyle="rgba(255,92,0,.06)";ctx.fillRect(0,(Math.sin(t*13)*.5+.5)*H,W,2+Math.random()*6)}
+    }
+    const yr=2026+((Math.sin(t*.4)*.5+.5)*34);
+    L.textContent=`T+${t.toFixed(2).padStart(8,"0")}\nΔt=34y  SYNC ${(97+Math.sin(t*2)*2.4).toFixed(1)}%\nYEAR ${yr.toFixed(3)}`;
+    Rr.textContent=`LAT 35.6580 N\nLON 139.7016 E\nDEST SHIBUYA / 窓口07`;
+    if(!reduce)requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+
+/* サウンド（Web Audioで合成。音声ファイルなし） */
+const SND=(()=>{
+  let ac=null,master=null,bgmBus=null,sfxBus=null,on=false,bgmNodes=null,arpTimer=null;
+  on=true;try{on=localStorage.getItem("miraibin_sound")!=="off"}catch{}
+  const btn=$("#snd");
+  function ui(){btn.textContent=on?"SOUND ON":"SOUND OFF";btn.setAttribute("aria-pressed",on)}
+  function init(){
+    if(ac)return;
+    ac=new (window.AudioContext||window.webkitAudioContext)();
+    master=ac.createGain();master.gain.value=.8;master.connect(ac.destination);
+    // 空間っぽさ用のディレイ
+    const dl=ac.createDelay(1),fb=ac.createGain(),wet=ac.createGain();
+    dl.delayTime.value=.33;fb.gain.value=.38;wet.gain.value=.35;
+    dl.connect(fb);fb.connect(dl);dl.connect(wet);wet.connect(master);
+    bgmBus=ac.createGain();bgmBus.gain.value=0;bgmBus.connect(master);bgmBus.connect(dl);
+    sfxBus=ac.createGain();sfxBus.gain.value=.9;sfxBus.connect(master);sfxBus.connect(dl);
+  }
+  function noiseBuf(sec){const b=ac.createBuffer(1,ac.sampleRate*sec,ac.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;return b}
+  function tone(freq,dur,{type="sine",vol=.3,at=0,slide=0,bus=sfxBus}={}){
+    if(!ac||!on)return;const t=ac.currentTime+at,o=ac.createOscillator(),g=ac.createGain();
+    o.type=type;o.frequency.setValueAtTime(freq,t);if(slide)o.frequency.exponentialRampToValueAtTime(slide,t+dur);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    o.connect(g);g.connect(bus);o.start(t);o.stop(t+dur+.05);
+  }
+  function noise(dur,{vol=.3,f=2000,q=1,type="bandpass",at=0,fTo=0}={}){
+    if(!ac||!on)return;const t=ac.currentTime+at,n=ac.createBufferSource(),fl=ac.createBiquadFilter(),g=ac.createGain();
+    n.buffer=noiseBuf(dur+.1);fl.type=type;fl.frequency.setValueAtTime(f,t);if(fTo)fl.frequency.exponentialRampToValueAtTime(fTo,t+dur);fl.Q.value=q;
+    g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    n.connect(fl);fl.connect(g);g.connect(sfxBus);n.start(t);n.stop(t+dur+.05);
+  }
+  /* BGM：低いドローン＋ゆっくりしたアルペジオ */
+  function bgmStart(){
+    if(!ac||bgmNodes)return;
+    const fl=ac.createBiquadFilter();fl.type="lowpass";fl.frequency.value=420;fl.Q.value=6;
+    const lfo=ac.createOscillator(),lg=ac.createGain();lfo.frequency.value=.07;lg.gain.value=260;lfo.connect(lg);lg.connect(fl.frequency);lfo.start();
+    const g=ac.createGain();g.gain.value=.16;fl.connect(g);g.connect(bgmBus);
+    const oscs=[55,55*1.5,110.4].map((f,i)=>{const o=ac.createOscillator();o.type=i===2?"triangle":"sawtooth";o.frequency.value=f;o.detune.value=(i-1)*7;o.connect(fl);o.start();return o});
+    bgmNodes={oscs,lfo};
+    const scale=[220,261.6,293.7,329.6,392,440,523.3];let k=0;
+    arpTimer=setInterval(()=>{if(!on)return;if(Math.random()<.35)return;
+      const f=scale[(k*3+Math.floor(Math.random()*3))%scale.length]*(Math.random()<.2?2:1);k++;
+      tone(f,1.6,{type:"triangle",vol:.05,bus:bgmBus})},700);
+    bgmBus.gain.cancelScheduledValues(ac.currentTime);bgmBus.gain.setTargetAtTime(1,ac.currentTime,1.2);
+  }
+  function bgmDuck(v,tc=.3){if(ac)bgmBus.gain.setTargetAtTime(on?v:0,ac.currentTime,tc)}
+  function setOn(v){
+    on=v;try{localStorage.setItem("miraibin_sound",on?"on":"off")}catch{}ui();
+    if(on){init();ac.resume();bgmStart();bgmDuck(1,1)}else if(ac){bgmDuck(0,.2)}
+  }
+  btn.onclick=()=>setOn(!on);
+  ui();
+  // ブラウザは操作前に音を鳴らせないので、最初のクリックで開始
+  document.addEventListener("pointerdown",()=>{if(on){init();ac.resume();bgmStart()}},{once:true});
+  // ボタンのクリック音
+  document.addEventListener("click",e=>{if(e.target.closest(".btn,.li"))tone(880,.08,{type:"square",vol:.06,slide:1320})});
+  return{
+    shutter(){noise(.12,{vol:.5,f:3000,q:.7,type:"highpass"});tone(1600,.05,{type:"square",vol:.12})},
+    warp(){
+      if(!ac||!on)return()=>{};
+      bgmDuck(.35,1.5);
+      const t=ac.currentTime,D=12;
+      // ゆっくり持ち上がる柔らかいパッド（5度の和音）
+      const pad=ac.createGain(),fl=ac.createBiquadFilter();
+      fl.type="lowpass";fl.Q.value=2;fl.frequency.setValueAtTime(350,t);fl.frequency.linearRampToValueAtTime(1800,t+D);
+      const lfo=ac.createOscillator(),lg=ac.createGain();lfo.frequency.value=.25;lg.gain.value=180;lfo.connect(lg);lg.connect(fl.frequency);
+      pad.gain.setValueAtTime(0,t);pad.gain.linearRampToValueAtTime(.07,t+3);
+      const oscs=[110,165,220.5].map((f,i)=>{const o=ac.createOscillator();o.type=i===1?"sine":"triangle";
+        o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(f*2,t+D);o.connect(fl);return o});
+      fl.connect(pad);pad.connect(sfxBus);
+      // 遠くを流れる風（こもった音）
+      const n=ac.createBufferSource(),nf=ac.createBiquadFilter(),ng=ac.createGain();
+      n.buffer=noiseBuf(2);n.loop=true;nf.type="lowpass";nf.Q.value=.7;nf.frequency.setValueAtTime(250,t);nf.frequency.linearRampToValueAtTime(1200,t+D);
+      ng.gain.setValueAtTime(0,t);ng.gain.linearRampToValueAtTime(.05,t+4);
+      n.connect(nf);nf.connect(ng);ng.connect(sfxBus);
+      [lfo,n,...oscs].forEach(x=>x.start(t));
+      // 時を刻む小さな音（1秒ごと、少しずつ高く）
+      let i=0;const tick=setInterval(()=>{tone(1320+Math.min(i,20)*25,.12,{type:"sine",vol:.025});i++},1000);
+      return()=>{clearInterval(tick);const e=ac.currentTime;
+        pad.gain.cancelScheduledValues(e);ng.gain.cancelScheduledValues(e);
+        pad.gain.setTargetAtTime(0,e,.25);ng.gain.setTargetAtTime(0,e,.3);[lfo,n,...oscs].forEach(x=>x.stop(e+1.5))};
+    },
+    arrive(){
+      tone(110,1.4,{vol:.25,slide:55});noise(.9,{vol:.12,f:600,q:.5,type:"lowpass",fTo:120});
+      [523.3,659.3,784,1046.5].forEach((f,i)=>tone(f,2.2,{type:"sine",vol:.06,at:.05+i*.08}));
+      setTimeout(()=>bgmDuck(1,1.5),900);
+    },
+    glitch(){for(let i=0;i<7;i++)tone(200+Math.random()*1800,.05,{type:"square",vol:.06,at:i*.09})},
+    stamp(){tone(90,.25,{vol:.5,slide:50});noise(.1,{vol:.4,f:1200,q:.8})},
+    win(big){[523.3,659.3,784,1046.5].forEach((f,i)=>tone(f,.5,{type:"triangle",vol:.09,at:i*.11}));if(big)tone(1568,1.2,{type:"sine",vol:.06,at:.5})},
+    lose(){tone(392,.3,{type:"triangle",vol:.08,slide:370});tone(311,.6,{type:"triangle",vol:.08,at:.28,slide:260})},
+    static(){noise(.22,{vol:.06,f:2600,q:.6});tone(60,.15,{type:"square",vol:.03})},
+    tick(){noise(.06,{vol:.035,f:4000,q:1})},
+    error(){tone(330,.25,{type:"sawtooth",vol:.12,slide:165});tone(220,.4,{type:"sawtooth",vol:.12,at:.22,slide:110});bgmDuck(1,1)}
+  };
+})();
+
+/* minatoの姿：粒子が集まって人の上半身の形に揺れる */
+function minatoFigure(cv,{talk=false}={}){
+  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const dpr=Math.min(2,devicePixelRatio||1),r=cv.getBoundingClientRect();
+  const W=Math.max(60,r.width),H=Math.max(80,r.height);
+  cv.width=W*dpr;cv.height=H*dpr;const ctx=cv.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);
+  const sub=cv.parentElement.querySelector(".figid")?18:0, FH=H-sub;
+  // 形の判定（0〜1の座標）：頭・首・肩
+  function inside(x,y){
+    const hx=(x-.5)/.21,hy=(y-.33)/.23;if(hx*hx+hy*hy<1)return true;
+    if(y>.52&&y<.7&&Math.abs(x-.5)<.075)return true;
+    if(y>=.64&&y<=1){const k=Math.min(1,(y-.64)/.14),hw=.12+Math.sin(k*Math.PI/2)*.34;return Math.abs(x-.5)<hw}
+    return false;
+  }
+  const N=Math.round(Math.min(3200,W*FH/9)),P=[];
+  while(P.length<N){
+    const x=Math.random(),y=Math.random();if(!inside(x,y))continue;
+    // 顔の中心と胸元を少し濃く
+    const d=Math.hypot(x-.5,(y-.42)*1.3);if(Math.random()>.45+.55*Math.exp(-d*d*18))continue;
+    P.push({hx:x,hy:y,x:Math.random(),y:Math.random()*1.1,vx:0,vy:0,a:.25+Math.random()*.75,s:Math.random()<.12?1.6:1,ph:Math.random()*6.28});
+  }
+  let raf,kick=0;const t0=performance.now();
+  cv.parentElement._kick=()=>{kick=1};
+  function frame(now){
+    const t=(now-t0)/1000;
+    ctx.clearRect(0,0,W,H);
+    const sway=Math.sin(t*.7)*.008,breath=1+Math.sin(t*1.6)*.006;
+    const amp=talk?(.004+.004*(Math.sin(t*9)*.5+.5)*(Math.sin(t*1.3)>-.2?1:.2)):.003;
+    if(kick>0){for(const p of P){p.vx+=(Math.random()-.5)*.03*kick;p.vy+=(Math.random()-.5)*.02*kick}kick=0}
+    for(const p of P){
+      const tx=.5+(p.hx-.5)*breath+sway*(1-p.hy),ty=p.hy;
+      p.vx+=(tx-p.x)*.045+Math.sin(t*2+p.ph)*amp*.15+(Math.random()-.5)*amp;
+      p.vy+=(ty-p.y)*.045+Math.cos(t*1.7+p.ph)*amp*.15+(Math.random()-.5)*amp;
+      p.vx*=.82;p.vy*=.82;p.x+=p.vx;p.y+=p.vy;
+      const fl=.6+.4*Math.sin(t*3+p.ph);
+      ctx.fillStyle=`rgba(255,${110+(p.ph*20|0)},${40+(p.ph*8|0)},${p.a*fl})`;
+      ctx.fillRect(p.x*W,p.y*FH,p.s,p.s);
+    }
+    // 足元の走査線
+    ctx.fillStyle="rgba(255,92,0,.35)";ctx.fillRect(W*.15,FH*.995,W*.7,1);
+    if(!reduce)raf=requestAnimationFrame(frame);
+  }
+  if(reduce){for(const p of P){p.x=p.hx;p.y=p.hy}}
+  raf=requestAnimationFrame(frame);
+  return()=>cancelAnimationFrame(raf);
+}
+
+/* 未来の要素にときどきグリッチをかける（通信が不安定な感じ） */
+(function(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const GL="▓▒░#%&@$01ﾐﾅﾄ█▚▞";
+  function glitchEl(el){
+    if(el.classList.contains("gl"))return;
+    el.classList.remove("gl");void el.offsetWidth;el.classList.add("gl");
+    if(el.dataset.fx==="text"&&el.children.length===0){
+      const orig=el.textContent;let n=0;
+      const iv=setInterval(()=>{
+        if(!el.isConnected){clearInterval(iv);return}
+        el.textContent=[...orig].map(c=>c.trim()&&Math.random()<.35?GL[Math.random()*GL.length|0]:c).join("");
+        if(++n>5){clearInterval(iv);el.textContent=orig}
+      },55);
+    }
+    setTimeout(()=>el.classList.remove("gl"),400);
+  }
+  function visible(el){const r=el.getBoundingClientRect();return r.width>0&&r.bottom>0&&r.top<innerHeight}
+  function small(){
+    if(!document.querySelector(".view.warp")){
+      const els=[...document.querySelectorAll("[data-fx]")].filter(visible);
+      if(els.length){
+        const n=Math.random()<.3?2:1;
+        for(let i=0;i<n;i++){const el=els[Math.random()*els.length|0];glitchEl(el);el._kick&&el._kick()}
+        SND.tick();
+      }
+    }
+    setTimeout(small,3500+Math.random()*6000);
+  }
+  function big(){
+    if(!document.querySelector(".view.warp")){
+      const w=document.querySelector(".wrap"),st=$("#static");
+      w.classList.remove("pg");st.classList.remove("on");void w.offsetWidth;
+      w.classList.add("pg");st.classList.add("on");SND.static();
+      setTimeout(()=>{w.classList.remove("pg");st.classList.remove("on")},360);
+    }
+    setTimeout(big,18000+Math.random()*20000);
+  }
+  setTimeout(small,2500);
+  setTimeout(big,12000);
+})();
+
+home();
+</script>
+</body>
+</html>

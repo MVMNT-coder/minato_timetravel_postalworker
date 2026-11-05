@@ -1,5 +1,5 @@
 /**
- * 未来便 minato — 中継サーバー（Google Apps Script）
+ * 未来救出局／未来便 minato — 中継サーバー（Google Apps Script）
  *
  * ・ページから写真を受け取り、Claude API に送って minato の返事を作る
  * ・結果をこのスプレッドシートの「log」シートに1行ずつ記録する
@@ -110,6 +110,72 @@ minatoは窓口で、消えてしまった品物が過去から届くと、2060�
 
 品物がわからない場合は item_name を "よくわからない物" にし、2060年の人がそれを何だと思って、どんな体験を取り戻したかを考える。`;
 
+// ===== 未来救出局（メイン：index.html）=====
+const MISSION_SHEET = 'mission_log';
+const MISSION_HEADERS = ['日時', '品物', '消滅年', 'リクエスト', 'どう応えたか', '2060年の変化', 'ツッコミ', '一言', '点数', '結果', '写真'];
+// index.html の STORIES と同じ順番にしておくこと
+const MISSION_STORIES = [
+  { request: "失敗したり、寄り道したくなったりする物を送って。", theme: "AIが何でも最適化してくれるので、失敗も寄り道もなく、新しいものが生まれなくなった" },
+  { request: "人によって好みが分かれて、「自分だけの好き」が見つかる物を送って。", theme: "みんなが同じおすすめを見て同じものを好きになり、街の色も流行も全部同じになった" },
+  { request: "思わず手を動かして、何か作りたくなる物を送って。", theme: "便利すぎて誰も手を動かさなくなり、作り方・直し方を覚えている人がいなくなった" },
+  { request: "届くまで、わかるまで、楽しみに待てる物を送って。", theme: "待ち時間がゼロになり、楽しみに待つ気持ちやワクワクが消えた" },
+  { request: "知らない誰かと、偶然出会うきっかけになる物を送って。", theme: "出会いはAIが完璧にマッチングするので、偶然の出会いや予想外の出来事が起きなくなった" },
+  { request: "忘れたり、あとで思い出したりできる物を送って。", theme: "すべての記録がクラウドに残るので誰も何も忘れず、思い出すことも新しい思い出も増えなくなった" }
+];
+const PROMPT_MISSION = `あなたは2060年の東京・渋谷に住む29歳のminatoです。「時間郵便局」の受付係で、2026年から届く品物を受け取っています。
+
+【2060年の状況：停滞】
+今の2060年は、こうなって行き詰まっている：{{THEME}}。
+minatoは過去の人にこうリクエストした：「{{Q}}」
+写真の品物は、このリクエストに応えて送られてきた。
+新しいアイデアや文化が生まれず、世界が少しずつ止まりかけている。2026年には当たり前だった多くの品物は、便利な仕組みに置き換わって消えている。過去から届く品物だけが、この停滞を動かせる。
+
+【やること】写真の品物について、次の順に考える。
+1. 品物を特定する（人が写っていても品物だけを見る。容姿には触れない）
+2. その品物が2060年までに消えているかを判断する。消えているなら何年ごろか。今ある技術や社会の流れの延長で、ありそうな理由にする
+3. その品物がリクエストに応えているか、停滞をどれだけ動かせるかを、0〜100の点数で判定する
+   - 2060年で消えていて、リクエストに「なるほど」と思える形で応えている（失われた体験を取り戻せる）ほど高い
+   - 2060年にもまだ普通にある品物や、停滞と関係が薄い品物は低い
+4. 点数に合った「2060年がどう変わったか」を、渋谷の具体的な一場面で書く
+   - 75点以上：世界が再び動き出した場面（誰が・どこで・何をし始めたか）
+   - 50〜74点：一瞬変化が起きたが、すぐ元に戻ってしまった場面
+   - 49点以下：何も変わらず、街が色を失っていく場面
+5. minatoとして一言ツッコむ。皮肉屋だが、救われたときは内心ちょっと嬉しく、救えなかったときは少し寂しい感じがにじむ。友達に言うような口調。一人称は「私」
+6. 決めの一言で締める
+
+【書き方のルール】
+- SFすぎる設定（瞬間移動・宇宙など）は使わない
+- 人を傷つける言い方や下品な表現はしない
+- 書き終えたら読み直して、リクエスト・品物・点数・2060年の変化・ツッコミがつながっているか、初めて読む人が一度で意味がわかるかを確認する。つながっていなければ書き直す
+
+以下のJSONオブジェクトだけを返す：
+{"item_name":"品物の名前","vanished":true または false,"vanished_year":"消えた年（4桁。残っている場合は空文字）","answer":"この品物がリクエストにどう応えたか（1文、40字以内。「〜することで、〜できる」の形）","change":"送った品物で2060年がどう変わったか（1〜2文、60字以内）","tsukkomi":"minatoのツッコミ（1〜2文、45字以内）","punchline":"決めの一言（12字以内）","score":0〜100の整数}
+
+品物がわからない場合は item_name を "よくわからない物" にし、2060年の人がそれを何だと思ったかから考える。`;
+
+function missionOutcome_(score) { return score >= 75 ? 'saved' : score >= 50 ? 'partial' : 'lost'; }
+
+function missionSheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(MISSION_SHEET);
+  if (!sh) { sh = ss.insertSheet(MISSION_SHEET); sh.appendRow(MISSION_HEADERS); sh.setFrozenRows(1); }
+  return sh;
+}
+
+function logMission_(r, story, outcome, photoUrl) {
+  const label = { saved: '救われた', partial: 'あと一歩', lost: '色を失った' }[outcome];
+  missionSheet_().appendRow([new Date(), r.item_name, r.vanished === false ? '残っている' : r.vanished_year, story.request, r.answer, r.change, r.tsukkomi, r.punchline, r.score, label, photoUrl]);
+}
+
+// 救われた世界／救えなかった世界の数
+function missionStats_() {
+  const sh = missionSheet_();
+  const n = sh.getLastRow() - 1;
+  let saved = 0, lost = 0;
+  if (n > 0) sh.getRange(2, 10, n, 1).getValues().forEach(function (v) { if (v[0] === '救われた') saved++; else if (v[0]) lost++; });
+  return { saved: saved, lost: lost };
+}
+
 function doPost(e) {
   if (!e || !e.postData) {
     // エディタの「実行」で doPost を直接動かした場合。動作確認は testClaude を使う
@@ -124,6 +190,16 @@ function doPost(e) {
       return out_({ ok: false, error: 'bad_image' });
     }
     let photoUrl = '';
+    if (body.mode === 'mission') {
+      const idx = Math.max(0, Math.min(MISSION_STORIES.length - 1, Number(body.story) || 0));
+      const story = MISSION_STORIES[idx];
+      const result = callClaude_(image, PROMPT_MISSION.replace('{{THEME}}', story.theme).replace('{{Q}}', story.request));
+      result.score = Math.max(0, Math.min(100, Math.round(Number(result.score) || 0)));
+      const outcome = missionOutcome_(result.score);
+      try { photoUrl = saveImage_(image); } catch (err) { console.error('saveImage', err); }
+      try { logMission_(result, story, outcome, photoUrl); } catch (err) { console.error('logMission', err); }
+      return out_({ ok: true, result: result, stats: missionStats_() });
+    }
     if (body.mode === 'rescue') {
       const result = callClaude_(image, PROMPT_RESCUE);
       result.recovery = Math.max(0, Math.min(100, Math.round(Number(result.recovery) || 0)));
@@ -145,6 +221,7 @@ function doPost(e) {
 
 // ブラウザでURLを開いたときの動作確認用
 function doGet(e) {
+  if (e && e.parameter && e.parameter.stats === 'mission') return out_({ ok: true, stats: missionStats_() });
   if (e && e.parameter && e.parameter.stats === 'rescue') return out_({ ok: true, stats: rescueStats_() });
   return out_({ ok: true, service: 'minato', ready: !!PROPS.getProperty('ANTHROPIC_API_KEY') });
 }
