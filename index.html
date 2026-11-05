@@ -252,6 +252,102 @@ body.desat .wrap,body.desat #bg,body.desat .hud{filter:grayscale(1) brightness(.
 .camq{display:flex;gap:10px;align-items:baseline}
 .camq .lbl{white-space:nowrap;flex-shrink:0}
 .camq p{margin:0;font-weight:700;font-size:15px;line-height:1.6}
+
+/* ===== 16:9モニター向けサイズ調整 =====
+   --u は 1920×1080 で約19px。画面の幅と高さの小さい方に合わせて全体が伸び縮みする */
+:root{--u:min(1vw,1.78vh)}
+html,body{height:100%}
+body{font-size:clamp(15px,calc(var(--u)*1.05),22px)}
+.wrap{max-width:min(94vw,168vh);height:100vh;height:100dvh;min-height:0;gap:calc(var(--u)*1.4);padding-block:calc(var(--u)*1.2) calc(var(--u)*1.6);overflow:hidden}
+header{padding-bottom:calc(var(--u)*.7)}
+.logo{font-size:clamp(22px,calc(var(--u)*1.8),40px)}
+.lbl{font-size:clamp(11px,calc(var(--u)*.72),16px)}
+.snd{font-size:clamp(11px,calc(var(--u)*.68),15px);padding:.35em .7em}
+.hud{font-size:clamp(10px,calc(var(--u)*.62),14px)}
+.card{min-height:0;gap:calc(var(--u)*1.6)}
+.btn{font-size:clamp(18px,calc(var(--u)*1.5),34px);padding:.75em 1.4em}
+.btn.ghost{font-size:clamp(14px,calc(var(--u)*1.05),22px);padding:.85em 1.3em}
+.row{gap:calc(var(--u)*.9)}
+.mute[style*="font-size:12px"]{font-size:clamp(12px,calc(var(--u)*.72),16px)!important}
+
+/* タイトル */
+.title{font-size:clamp(40px,calc(var(--u)*7.2),150px)}
+.tally{max-width:calc(var(--u)*56)}
+.tally div{padding:calc(var(--u)*.9) 0}
+.tally div+div{padding-left:calc(var(--u)*1.4)}
+.tally b{font-size:clamp(30px,calc(var(--u)*4.4),90px)}
+.tally span{font-size:clamp(12px,calc(var(--u)*.85),18px)}
+
+/* 語り */
+.say{grid-template-columns:auto minmax(0,1fr);gap:calc(var(--u)*3)}
+.say .fig{height:min(64vh,calc(var(--u)*36));width:auto;aspect-ratio:3/4}
+.saytext{min-width:0;display:flex;flex-direction:column;gap:calc(var(--u)*1.4)}
+.line{font-size:clamp(20px,calc(var(--u)*2.3),48px);min-height:6.5em}
+.line .intro-l{display:block;color:var(--or);margin-bottom:.4em}
+.figid{font-size:clamp(9px,calc(var(--u)*.6),13px)}
+
+/* ミッション・リクエスト */
+.mission{gap:calc(var(--u)*1.6)}
+.mission p{font-size:clamp(24px,calc(var(--u)*3.6),76px)}
+.mission p.sub{font-size:clamp(18px,calc(var(--u)*2.2),46px)}
+.qwrap{gap:calc(var(--u)*1.2);padding-left:calc(var(--u)*1.4)}
+.qlbl{font-size:clamp(12px,calc(var(--u)*.9),20px)}
+.qtext{font-size:clamp(24px,calc(var(--u)*3.6),76px);max-width:22em}
+.qhint{font-size:clamp(15px,calc(var(--u)*1.25),26px)}
+
+/* カメラ：左にカメラ、右にリクエストとボタン */
+.camgrid{display:grid;grid-template-columns:auto minmax(0,1fr);gap:calc(var(--u)*3);align-items:center}
+.camgrid .hud-cam{height:min(74vh,calc(var(--u)*46));width:auto;aspect-ratio:4/3}
+.camside{display:flex;flex-direction:column;gap:calc(var(--u)*1.6);min-width:0}
+.camq{flex-direction:column;gap:calc(var(--u)*.6)}
+.camq p{font-family:var(--f-disp);font-weight:900;font-size:clamp(18px,calc(var(--u)*2.3),48px);line-height:1.5}
+.camhint{margin:0;color:var(--mute);font-size:clamp(14px,calc(var(--u)*1.1),24px)}
+.shootbox{display:flex;align-items:center;gap:calc(var(--u)*1.2)}
+.shoot{width:clamp(72px,calc(var(--u)*7),150px);height:clamp(72px,calc(var(--u)*7),150px)}
+.shoot::after{inset:14%}
+.shootlbl{font-size:clamp(11px,calc(var(--u)*.85),18px)}
+.hud-txt{font-size:clamp(10px,calc(var(--u)*.75),16px)}
+.hud-cam .br{width:calc(var(--u)*2.4);height:calc(var(--u)*2.4)}
+.nocam{font-size:clamp(13px,calc(var(--u)*1),22px)}
+
+/* 転送 */
+.warpbox{display:grid;grid-template-columns:auto minmax(0,1fr);gap:calc(var(--u)*3);align-items:center}
+.warpbox .view{height:min(70vh,calc(var(--u)*44));width:auto;aspect-ratio:4/3}
+.warpinfo{display:flex;flex-direction:column;gap:calc(var(--u)*1.2);min-width:0}
+.status{font-size:clamp(20px,calc(var(--u)*2.4),50px)}
+.coord{font-size:clamp(12px,calc(var(--u)*1),22px)}
+.mline{border-left:3px solid var(--or);padding-left:calc(var(--u)*1.2);display:flex;flex-direction:column;gap:.3em}
+.mline p{margin:0;font-family:var(--f-disp);font-weight:700;font-size:clamp(18px,calc(var(--u)*2),42px);line-height:1.5}
+.mline.pop-in{animation:fin .4s ease both}
+
+/* 結果：左に判定と送った物、右に本文 */
+.resgrid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:calc(var(--u)*3.4);align-items:center}
+.resl,.resr{display:flex;flex-direction:column;gap:calc(var(--u)*1.3);min-width:0}
+.vlbl{font-size:clamp(12px,calc(var(--u)*.9),20px)}
+.verdict{font-size:clamp(30px,calc(var(--u)*4.4),92px)}
+.sent{grid-template-columns:clamp(72px,calc(var(--u)*13),260px) 1fr;gap:calc(var(--u)*1.2);padding-top:calc(var(--u)*1.2)}
+.sent b{font-size:clamp(17px,calc(var(--u)*1.7),36px)}
+.sentsub{font-size:clamp(13px,calc(var(--u)*.95),20px)}
+.change p{font-size:clamp(16px,calc(var(--u)*1.25),26px);margin:.2em 0 .5em;line-height:1.65}
+.change p.req{font-size:clamp(14px,calc(var(--u)*1.05),22px)}
+.talk{grid-template-columns:clamp(84px,calc(var(--u)*7.5),160px) 1fr;gap:calc(var(--u)*1.2)}
+.fig.sm{width:100%;flex:none}
+.talk .quote{font-size:clamp(18px,calc(var(--u)*1.75),36px);line-height:1.6}
+.figname{font-size:clamp(12px,calc(var(--u)*.8),18px)}
+.punch{padding-top:calc(var(--u)*1)}
+.punch q{font-size:clamp(20px,calc(var(--u)*2),42px)}
+.err{font-size:clamp(16px,calc(var(--u)*1.4),30px)}
+
+/* スマホ・縦長の画面：1列に並べ、縦スクロールを許す */
+@media (max-width:820px),(max-aspect-ratio:1/1){
+  :root{--u:min(1.6vw,1.2vh)}
+  .wrap{height:auto;min-height:100%;overflow:visible}
+  .say,.camgrid,.warpbox,.resgrid{grid-template-columns:1fr}
+  .say .fig{height:auto;width:min(170px,45vw)}
+  .camgrid .hud-cam,.warpbox .view{height:auto;width:100%}
+  .line{min-height:0}
+  .resgrid{align-items:start}
+}
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0}
 img{max-width:100%}
@@ -265,7 +361,7 @@ img{max-width:100%}
 <div class="hud l" id="hudL" aria-hidden="true" data-fx="css"></div><div class="hud r" id="hudR" aria-hidden="true" data-fx="css"></div>
 <div class="static" id="static" aria-hidden="true"></div>
 <div class="wrap">
-  <header><div class="logo">未来救出局<em>.</em></div><div class="hr"><button class="snd" id="snd" aria-pressed="false">SOUND OFF</button><div class="lbl" data-fx="text">Tokyo 2060</div></div></header>
+  <header><div class="logo" data-fx="css">未来救出局<em>.</em></div><div class="hr"><button class="snd" id="snd" aria-pressed="false">SOUND OFF</button><div class="lbl" data-fx="text">Tokyo 2060</div></div></header>
   <main class="card" id="card"></main>
 </div>
 <script>
@@ -279,6 +375,7 @@ function stopCam(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=nul
 function render(html){
   if(unmountFig){unmountFig();unmountFig=null}
   cleanup.forEach(f=>{try{f()}catch{}});cleanup=[];
+  document.body.dataset.calm="";card.dataset.page="";
   card.style.animation="none";card.offsetHeight;card.style.animation="";card.innerHTML=html;
 }
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -309,7 +406,7 @@ function pageTitle(){
   stopCam();document.body.classList.remove("desat");
   const t1="あなたは",t2="未来",t3="を救えるか!?";
   let k=0;const chars=s=>[...s].map(c=>`<span class="ch" style="animation-delay:${(k++)*60}ms">${esc(c)}</span>`).join("");
-  render(`<h1 class="title" data-fx="css">${chars(t1)}<br><em>${chars(t2)}</em>${chars(t3)}</h1>
+  render(`<h1 class="title">${chars(t1)}<br><em>${chars(t2)}</em>${chars(t3)}</h1>
     <div class="tally fade-in" style="animation-delay:900ms">
       <div class="sv"><span>救われた世界</span><b id="tS">0</b></div>
       <div class="ls"><span>救えなかった世界</span><b id="tL">0</b></div>
@@ -318,6 +415,7 @@ function pageTitle(){
     <div class="mute fade-in" style="animation-delay:1400ms;font-size:12px">撮影した写真と結果は、記録のため保存されます。人の顔が写らないように撮ってください。<br><a href="gift.html" style="color:var(--mute)">旧バージョン（未来便）はこちら</a></div>`);
   const upd=t=>{const a=$("#tS"),b=$("#tL");if(a){a.textContent=t.saved;b.textContent=t.lost}};
   upd(tally);tallyListeners.push(upd);loadTally();cleanup.push(()=>{tallyListeners=tallyListeners.filter(f=>f!==upd)});
+  card.dataset.page="title";
   setTimeout(()=>SND.glitch(),300);
   $("#go").onclick=pageStory;
 }
@@ -325,20 +423,24 @@ function pageTitle(){
 /* 2. minatoが2060年の状況を話す */
 function pageStory(){
   pickStory();
-  render(`<div class="say">${FIG()}<div style="min-width:0;display:flex;flex-direction:column;gap:18px">
+  render(`<div class="say">${FIG()}<div class="saytext">
     <div class="lbl" data-fx="text">TRANSMISSION · MINATO-2060</div>
     <p class="line" id="line"><span class="cur"></span></p>
     <div><button class="btn hidden-until" id="next">次へ</button></div></div></div>`);
+  card.dataset.page="story";
   unmountFig=minatoFigure($("#fig"),{talk:true});
   const line=$("#line");let alive=true;cleanup.push(()=>alive=false);
   (async()=>{
     await sleep(700);
-    const txt=story.text;
-    for(let i=1;i<=txt.length&&alive;i++){
-      line.innerHTML=esc(txt.slice(0,i))+'<span class="cur"></span>';
+    const intro="2060年の時間郵便局で働く、minatoです。",txt=story.text;
+    const type=async(pre,t)=>{for(let i=1;i<=t.length&&alive;i++){
+      line.innerHTML=pre+esc(t.slice(0,i))+'<span class="cur"></span>';
       if(i%2)SND.type();
-      const c=txt[i-1];await sleep("。、".includes(c)?320:55);
-    }
+      const c=t[i-1];await sleep("。、".includes(c)?320:55);
+    }};
+    await type("",intro);if(!alive)return;
+    await sleep(600);
+    await type(`<span class="intro-l">${esc(intro)}</span>`,txt);
     if(alive)$("#next").classList.remove("hidden-until");
   })();
   $("#next").onclick=pageMission;
@@ -349,9 +451,10 @@ function pageMission(){
   render(`<div class="lbl alert" data-fx="text">MISSION · 2026 → 2060</div>
     <div class="mission">
       <p class="fade-in" style="animation-delay:200ms">現代の物を未来へ送り、<br>minatoが住む停滞した世界を<br>救ってください。</p>
-      <p class="sub fade-in" style="animation-delay:1500ms" data-fx="css">minatoには、あなたが必要です。</p>
+      <p class="sub fade-in" style="animation-delay:1500ms">minatoには、あなたが必要です。</p>
     </div>
     <div class="fade-in" style="animation-delay:2600ms"><button class="btn" id="go">ミッションを始める</button></div>`);
+  card.dataset.page="mission";
   setTimeout(()=>SND.tick(),1500);
   $("#go").onclick=pageQuestion;
 }
@@ -361,18 +464,18 @@ function pageQuestion(){
   render(`<div class="lbl alert" data-fx="text">REQUEST FROM 2060</div>
     <div class="qwrap">
       <div class="qlbl fade-in" style="animation-delay:150ms">minatoからのリクエスト</div>
-      <p class="qtext fade-in" style="animation-delay:500ms" data-fx="css">「${esc(story.q)}」</p>
+      <p class="qtext fade-in" style="animation-delay:500ms">「${esc(story.q)}」</p>
       <p class="qhint fade-in" style="animation-delay:1800ms">当てはまりそうな物を、身の回りから1つ見つけて未来へ送ってください。</p>
     </div>
     <div class="fade-in" style="animation-delay:2600ms"><button class="btn" id="go">当てはまる物を探す</button></div>`);
+  card.dataset.page="request";document.body.dataset.calm="1";
   setTimeout(()=>SND.tick(),500);
   $("#go").onclick=pageCamera;
 }
 
 /* 4. カメラ */
 async function pageCamera(){
-  render(`<div class="camq"><span class="lbl">リクエスト</span><p>${esc(story.q)}</p></div>
-    <div class="hud-cam" id="cam"><video id="v" autoplay playsinline muted></video><div class="tint"></div>
+  render(`<div class="camgrid"><div class="hud-cam" id="cam"><video id="v" autoplay playsinline muted></video><div class="tint"></div>
       <i class="br b1"></i><i class="br b2"></i><i class="br b3"></i><i class="br b4"></i>
       <div class="reticle"><i></i></div><div class="scan"></div>
       <div class="hud-txt ht1"><span class="blinkr">●</span> TARGET SCAN</div>
@@ -380,9 +483,13 @@ async function pageCamera(){
       <div class="hud-txt ht3" id="obj">OBJECT: SEARCHING…</div>
       <div class="hud-txt ht4">DEST 2060 / SHIBUYA</div>
     </div>
-    <div class="shootrow"><button class="shoot" id="shot" aria-label="撮影して未来へ送る"></button></div>
-    <div class="shootrow"><span class="shootlbl">TAP TO TRANSMIT</span></div>
+    <div class="camside">
+      <div class="camq"><div class="lbl">minatoからのリクエスト</div><p>「${esc(story.q)}」</p></div>
+      <p class="camhint">物を枠の真ん中に映して、ボタンを押してください。</p>
+      <div class="shootbox"><button class="shoot" id="shot" aria-label="撮影して未来へ送る"></button><span class="shootlbl">TAP TO TRANSMIT</span></div>
+    </div></div>
     <input type="file" id="file" accept="image/*" capture="environment" hidden>`);
+  card.dataset.page="camera";document.body.dataset.calm="1";
   const clk=()=>{const c=$("#clk");if(c){const d=new Date();c.textContent=`REC 2026.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getDate()).padStart(2,"0")} ${d.toTimeString().slice(0,8)}`}};
   clk();const iv=setInterval(()=>{clk();const o=$("#obj");if(o)o.textContent="OBJECT: "+(Math.random()<.5?"SEARCHING…":"LOCK "+(60+Math.random()*39|0)+"%")},700);cleanup.push(()=>clearInterval(iv));
   const fileIn=$("#file");
@@ -399,25 +506,41 @@ async function pageCamera(){
 }
 
 /* 5. 時空転送 */
+const WAIT_LINES=["今届いた。開けてみる…","え、なにこれ","ちょっと待って、調べてる","2026年の人って、こういうの使ってたんだ…","うーん、これで世界、動くかな","よし、試してみる"];
 async function send(srcCanvas){
-  const img=scaled(srcCanvas,1024),thumb=square(srcCanvas,240);
-  render(`<div class="view warp"><canvas id="fx"></canvas></div><div class="status" id="st">時空の歪みを通過中</div><div class="coord" id="co"></div>`);
+  const img=scaled(srcCanvas,1024),thumb=square(srcCanvas,360);
+  render(`<div class="warpbox"><div class="view warp"><canvas id="fx"></canvas></div>
+    <div class="warpinfo"><div class="status" id="st">時空の歪みを通過中</div><div class="coord" id="co"></div>
+    <div class="mline" id="ml" hidden><span class="lbl">MINATO</span><p id="mlt"></p></div></div></div>`);
+  card.dataset.page="warp";
   const stop=warp($("#fx"),img),stopWarpSnd=SND.warp();
   const msgs=["時空の歪みを通過中","2060年の座標を探索中","停滞した世界に到着"];
   let i=0;const ti=setInterval(()=>{i=Math.min(i+1,msgs.length-1);const s=$("#st");if(s)s.textContent=msgs[i]},2200);
   const t0=performance.now();
   const ci=setInterval(()=>{const c=$("#co");if(c)c.textContent=`YEAR ${Math.min(2060,2026+((performance.now()-t0)/6000)*34).toFixed(2)}`},60);
-  const minWait=sleep(6000);
-  let res,err;
-  try{
-    if(!window.GAS_URL)throw {code:"no_config"};
-    const image=img.toDataURL("image/jpeg",.85).split(",")[1];
-    const req=fetch(window.GAS_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({image,mode:"mission",story:storyIdx})})
-      .then(async r=>{const t=await r.text();try{return JSON.parse(t)}catch{throw {code:"bad_response",detail:"GASからJSON以外の応答（"+r.status+"）。デプロイのアクセス権が「全員」か、URLが /exec で終わっているか確認してください。"}}})
-      .then(d=>{if(!d.ok)throw {code:d.error||"server_error",detail:d.detail};if(d.stats)setTally(d.stats);return d.result});
-    [res]=await Promise.all([req,minWait]);
-  }catch(e){err=e&&e.code?e:{code:"network",detail:String(e&&e.message||e)};await minWait}
-  clearInterval(ti);clearInterval(ci);stop();stopWarpSnd();
+  let res,err,done=false,li;
+  const reqP=(async()=>{
+    try{
+      if(!window.GAS_URL)throw {code:"no_config"};
+      const image=img.toDataURL("image/jpeg",.85).split(",")[1];
+      const r=await fetch(window.GAS_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({image,mode:"mission",story:storyIdx})});
+      const t=await r.text();let d;
+      try{d=JSON.parse(t)}catch{throw {code:"bad_response",detail:"GASからJSON以外の応答（"+r.status+"）。デプロイのアクセス権が「全員」か、URLが /exec で終わっているか確認してください。"}}
+      if(!d.ok)throw {code:d.error||"server_error",detail:d.detail};
+      if(d.stats)setTally(d.stats);
+      res=d.result;
+    }catch(e){err=e&&e.code?e:{code:"network",detail:String(e&&e.message||e)}}
+    done=true;
+  })();
+  await sleep(6000);
+  if(!done){
+    // 返答待ちの間、minatoのセリフを順に流す（尽きたら最後のセリフのまま）
+    const ml=$("#ml"),mlt=$("#mlt");let k=0;
+    const say=()=>{if(!mlt)return;mlt.textContent=WAIT_LINES[k];ml.hidden=false;ml.classList.remove("pop-in");void ml.offsetWidth;ml.classList.add("pop-in");SND.type();if(k<WAIT_LINES.length-1)k++;else clearInterval(li)};
+    say();li=setInterval(say,2800);
+  }
+  await reqP;
+  clearInterval(li);clearInterval(ti);clearInterval(ci);stop();stopWarpSnd();
   flash();SND.arrive();
   if(err||!res)return fail(err);
   pageResult({...res,thumb});
@@ -432,15 +555,21 @@ const VERDICT={
 };
 function pageResult(r){
   const n=Math.max(0,Math.min(100,Number(r.score)||0)),o=outcomeOf(n),V=VERDICT[o];
-  render(`<div class="vlbl" style="color:${o==="saved"?"var(--or)":"var(--mute)"}" data-fx="text">${V.m}</div>
-    <h1 class="verdict ${o}" data-fx="css">${V.t}</h1>
-    <div class="sent fade-in" style="animation-delay:900ms"><div class="ph"><img src="${r.thumb}" alt=""></div>
-      <div><div class="lbl">送った物</div><b>${esc(r.item_name)}</b><div class="mute" style="font-size:13px">${r.vanished===false?"2060年にもまだある":`${esc(r.vanished_year)}年に消滅`}</div></div></div>
-    <div class="change fade-in" style="animation-delay:1200ms"><div class="lbl">minatoのリクエスト</div><p class="mute" style="font-size:14px">「${esc(story.q)}」</p>${r.answer?`<div class="lbl" style="margin-top:8px">あなたの物がどう応えたか</div><p>${esc(r.answer)}</p>`:""}</div>
-    <div class="change fade-in" style="animation-delay:1600ms"><div class="lbl">2060年はこう変わった</div><p>${esc(r.change)}</p></div>
-    <div class="talk fade-in" style="animation-delay:2000ms">${FIG("sm")}<div style="min-width:0"><div class="figname" data-fx="text">MINATO-2060</div><p class="quote" data-fx="css">${esc(r.tsukkomi)}</p></div></div>
-    <div class="punch fade-in" style="animation-delay:2600ms"><q>${esc(r.punchline)}</q></div>
-    <div class="row fade-in" style="animation-delay:3000ms"><button class="btn" id="again">もう一度挑戦する</button><button class="btn ghost" id="top">TOPへ</button></div>`);
+  render(`<div class="resgrid">
+    <div class="resl">
+      <div class="vlbl" style="color:${o==="saved"?"var(--or)":"var(--mute)"}" data-fx="text">${V.m}</div>
+      <h1 class="verdict ${o}">${V.t}</h1>
+      <div class="sent fade-in" style="animation-delay:900ms"><div class="ph"><img src="${r.thumb}" alt=""></div>
+        <div><div class="lbl">送った物</div><b>${esc(r.item_name)}</b><div class="mute sentsub">${r.vanished===false?"2060年にもまだある":`2060年では ${esc(r.vanished_year)}年に消滅`}</div></div></div>
+    </div>
+    <div class="resr">
+      <div class="change fade-in" style="animation-delay:1200ms"><div class="lbl">minatoのリクエスト</div><p class="mute req">「${esc(story.q)}」</p>${r.answer?`<div class="lbl">あなたの物がどう応えたか</div><p>${esc(r.answer)}</p>`:""}</div>
+      <div class="change fade-in" style="animation-delay:1600ms"><div class="lbl">2060年はこう変わった</div><p>${esc(r.change)}</p></div>
+      <div class="talk fade-in" style="animation-delay:2000ms">${FIG("sm")}<div style="min-width:0"><div class="figname" data-fx="text">MINATO-2060</div><p class="quote">${esc(r.tsukkomi)}</p></div></div>
+      <div class="punch fade-in" style="animation-delay:2600ms"><q>${esc(r.punchline)}</q></div>
+      <div class="row fade-in" style="animation-delay:3000ms"><button class="btn" id="again">もう一度挑戦する</button><button class="btn ghost" id="top">TOPへ</button></div>
+    </div></div>`);
+  card.dataset.page="result";document.body.dataset.calm="1";
   unmountFig=minatoFigure($("#fig"),{talk:true});
   setTimeout(()=>{o==="lost"?SND.lose():SND.win(o==="saved")},400);
   if(o==="lost")setTimeout(()=>document.body.classList.add("desat"),1200);
@@ -691,7 +820,7 @@ function minatoFigure(cv,{talk=false}={}){
     if(y>=.64&&y<=1){const k=Math.min(1,(y-.64)/.14),hw=.12+Math.sin(k*Math.PI/2)*.34;return Math.abs(x-.5)<hw}
     return false;
   }
-  const N=Math.round(Math.min(3200,W*FH/9)),P=[];
+  const ps=Math.max(1,W/210),N=Math.round(Math.min(4500,W*FH/(9*ps*ps))),P=[];
   while(P.length<N){
     const x=Math.random(),y=Math.random();if(!inside(x,y))continue;
     // 顔の中心と胸元を少し濃く
@@ -713,7 +842,7 @@ function minatoFigure(cv,{talk=false}={}){
       p.vx*=.82;p.vy*=.82;p.x+=p.vx;p.y+=p.vy;
       const fl=.6+.4*Math.sin(t*3+p.ph);
       ctx.fillStyle=`rgba(255,${110+(p.ph*20|0)},${40+(p.ph*8|0)},${p.a*fl})`;
-      ctx.fillRect(p.x*W,p.y*FH,p.s,p.s);
+      ctx.fillRect(p.x*W,p.y*FH,p.s*ps,p.s*ps);
     }
     // 足元の走査線
     ctx.fillStyle="rgba(255,92,0,.35)";ctx.fillRect(W*.15,FH*.995,W*.7,1);
@@ -755,7 +884,7 @@ function minatoFigure(cv,{talk=false}={}){
     setTimeout(small,3500+Math.random()*6000);
   }
   function big(){
-    if(!document.querySelector(".view.warp")){
+    if(!document.querySelector(".view.warp")&&!document.body.dataset.calm){
       const w=document.querySelector(".wrap"),st=$("#static");
       w.classList.remove("pg");st.classList.remove("on");void w.offsetWidth;
       w.classList.add("pg");st.classList.add("on");SND.static();
