@@ -11,10 +11,13 @@
  *   RATE_PER_MIN       （任意）1分あたりの受付上限。既定 30
  *   SAVE_IMAGES        （任意）"false" にすると写真を保存しない
  *   IMAGE_FOLDER_ID    （任意）写真の保存先フォルダID。未設定なら自動で作る
+ *   RESCUE_GOAL        （任意）未来救済モードで回復率100%になる合計ポイント。既定 3000
  */
 
 const PROPS = PropertiesService.getScriptProperties();
 const SHEET_NAME = 'log';
+const RESCUE_SHEET = 'rescue_log';
+const RESCUE_HEADERS = ['日時', '品物', '消滅した？', '消滅年', '消えた理由', '取り戻したもの', '起きたこと', 'ツッコミ', '一言', '回復ポイント', '写真'];
 const HEADERS = ['日時', '品物', '2060年の名前', 'どう変わった', 'なぜ', '使われ方', 'ツッコミ', '一言', '行き先', '世界設定No', '写真'];
 
 const PROMPT = `あなたは2060年の東京・渋谷に住む29歳のminatoです。「時間郵便局」の受付係で、2026年から届く品物を受け取っています。
@@ -69,6 +72,44 @@ const PROMPT = `あなたは2060年の東京・渋谷に住む29歳のminatoで�
 
 品物がわからない場合は item_name を "よくわからない物" にし、2060年の人が何と勘違いして使っているかを場面にする。`;
 
+const PROMPT_RESCUE = `あなたは2060年の東京・渋谷に住む29歳のminatoです。「時間郵便局」の受付係で、2026年から届く品物を受け取っています。
+
+【2060年の状況：停滞】
+2060年は、AIがあらゆることを最適化した結果、こうなっている：
+- 失敗・寄り道・無駄がなくなった。買い物も進路も恋人も、AIのおすすめどおりに選ぶ
+- みんな同じものを好きになり、流行もスタイルも似たものばかり
+- 待つ・迷う・探す・手で作る、といった時間がほとんどない
+- その結果、新しいアイデアや文化が生まれなくなり、街が少しずつ止まりかけている
+- 2026年には当たり前だった多くの品物が、便利な仕組みに置き換わって消えている
+minatoは窓口で、消えてしまった品物が過去から届くと、2060年に小さな変化が起きることに気づいている。
+
+【やること】写真の品物について、次の順に考える。
+1. 品物を特定する（人が写っていても品物だけを見る。容姿には触れない）
+2. その品物が2060年までに消えているかを判断する。消えているなら、何年ごろ、何に置き換わって消えたのかを考える。今ある技術や社会の流れの延長で、ありそうな理由にする
+3. その品物が2060年に届いたことで、渋谷の誰かに起きた小さな変化を、具体的な一場面で考える（例：迷う、待つ、失敗する、手を動かす、偶然出会う、といった「最適化で失われた体験」が戻る）
+4. その品物が取り戻したもの（失われていた体験や感覚）を、短い言葉にする
+5. minatoとして一言ツッコむ。皮肉屋だが、内心ちょっと嬉しい感じがにじむ
+6. 回復ポイントを0〜100でつける。2060年で消えていて、失われた体験を強く取り戻せるほど高い。2060年にもまだ普通にある品物は低い（0〜15）
+
+品物が2060年にもまだ残っている場合は、vanished を false にし、「これ、まだあるんだけど」という調子で少しがっかりしたツッコミにする。
+
+【書き方のルール】
+- 変化は「誰が・どこで・何をしたか」がわかる一場面にする
+- SFすぎる設定（瞬間移動・宇宙など）は使わない
+- ツッコミは場面の1点だけを突く。友達に言うような口調で。一人称は「私」
+- 人を傷つける言い方や下品な表現はしない
+- 書き終えたら読み直して、消えた理由・起きたこと・取り戻したもの・ツッコミがつながっているか、初めて読む人が一度でわかるかを確認する。つながっていなければ書き直す
+
+【例】写真：紙の地図
+{"item_name":"紙の地図","vanished":true,"vanished_year":"2038","why_vanished":"メガネに道順が直接表示されるようになり、地図を広げる人がいなくなった。","scene":"道案内を切った大学生が、地図を片手に渋谷の裏道で30分迷い、知らない古着屋を見つけた。","lost_value":"迷う楽しさ","tsukkomi":"30分迷って喜んでる。2060年でいちばん贅沢な時間の使い方だよ。","punchline":"迷子、復活","recovery":72}
+
+例と同じ品物・同じネタは使わないこと。
+
+以下のJSONオブジェクトだけを返す：
+{"item_name":"現代での名前","vanished":true または false,"vanished_year":"消えた年（4桁。残っている場合は空文字）","why_vanished":"消えた理由（1文、40字以内。残っている場合は2060年での扱われ方）","scene":"届いた2060年で起きたこと（1文、45字以内）","lost_value":"取り戻したもの（10字以内）","tsukkomi":"minatoのツッコミ（1〜2文、40字以内）","punchline":"決めの一言（12字以内）","recovery":0〜100の整数}
+
+品物がわからない場合は item_name を "よくわからない物" にし、2060年の人がそれを何だと思って、どんな体験を取り戻したかを考える。`;
+
 function doPost(e) {
   if (!e || !e.postData) {
     // エディタの「実行」で doPost を直接動かした場合。動作確認は testClaude を使う
@@ -82,9 +123,16 @@ function doPost(e) {
     if (typeof image !== 'string' || image.length < 1000 || image.length > 4000000) {
       return out_({ ok: false, error: 'bad_image' });
     }
-    const world = 1 + Math.floor(Math.random() * 15);
-    const result = callClaude_(image, world);
     let photoUrl = '';
+    if (body.mode === 'rescue') {
+      const result = callClaude_(image, PROMPT_RESCUE);
+      result.recovery = Math.max(0, Math.min(100, Math.round(Number(result.recovery) || 0)));
+      try { photoUrl = saveImage_(image); } catch (err) { console.error('saveImage', err); }
+      try { logRescue_(result, photoUrl); } catch (err) { console.error('logRescue', err); }
+      return out_({ ok: true, result: result, stats: rescueStats_() });
+    }
+    const world = 1 + Math.floor(Math.random() * 15);
+    const result = callClaude_(image, PROMPT.replace('{{WORLD}}', String(world)));
     try { photoUrl = saveImage_(image); } catch (err) { console.error('saveImage', err); }
     try { logRow_(result, world, photoUrl); } catch (err) { console.error('logRow', err); }
     return out_({ ok: true, result: result });
@@ -96,11 +144,12 @@ function doPost(e) {
 }
 
 // ブラウザでURLを開いたときの動作確認用
-function doGet() {
+function doGet(e) {
+  if (e && e.parameter && e.parameter.stats === 'rescue') return out_({ ok: true, stats: rescueStats_() });
   return out_({ ok: true, service: 'minato', ready: !!PROPS.getProperty('ANTHROPIC_API_KEY') });
 }
 
-function callClaude_(imageBase64, world) {
+function callClaude_(imageBase64, promptText) {
   const key = (PROPS.getProperty('ANTHROPIC_API_KEY') || '').trim();
   if (!key) throw new Error('ANTHROPIC_API_KEY が未設定です');
   const payload = {
@@ -110,7 +159,7 @@ function callClaude_(imageBase64, world) {
       role: 'user',
       content: [
         { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: imageBase64 } },
-        { type: 'text', text: PROMPT.replace('{{WORLD}}', String(world)) + '\n\n添付画像が、過去から届いた品物の写真です。' }
+        { type: 'text', text: promptText + '\n\n添付画像が、過去から届いた品物の写真です。' }
       ]
     }]
   };
@@ -198,4 +247,29 @@ function testClaude() {
   });
   console.log('status:', res.getResponseCode());
   console.log(res.getContentText().slice(0, 500));
+}
+
+function rescueSheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(RESCUE_SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(RESCUE_SHEET);
+    sh.appendRow(RESCUE_HEADERS);
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+
+function logRescue_(r, photoUrl) {
+  rescueSheet_().appendRow([new Date(), r.item_name, r.vanished === false ? 'いいえ' : 'はい', r.vanished_year, r.why_vanished, r.lost_value, r.scene, r.tsukkomi, r.punchline, r.recovery, photoUrl]);
+}
+
+// 未来救済モードの全体集計（回復ポイントの合計から回復率を出す）
+function rescueStats_() {
+  const sh = rescueSheet_();
+  const n = sh.getLastRow() - 1;
+  let total = 0;
+  if (n > 0) sh.getRange(2, 10, n, 1).getValues().forEach(function (v) { total += Number(v[0]) || 0; });
+  const goal = Number(PROPS.getProperty('RESCUE_GOAL') || 3000);
+  return { count: Math.max(0, n), total: total, goal: goal, rate: Math.min(100, Math.round(total / goal * 1000) / 10) };
 }

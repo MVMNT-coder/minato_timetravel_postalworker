@@ -31,6 +31,7 @@
 | `MODEL` | 使うモデル（既定 `claude-sonnet-5-5`） | |
 | `RATE_PER_MIN` | 1分あたりの受付上限（既定 `30`） | |
 | `SAVE_IMAGES` | `false` にすると写真を保存しない | |
+| `RESCUE_GOAL` | 未来救済モードで回復率100%になる合計ポイント（既定 `3000`） | |
 
 5. エディタ上部の関数選択で `setupCheck` を選んで「実行」します。許可の画面が出るので、自分のアカウントで許可します。シートに `log` タブと動作確認の行ができれば成功です（確認の行は消してかまいません）。
 
@@ -47,6 +48,15 @@
 1. `config.js` の `window.GAS_URL = "";` の `""` の中に、手順3でコピーした URL を貼って commit します。
 2. GitHub のリポジトリで「Settings > Pages」を開き、Source を「Deploy from a branch」、Branch を `main` / `(root)` にして保存します。
 3. 数分後に `https://mvmnt-coder.github.io/minato_timetravel_postalworker/` で開けます。
+
+## 2つのモード
+
+| モード | URL | 内容 |
+|---|---|---|
+| 贈り物モード | `…/minato_timetravel_postalworker/` | 品物が2060年でどう変わり、どう使われているかをminatoがツッコむ |
+| 未来救済モード | `…/minato_timetravel_postalworker/?mode=rescue` | AIの最適化で止まりかけた2060年に、消えた品物を送って「失われた体験」を取り戻す。全員の回復ポイントが合算され、未来の回復率が上がっていく |
+
+未来救済モードの記録は、スプレッドシートの `rescue_log` シートに残ります。回復率は、このシートの回復ポイントの合計を `RESCUE_GOAL` で割って計算します。シートの行を消すと回復率も下がるので、展示ごとにリセットできます。
 
 ## 運用メモ
 - **費用**：撮影1回につき Claude API を1回呼びます。費用はキーを発行したアカウントに請求されます。
