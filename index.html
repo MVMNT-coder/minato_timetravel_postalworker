@@ -353,7 +353,7 @@ function fail(e){
 /* サウンド（Web Audioで合成。音声ファイルなし） */
 const SND=(()=>{
   let ac=null,master=null,bgmBus=null,sfxBus=null,on=false,bgmNodes=null,arpTimer=null;
-  try{on=localStorage.getItem("miraibin_sound")==="on"}catch{}
+  on=true;try{on=localStorage.getItem("miraibin_sound")!=="off"}catch{}
   const btn=$("#snd");
   function ui(){btn.textContent=on?"SOUND ON":"SOUND OFF";btn.setAttribute("aria-pressed",on)}
   function init(){
@@ -409,30 +409,31 @@ const SND=(()=>{
     shutter(){noise(.12,{vol:.5,f:3000,q:.7,type:"highpass"});tone(1600,.05,{type:"square",vol:.12})},
     warp(){
       if(!ac||!on)return()=>{};
-      bgmDuck(.15,.4);
-      const t=ac.currentTime,D=5.5;
-      // 上昇するうなり
-      const o=ac.createOscillator(),o2=ac.createOscillator(),og=ac.createGain(),fl=ac.createBiquadFilter();
-      o.type="sawtooth";o2.type="sawtooth";o.frequency.setValueAtTime(60,t);o.frequency.exponentialRampToValueAtTime(880,t+D);
-      o2.frequency.setValueAtTime(61.5,t);o2.frequency.exponentialRampToValueAtTime(905,t+D);
-      fl.type="lowpass";fl.frequency.setValueAtTime(300,t);fl.frequency.exponentialRampToValueAtTime(5000,t+D);fl.Q.value=8;
-      const wob=ac.createOscillator(),wg=ac.createGain();wob.frequency.setValueAtTime(3,t);wob.frequency.linearRampToValueAtTime(18,t+D);wg.gain.value=600;wob.connect(wg);wg.connect(fl.frequency);
-      og.gain.setValueAtTime(0,t);og.gain.linearRampToValueAtTime(.14,t+1.2);
-      o.connect(fl);o2.connect(fl);fl.connect(og);og.connect(sfxBus);
-      // 風切り音
+      bgmDuck(.35,1.5);
+      const t=ac.currentTime,D=12;
+      // ゆっくり持ち上がる柔らかいパッド（5度の和音）
+      const pad=ac.createGain(),fl=ac.createBiquadFilter();
+      fl.type="lowpass";fl.Q.value=2;fl.frequency.setValueAtTime(350,t);fl.frequency.linearRampToValueAtTime(1800,t+D);
+      const lfo=ac.createOscillator(),lg=ac.createGain();lfo.frequency.value=.25;lg.gain.value=180;lfo.connect(lg);lg.connect(fl.frequency);
+      pad.gain.setValueAtTime(0,t);pad.gain.linearRampToValueAtTime(.07,t+3);
+      const oscs=[110,165,220.5].map((f,i)=>{const o=ac.createOscillator();o.type=i===1?"sine":"triangle";
+        o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(f*2,t+D);o.connect(fl);return o});
+      fl.connect(pad);pad.connect(sfxBus);
+      // 遠くを流れる風（こもった音）
       const n=ac.createBufferSource(),nf=ac.createBiquadFilter(),ng=ac.createGain();
-      n.buffer=noiseBuf(2);n.loop=true;nf.type="bandpass";nf.Q.value=2;nf.frequency.setValueAtTime(400,t);nf.frequency.exponentialRampToValueAtTime(6000,t+D);
-      ng.gain.setValueAtTime(0,t);ng.gain.linearRampToValueAtTime(.22,t+D*.8);
+      n.buffer=noiseBuf(2);n.loop=true;nf.type="lowpass";nf.Q.value=.7;nf.frequency.setValueAtTime(250,t);nf.frequency.linearRampToValueAtTime(1200,t+D);
+      ng.gain.setValueAtTime(0,t);ng.gain.linearRampToValueAtTime(.05,t+4);
       n.connect(nf);nf.connect(ng);ng.connect(sfxBus);
-      [o,o2,wob,n].forEach(x=>x.start(t));
-      // 年号が進む電子音
-      let i=0;const beep=setInterval(()=>{tone(900+Math.min(i,40)*30,.04,{type:"square",vol:.05});i++},220);
-      return()=>{clearInterval(beep);const e=ac.currentTime;og.gain.cancelScheduledValues(e);ng.gain.cancelScheduledValues(e);
-        og.gain.setTargetAtTime(0,e,.05);ng.gain.setTargetAtTime(0,e,.08);[o,o2,wob,n].forEach(x=>x.stop(e+.6))};
+      [lfo,n,...oscs].forEach(x=>x.start(t));
+      // 時を刻む小さな音（1秒ごと、少しずつ高く）
+      let i=0;const tick=setInterval(()=>{tone(1320+Math.min(i,20)*25,.12,{type:"sine",vol:.025});i++},1000);
+      return()=>{clearInterval(tick);const e=ac.currentTime;
+        pad.gain.cancelScheduledValues(e);ng.gain.cancelScheduledValues(e);
+        pad.gain.setTargetAtTime(0,e,.25);ng.gain.setTargetAtTime(0,e,.3);[lfo,n,...oscs].forEach(x=>x.stop(e+1.5))};
     },
     arrive(){
-      tone(110,1.2,{vol:.45,slide:40});noise(.8,{vol:.35,f:800,q:.5,type:"lowpass",fTo:100});
-      [523.3,659.3,784,1046.5].forEach((f,i)=>tone(f,1.8,{type:"triangle",vol:.08,at:.05+i*.04}));
+      tone(110,1.4,{vol:.25,slide:55});noise(.9,{vol:.12,f:600,q:.5,type:"lowpass",fTo:120});
+      [523.3,659.3,784,1046.5].forEach((f,i)=>tone(f,2.2,{type:"sine",vol:.06,at:.05+i*.08}));
       setTimeout(()=>bgmDuck(1,1.5),900);
     },
     glitch(){for(let i=0;i<7;i++)tone(200+Math.random()*1800,.05,{type:"square",vol:.06,at:i*.09})},
