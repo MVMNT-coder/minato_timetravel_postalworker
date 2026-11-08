@@ -424,6 +424,7 @@ async function loadTally(){
 
 /* 1. タイトル */
 function pageTitle(){
+  SND.mood("base");
   stopCam();document.body.classList.remove("desat");
   const t1="あなたは",t2="未来",t3="を救えるか!?";
   let k=0;const chars=s=>[...s].map(c=>`<span class="ch" style="animation-delay:${(k++)*60}ms">${esc(c)}</span>`).join("");
@@ -482,6 +483,7 @@ function pageMission(){
 
 /* 3.5 minatoからのリクエスト */
 function pageQuestion(){
+  SND.mood("base");
   render(`<div class="lbl alert" data-fx="text">REQUEST FROM 2060</div>
     <div class="qwrap">
       <div class="qlbl fade-in" style="animation-delay:150ms">minatoからのリクエスト</div>
@@ -594,7 +596,7 @@ function pageResult(r){
   card.dataset.page="result";document.body.dataset.calm="1";
   unmountFig=minatoFigure($("#fig"),{talk:true});
   let alive=true;cleanup.push(()=>alive=false);
-  setTimeout(()=>{if(!alive)return;o==="lost"?SND.lose():SND.win(o==="saved")},T[4]+150);
+  setTimeout(()=>{if(!alive)return;o==="lost"?SND.lose():SND.win(o==="saved");SND.mood(o)},T[4]+150);
   if(o==="lost")setTimeout(()=>{if(alive)document.body.classList.add("desat")},T[4]+600);
   $("#again").onclick=()=>{document.body.classList.remove("desat");pageQuestion()};
   $("#top").onclick=pageTitle;
@@ -761,18 +763,48 @@ const SND=(()=>{
     g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
     n.connect(fl);fl.connect(g);g.connect(sfxBus);n.start(t);n.stop(t+dur+.05);
   }
-  /* BGM：低いドローン＋ゆっくりしたアルペジオ */
+  /* BGM：雰囲気（mood）ごとにドローン＋アルペジオを切り替える */
+  const MOODS={
+    // 通常：静かで少し不穏
+    base:{drone:[[55,"sawtooth"],[82.5,"sawtooth"],[110.4,"triangle"]],cut:420,q:6,lfo:260,vol:.16,
+          notes:[220,261.6,293.7,329.6,392,440,523.3],every:700,skip:.35,wave:"triangle",nv:.05,len:1.6,order:"rand"},
+    // 救われた：明るく温かい（ハ長調）
+    saved:{drone:[[65.4,"triangle"],[98,"sine"],[164.8,"sine"]],cut:1600,q:1,lfo:300,vol:.13,
+          notes:[523.3,587.3,659.3,784,880,1046.5,1174.7,1318.5],every:240,skip:.12,wave:"triangle",nv:.045,len:.9,order:"up"},
+    // あと一歩：穏やかで少し切ない
+    partial:{drone:[[110,"sine"],[164.8,"sine"],[246.9,"triangle"]],cut:900,q:1.5,lfo:200,vol:.12,
+          notes:[440,493.9,523.3,587.3,659.3,587.3,523.3,493.9],every:560,skip:.3,wave:"sine",nv:.045,len:1.6,order:"up"},
+    // 救えなかった：寂しく、ゆっくり沈んでいく
+    lost:{drone:[[55,"sine"],[82.4,"sine"],[110,"sine"]],cut:300,q:1,lfo:80,vol:.14,
+          notes:[392,349.2,311.1,293.7,261.6,233.1],every:1500,skip:.45,wave:"sine",nv:.035,len:2.8,order:"down"}
+  };
+  let mood="base",drone=null;
+  function buildDrone(m){
+    const M=MOODS[m],t=ac.currentTime;
+    const fl=ac.createBiquadFilter();fl.type="lowpass";fl.frequency.value=M.cut;fl.Q.value=M.q;
+    const lfo=ac.createOscillator(),lg=ac.createGain();lfo.frequency.value=.07;lg.gain.value=M.lfo;lfo.connect(lg);lg.connect(fl.frequency);lfo.start();
+    const g=ac.createGain();g.gain.setValueAtTime(0,t);g.gain.setTargetAtTime(M.vol,t,1.2);fl.connect(g);g.connect(bgmBus);
+    const oscs=M.drone.map(([f,type],i)=>{const o=ac.createOscillator();o.type=type;o.frequency.value=f;o.detune.value=(i-1)*6;o.connect(fl);o.start();return o});
+    return {g,oscs:[...oscs,lfo]};
+  }
+  function startArp(m){
+    clearInterval(arpTimer);const M=MOODS[m];let k=0;
+    arpTimer=setInterval(()=>{if(!on||Math.random()<M.skip)return;
+      const N=M.notes,i=M.order==="up"?k%N.length:M.order==="down"?k%N.length:(k*3+Math.floor(Math.random()*3))%N.length;
+      const f=N[i]*(M.order==="rand"&&Math.random()<.2?2:1);k++;
+      tone(f,M.len,{type:M.wave,vol:M.nv,bus:bgmBus})},M.every);
+  }
+  function setMood(m){
+    if(!MOODS[m])m="base";
+    if(!ac){mood=m;return}
+    if(drone&&m===mood)return;
+    mood=m;
+    if(drone){const old=drone,t=ac.currentTime;old.g.gain.cancelScheduledValues(t);old.g.gain.setTargetAtTime(0,t,.6);old.oscs.forEach(o=>o.stop(t+3))}
+    drone=buildDrone(m);startArp(m);
+  }
   function bgmStart(){
     if(!ac||bgmNodes)return;
-    const fl=ac.createBiquadFilter();fl.type="lowpass";fl.frequency.value=420;fl.Q.value=6;
-    const lfo=ac.createOscillator(),lg=ac.createGain();lfo.frequency.value=.07;lg.gain.value=260;lfo.connect(lg);lg.connect(fl.frequency);lfo.start();
-    const g=ac.createGain();g.gain.value=.16;fl.connect(g);g.connect(bgmBus);
-    const oscs=[55,55*1.5,110.4].map((f,i)=>{const o=ac.createOscillator();o.type=i===2?"triangle":"sawtooth";o.frequency.value=f;o.detune.value=(i-1)*7;o.connect(fl);o.start();return o});
-    bgmNodes={oscs,lfo};
-    const scale=[220,261.6,293.7,329.6,392,440,523.3];let k=0;
-    arpTimer=setInterval(()=>{if(!on)return;if(Math.random()<.35)return;
-      const f=scale[(k*3+Math.floor(Math.random()*3))%scale.length]*(Math.random()<.2?2:1);k++;
-      tone(f,1.6,{type:"triangle",vol:.05,bus:bgmBus})},700);
+    bgmNodes=true;drone=null;setMood(mood);
     bgmBus.gain.cancelScheduledValues(ac.currentTime);bgmBus.gain.setTargetAtTime(1,ac.currentTime,1.2);
   }
   function bgmDuck(v,tc=.3){if(ac)bgmBus.gain.setTargetAtTime(on?v:0,ac.currentTime,tc)}
@@ -819,6 +851,7 @@ const SND=(()=>{
     },
     glitch(){for(let i=0;i<7;i++)tone(200+Math.random()*1800,.05,{type:"square",vol:.06,at:i*.09})},
     stamp(){tone(90,.25,{vol:.5,slide:50});noise(.1,{vol:.4,f:1200,q:.8})},
+    mood(m){setMood(m);bgmDuck(1,1)},
     win(big){[523.3,659.3,784,1046.5].forEach((f,i)=>tone(f,.5,{type:"triangle",vol:.09,at:i*.11}));if(big)tone(1568,1.2,{type:"sine",vol:.06,at:.5})},
     lose(){tone(392,.3,{type:"triangle",vol:.08,slide:370});tone(311,.6,{type:"triangle",vol:.08,at:.28,slide:260})},
     type(){tone(1700+Math.random()*500,.025,{type:"square",vol:.012})},
