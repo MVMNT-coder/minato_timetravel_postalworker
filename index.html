@@ -393,6 +393,12 @@ body.exhibit .card{padding-bottom:calc(var(--u)*4)}
 #staff button:hover{border-color:var(--or)}#staff button.warn{border-color:var(--or);color:var(--or)}
 #spV{width:240px;max-width:100%;aspect-ratio:4/3;background:#000;margin-top:8px;object-fit:cover}
 .sp-st{color:var(--mute);font-size:12px;margin-top:4px}
+
+/* ===== 演出ありモード：画面を中央に縮め、外周を演出に使う ===== */
+#stage{display:contents}
+#fxb{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;background:#000}
+body.fxmode{background:#000;overflow:hidden}
+body.fxmode #stage{display:block;position:fixed;inset:0;z-index:1;transform:scale(var(--fxs,.9));transform-origin:center;background:var(--bk);overflow:hidden}
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0}
 img{max-width:100%}
@@ -402,6 +408,8 @@ img{max-width:100%}
 <script src="config.js"></script>
 </head>
 <body>
+<canvas id="fxb" aria-hidden="true" hidden></canvas>
+<div id="stage">
 <canvas id="bg" aria-hidden="true"></canvas>
 <div class="hud l" id="hudL" aria-hidden="true" data-fx="css"></div><div class="hud r" id="hudR" aria-hidden="true" data-fx="css"></div>
 <div class="static" id="static" aria-hidden="true"></div>
@@ -410,14 +418,17 @@ img{max-width:100%}
   <main class="card" id="card"></main>
   <div class="push" id="push" hidden aria-live="polite"><i></i><span>PUSH TO</span> <b id="pushL">START</b></div>
 </div>
+</div>
 <script>
 
 const $=s=>document.querySelector(s);
 const card=$("#card");
 let stream=null,unmountFig=null,cleanup=[];
 /* 展示モード：URLに ?exhibit=1 を付けて開く（PUSH案内を表示、カメラを開いたままにする） */
-const EXHIBIT=(()=>{try{const q=new URLSearchParams(location.search).get("exhibit");if(q!==null)localStorage.setItem("mirai_exhibit",q==="0"?"0":"1");return localStorage.getItem("mirai_exhibit")==="1"}catch{return new URLSearchParams(location.search).get("exhibit")==="1"}})();
+const EXHIBIT=(()=>{try{const fq=new URLSearchParams(location.search).get("fx");if(fq!==null&&fq!=="0")localStorage.setItem("mirai_exhibit","1");const q=new URLSearchParams(location.search).get("exhibit");if(q!==null)localStorage.setItem("mirai_exhibit",q==="0"?"0":"1");return localStorage.getItem("mirai_exhibit")==="1"}catch{return new URLSearchParams(location.search).get("exhibit")==="1"}})();
 if(EXHIBIT)document.body.classList.add("exhibit");
+/* 演出ありモード：?fx=1（展示モードもONになる）。画面を少し縮め、外周を演出に使う */
+const FXMODE=(()=>{try{const q=new URLSearchParams(location.search).get("fx");if(q!==null){localStorage.setItem("mirai_fx",q==="0"?"0":"1");if(q!=="0"){localStorage.setItem("mirai_exhibit","1");document.body.classList.add("exhibit")}}return localStorage.getItem("mirai_fx")==="1"}catch{return new URLSearchParams(location.search).get("fx")==="1"}})();
 function lsGet(k,d){try{const v=localStorage.getItem(k);return v===null?d:v}catch{return d}}
 function lsSet(k,v){try{localStorage.setItem(k,v)}catch{}}
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
@@ -652,7 +663,7 @@ async function send(srcCanvas){
   render(`<div class="warpbox"><div class="view warp"><canvas id="fx"></canvas></div>
     <div class="warpinfo"><div class="status" id="st">時空の歪みを通過中</div><div class="coord" id="co"></div>
     <div class="mline" id="ml" hidden><span class="lbl">MINATO</span><p id="mlt"></p></div></div></div>`);
-  card.dataset.page="warp";
+  card.dataset.page="warp";FXB.set("warp");
   const stop=warp($("#fx"),img),stopWarpSnd=SND.warp();
   const msgs=["時空の歪みを通過中","2060年の座標を探索中","停滞した世界に到着"];
   let i=0;const ti=setInterval(()=>{i=Math.min(i+1,msgs.length-1);const s=$("#st");if(s)s.textContent=msgs[i]},2200);
@@ -713,7 +724,7 @@ function pageResult(r){
   card.dataset.page="result";document.body.dataset.calm="1";
   unmountFig=minatoFigure($("#fig"),{talk:true});
   let alive=true;cleanup.push(()=>alive=false);
-  setTimeout(()=>{if(!alive)return;o==="lost"?SND.lose():SND.win(o==="saved");SND.mood(o)},T[4]+150);
+  setTimeout(()=>{if(!alive)return;o==="lost"?SND.lose():SND.win(o==="saved");SND.mood(o);FXB.set(o)},T[4]+150);
   if(o==="lost")setTimeout(()=>{if(alive)document.body.classList.add("desat")},T[4]+600);
   $("#again").onclick=()=>{document.body.classList.remove("desat");pageQuestion()};
   $("#top").onclick=pageTitle;
@@ -1075,6 +1086,101 @@ function minatoFigure(cv,{talk=false}={}){
 })();
 
 
+/* ===== 外周の演出（演出ありモード） =====
+   画面（#stage）を中央に縮めて表示し、その外側の余白に演出を描く。
+   プロジェクターでスクリーンからはみ出した部分が、そのまま演出になる想定 */
+const FXB=(()=>{
+  let m=Math.max(3,Math.min(15,Number(lsGet("mirai_fx_margin","5"))||5)),mode="idle",t0=performance.now();
+  const api={set(){},margin:()=>m,setMargin(v){m=v;lsSet("mirai_fx_margin",String(v));apply()}};
+  function apply(){document.documentElement.style.setProperty("--fxs",String(1-2*m/100))}
+  if(!FXMODE)return api;
+  document.body.classList.add("fxmode");apply();
+  const cv=$("#fxb"),ctx=cv.getContext("2d");cv.hidden=false;
+  let W,H;function size(){W=cv.width=innerWidth;H=cv.height=innerHeight}size();addEventListener("resize",size);
+  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let P=[];
+  api.set=v=>{if(v===mode)return;mode=v;t0=performance.now();if(v!=="warp")P=P.filter(p=>p.k!=="streak")};
+  // ページの切り替わりを見て、演出を自動で切り替える
+  const MAP={title:"idle",story:"comm",mission:"comm",request:"comm",camera:"scan",confirm:"scan",warp:"warp",result:"suspense"};
+  new MutationObserver(()=>{const pg=card.dataset.page;if(MAP[pg])api.set(MAP[pg])}).observe(card,{attributes:true,attributeFilter:["data-page"]});
+  const R=()=>({x0:W*m/100,y0:H*m/100,x1:W*(1-m/100),y1:H*(1-m/100)});
+  // 外周上の位置 p(0〜1) → 画面の縁の座標と外向きの向き
+  function edge(p){const r=R(),w=r.x1-r.x0,h=r.y1-r.y0,L=2*(w+h);let d=((p%1)+1)%1*L;
+    if(d<w)return{x:r.x0+d,y:r.y0,nx:0,ny:-1};d-=w;
+    if(d<h)return{x:r.x1,y:r.y0+d,nx:1,ny:0};d-=h;
+    if(d<w)return{x:r.x1-d,y:r.y1,nx:0,ny:1};d-=w;
+    return{x:r.x0,y:r.y1-d,nx:-1,ny:0}}
+  // 画面の縁から外へ向かってにじむ光
+  function glow(rgb,a){if(a<=0)return;const r=R(),mx=r.x0,my=r.y0,c0=`rgba(${rgb},${a})`,c1=`rgba(${rgb},0)`;
+    const lin=(x0,y0,x1,y1,x,y,w,h)=>{const g=ctx.createLinearGradient(x0,y0,x1,y1);g.addColorStop(0,c0);g.addColorStop(1,c1);ctx.fillStyle=g;ctx.fillRect(x,y,w,h)};
+    lin(0,r.y0,0,0,r.x0,0,r.x1-r.x0,my);lin(0,r.y1,0,H,r.x0,r.y1,r.x1-r.x0,my);lin(r.x0,0,0,0,0,r.y0,mx,r.y1-r.y0);lin(r.x1,0,W,0,r.x1,r.y0,mx,r.y1-r.y0);
+    // 四隅は角から丸く広がる光にして、つなぎ目を出さない
+    for(const [cx,cy,x,y] of [[r.x0,r.y0,0,0],[r.x1,r.y0,r.x1,0],[r.x0,r.y1,0,r.y1],[r.x1,r.y1,r.x1,r.y1]]){
+      ctx.save();ctx.translate(cx,cy);ctx.scale(mx,my);const g=ctx.createRadialGradient(0,0,0,0,0,1);g.addColorStop(0,c0);g.addColorStop(1,c1);ctx.fillStyle=g;ctx.fillRect((x-cx)/mx,(y-cy)/my,1,1);ctx.restore()}}
+  function frameLine(rgb,a,lw=2){const r=R();ctx.strokeStyle=`rgba(${rgb},${a})`;ctx.lineWidth=lw;ctx.strokeRect(r.x0-lw/2,r.y0-lw/2,r.x1-r.x0+lw,r.y1-r.y0+lw)}
+  function runner(p,len,rgb,a){ctx.strokeStyle=`rgba(${rgb},${a})`;ctx.lineWidth=3;ctx.beginPath();for(let i=0;i<=12;i++){const e=edge(p-len*i/12);const x=e.x+e.nx*6,y=e.y+e.ny*6;i?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.stroke()}
+  function wave(t,amp,rgb,a){const r=R();ctx.strokeStyle=`rgba(${rgb},${a})`;ctx.lineWidth=1.5;
+    for(const [yc,ph] of [[r.y0/2,0],[(H+r.y1)/2,2]]){ctx.beginPath();for(let x=0;x<=W;x+=8){const y=yc+Math.sin(x*.012+t*3+ph)*amp*Math.sin(x*.0031+t*.7)+Math.sin(x*.05+t*9)*amp*.25;x?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.stroke()}
+    for(const [xc,ph] of [[r.x0/2,1],[(W+r.x1)/2,3]]){ctx.beginPath();for(let y=0;y<=H;y+=8){const x=xc+Math.sin(y*.012+t*3+ph)*amp*Math.sin(y*.0031+t*.7)+Math.sin(y*.05+t*9)*amp*.25;y?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.stroke()}}
+  function spawn(k,n){for(let i=0;i<n;i++){const e=edge(Math.random());
+    if(k==="streak")P.push({k,x:e.x,y:e.y,vx:e.nx,vy:e.ny,s:2+Math.random()*6,life:0,max:1,w:Math.random()<.3});
+    else if(k==="spark"){const r=R();const side=Math.random()<.5;const x=side?(Math.random()<.5?Math.random()*r.x0:r.x1+Math.random()*r.x0):Math.random()*W;const y=side?H*Math.random():(Math.random()<.5?Math.random()*r.y0:r.y1+Math.random()*r.y0);
+      P.push({k,x,y,vx:(Math.random()-.5)*.2,vy:-.3-Math.random()*.9,s:1+Math.random()*2.5,life:0,max:2+Math.random()*3,ph:Math.random()*6})}
+    else if(k==="ash")P.push({k,x:Math.random()*W,y:-5,vx:(Math.random()-.5)*.3,vy:.4+Math.random()*.8,s:1+Math.random()*2,life:0,max:14})
+    else if(k==="dot")P.push({k,x:e.x,y:e.y,vx:e.nx*.25,vy:e.ny*.25,s:1.5,life:0,max:5})}}
+  let last=performance.now();
+  function frame(now){
+    const t=(now-t0)/1000,dt=Math.min(.05,(now-last)/1000);last=now;
+    ctx.clearRect(0,0,W,H);const mpx=Math.min(W,H)*m/100;
+    if(mode==="idle"){ // 待機：静かな通信。光が外周をゆっくり回る
+      frameLine("255,92,0",.35);glow("255,92,0",.05+.03*Math.sin(t*.8));
+      runner(t*.03,.06,"255,92,0",.8);runner(t*.03+.5,.06,"255,92,0",.8);
+      if(Math.random()<.06)spawn("dot",1);
+    }else if(mode==="comm"){ // minatoとの通信：波形
+      frameLine("255,92,0",.45);glow("255,92,0",.07);wave(t,mpx*.28,"255,92,0",.65);
+    }else if(mode==="scan"){ // 撮影：走査する光と四隅の枠
+      frameLine("255,92,0",.6);glow("255,92,0",.06);
+      for(let i=0;i<4;i++)runner(t*.12+i*.25,.05,"255,255,255",.85);
+      const r=R(),c=mpx*.6,a=.5+.4*Math.sin(t*4);ctx.strokeStyle=`rgba(255,92,0,${a})`;ctx.lineWidth=3;
+      for(const [x,y,sx,sy] of [[r.x0-mpx*.5,r.y0-mpx*.5,1,1],[r.x1+mpx*.5,r.y0-mpx*.5,-1,1],[r.x0-mpx*.5,r.y1+mpx*.5,1,-1],[r.x1+mpx*.5,r.y1+mpx*.5,-1,-1]]){ctx.beginPath();ctx.moveTo(x+sx*c,y);ctx.lineTo(x,y);ctx.lineTo(x,y+sy*c);ctx.stroke()}
+    }else if(mode==="warp"){ // 時空転送：光の筋が画面から外へ噴き出す
+      const k=Math.min(1,t/6);
+      glow("255,92,0",.18+.25*k+.08*Math.sin(t*12));frameLine("255,255,255",.5+.4*k,3);
+      spawn("streak",Math.round(4+k*22));
+      for(let i=0;i<3;i++)runner(t*(.25+k*.6)+i/3,.12,"255,255,255",.9);
+    }else if(mode==="suspense"){ // 判定待ち：鼓動のような明滅
+      const b=Math.pow(Math.max(0,Math.sin(t*2.2)),6);frameLine("255,92,0",.3+.5*b);glow("255,92,0",.04+.14*b);
+    }else if(mode==="saved"){ // 救われた：白と金のやわらかい光、舞い上がる光の粒
+      const a=Math.min(1,t/1.5),br=.5+.15*Math.sin(t*1.3);
+      glow("255,244,214",a*br);glow("255,200,90",a*.25);frameLine("255,255,255",a*.9,3);
+      if(Math.random()<.9)spawn("spark",3);
+      const r=R();ctx.save();ctx.globalAlpha=a*.25;ctx.strokeStyle="#fff6dc";ctx.lineWidth=2; // 上へ伸びる光の筋
+      for(let i=0;i<24;i++){const x=W*(i+.5)/24+Math.sin(t*.5+i)*10,l=mpx*(.5+.5*Math.sin(t*.9+i*1.7));ctx.beginPath();ctx.moveTo(x,r.y0);ctx.lineTo(x+(x-W/2)*.04,r.y0-l);ctx.stroke()}ctx.restore();
+    }else if(mode==="partial"){ // あと一歩：光がつきかけて、ちらつきながら消えていく
+      const d=Math.max(.12,1-t/7),fl=Math.random()<.12?.3:1;
+      glow("255,170,60",.28*d*fl);frameLine("255,170,60",.7*d*fl);if(Math.random()<.25*d)spawn("spark",1);
+    }else if(mode==="lost"){ // 救えなかった：赤い点滅（1秒に1回のゆっくりした明滅）→ 灰になって沈む
+      const alarm=Math.max(0,1-Math.max(0,t-6)/3),b=reduce?.5:Math.pow(.5+.5*Math.sin(t*Math.PI*2-Math.PI/2),2);
+      glow("255,20,10",alarm*(.12+.5*b));frameLine("255,40,20",alarm*(.4+.6*b),4);
+      if(t>4){glow("120,120,120",Math.min(.1,(t-4)*.02));frameLine("130,130,130",Math.min(.35,(t-4)*.06)*(1-alarm));if(Math.random()<.5)spawn("ash",1)}
+    }
+    // 粒子
+    for(const p of P){p.life+=dt;
+      if(p.k==="streak"){const v=p.s*(1+p.life*14);const x0=p.x,y0=p.y;p.x+=p.vx*v;p.y+=p.vy*v;p.x+=p.vy*Math.sin(p.life*9)*.6;p.y+=p.vx*Math.sin(p.life*9)*.6;
+        const a=Math.max(0,1-p.life/p.max);ctx.strokeStyle=p.w?`rgba(255,255,255,${a})`:`rgba(255,110,20,${a})`;ctx.lineWidth=1+p.s*.35;ctx.beginPath();ctx.moveTo(x0-p.vx*v*2,y0-p.vy*v*2);ctx.lineTo(p.x,p.y);ctx.stroke()}
+      else if(p.k==="spark"){p.x+=p.vx+Math.sin(p.life*2+p.ph)*.3;p.y+=p.vy;const a=Math.sin(Math.PI*Math.min(1,p.life/p.max))*(.6+.4*Math.sin(p.life*8+p.ph));
+        ctx.fillStyle=mode==="partial"?`rgba(255,180,80,${a})`:`rgba(255,250,225,${a})`;ctx.fillRect(p.x,p.y,p.s,p.s);
+        if(p.s>2.6){ctx.fillRect(p.x-p.s*1.5,p.y+p.s*.3,p.s*4,p.s*.4);ctx.fillRect(p.x+p.s*.3,p.y-p.s*1.5,p.s*.4,p.s*4)}}
+      else if(p.k==="ash"){p.x+=p.vx+Math.sin(p.life+p.x*.01)*.2;p.y+=p.vy;ctx.fillStyle="rgba(150,150,150,.5)";ctx.fillRect(p.x,p.y,p.s,p.s)}
+      else if(p.k==="dot"){p.x+=p.vx;p.y+=p.vy;ctx.fillStyle=`rgba(255,92,0,${.7*(1-p.life/p.max)})`;ctx.fillRect(p.x,p.y,p.s,p.s)}
+    }
+    P=P.filter(p=>p.life<p.max&&p.x>-20&&p.x<W+20&&p.y>-20&&p.y<H+20);if(P.length>1500)P.splice(0,P.length-1500);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+  return api;
+})();
+
 /* ===== スタッフ用パネル（Ctrl+Shift+S で開閉） ===== */
 function staffOpen(){return !!$("#staff")&&!$("#staff").hidden}
 (function(){
@@ -1087,6 +1193,10 @@ function staffOpen(){return !!$("#staff")&&!$("#staff").hidden}
       <div class="sp-st" id="spKeySt">最後に押されたキー：-</div></section>
     <section><h3>音</h3><div class="sp-row"><button id="spSnd">テスト音を鳴らす</button></div><div class="sp-st" id="spSndSt"></div></section>
     <section><h3>展示モード</h3><div class="sp-st">今：<b>${EXHIBIT?"ON":"OFF"}</b>（URLに ?exhibit=1 / ?exhibit=0 で切替）</div></section>
+    <section><h3>演出ありモード（外周の演出）</h3><div class="sp-st">今：<b>${FXMODE?"ON":"OFF"}</b>（URLに ?fx=1 / ?fx=0 でも切替）</div>
+      <div class="sp-row"><button id="spFx">${FXMODE?"OFFにする":"ONにする"}</button>
+      <label>外周の幅（片側） <select id="spFxM">${[3,5,8,10,12,15].map(v=>`<option value="${v}">${v}%</option>`).join("")}</select></label>
+      <button id="spFxTest">演出を順番にテスト</button></div></section>
     <section><h3>リセット</h3><div class="sp-row"><button id="spReset" class="warn">TOPへ強制リセット</button><button id="spReload">ページを再読み込み</button></div></section>
     </div>`;
   document.body.appendChild(el);
@@ -1118,6 +1228,10 @@ function staffOpen(){return !!$("#staff")&&!$("#staff").hidden}
   $("#spSnd").onclick=()=>{SND.unlock();SND.win(true);$("#spSndSt").textContent="音が鳴らない場合：右上のSOUND表示がONか、PCの出力先スピーカーと音量を確認してください。"};
   $("#spReset").onclick=()=>{close();document.body.classList.remove("desat");pageTitle()};
   $("#spReload").onclick=()=>location.reload();
+  $("#spFx").onclick=()=>{lsSet("mirai_fx",FXMODE?"0":"1");if(!FXMODE)lsSet("mirai_exhibit","1");location.href=location.pathname};
+  $("#spFxM").value=String(FXB.margin());
+  $("#spFxM").onchange=e=>FXB.setMargin(Number(e.target.value));
+  $("#spFxTest").onclick=()=>{close();const seq=["comm","scan","warp","suspense","saved","partial","lost","idle"];seq.forEach((m,i)=>setTimeout(()=>FXB.set(m),i*5000))};
 })();
 
 pageTitle();
