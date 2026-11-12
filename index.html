@@ -370,6 +370,29 @@ header{padding-bottom:calc(var(--u)*.7)}
 .r-ver .vlbl{color:var(--mute)}.r-ver.saved .vlbl{color:var(--or)}
 .r-ver .verdict{font-size:clamp(30px,calc(var(--u)*4),84px);line-height:1.25}
 @media (max-width:820px),(max-aspect-ratio:1/1){.res2{grid-template-columns:1fr;align-items:start}}
+
+/* ===== 展示：PUSH案内・確認画面・スタッフパネル ===== */
+.push{display:none}
+body.exhibit .push:not([hidden]){cursor:pointer;display:flex;align-items:center;gap:.6em;position:fixed;left:50%;bottom:calc(var(--u)*1.6 + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:30;
+  font-family:var(--f-mono);font-weight:700;letter-spacing:.2em;font-size:clamp(14px,calc(var(--u)*1.25),28px);color:#000;background:var(--or);padding:.55em 1.2em;box-shadow:0 0 28px rgba(255,92,0,.55);animation:pushPulse 1.6s ease-in-out infinite}
+.push i{width:.8em;height:.8em;border-radius:50%;background:#000;animation:blink 1s steps(2) infinite}
+.push.hit{transform:translateX(-50%) scale(.94)}
+@keyframes pushPulse{50%{box-shadow:0 0 6px rgba(255,92,0,.3)}}
+body.exhibit .shootbox,body.exhibit .card .btn:not(.ghost){display:none}
+body.exhibit .row:has(> .btn.ghost){opacity:.55}
+body.exhibit .card{padding-bottom:calc(var(--u)*4)}
+.hud-cam.conf img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
+#staff{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;font-family:var(--f-body);font-size:14px}
+#staff[hidden]{display:none}
+.sp-box{background:#111;border:1px solid var(--or);width:min(720px,94vw);max-height:92vh;overflow:auto;padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+.sp-hd{display:flex;justify-content:space-between;align-items:center}.sp-hd b{font-family:var(--f-mono);color:var(--or);letter-spacing:.2em}
+#staff h3{margin:0 0 6px;font-size:13px;color:var(--or);font-family:var(--f-mono);letter-spacing:.1em}
+#staff section{border-top:1px solid var(--line);padding-top:10px}
+.sp-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#staff button,#staff select{font:inherit;background:#000;color:var(--fg);border:1px solid var(--line);padding:6px 10px;cursor:pointer;max-width:100%}
+#staff button:hover{border-color:var(--or)}#staff button.warn{border-color:var(--or);color:var(--or)}
+#spV{width:240px;max-width:100%;aspect-ratio:4/3;background:#000;margin-top:8px;object-fit:cover}
+.sp-st{color:var(--mute);font-size:12px;margin-top:4px}
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0}
 img{max-width:100%}
@@ -385,16 +408,74 @@ img{max-width:100%}
 <div class="wrap">
   <header><div class="logo" data-fx="css">未来救出局<em>.</em></div><div class="hr"><button class="snd" id="snd" aria-pressed="false">SOUND OFF</button><div class="lbl" data-fx="text">Tokyo 2060</div></div></header>
   <main class="card" id="card"></main>
+  <div class="push" id="push" hidden aria-live="polite"><i></i><span>PUSH TO</span> <b id="pushL">START</b></div>
 </div>
 <script>
 
 const $=s=>document.querySelector(s);
 const card=$("#card");
 let stream=null,unmountFig=null,cleanup=[];
+/* 展示モード：URLに ?exhibit=1 を付けて開く（PUSH案内を表示、カメラを開いたままにする） */
+const EXHIBIT=(()=>{try{const q=new URLSearchParams(location.search).get("exhibit");if(q!==null)localStorage.setItem("mirai_exhibit",q==="0"?"0":"1");return localStorage.getItem("mirai_exhibit")==="1"}catch{return new URLSearchParams(location.search).get("exhibit")==="1"}})();
+if(EXHIBIT)document.body.classList.add("exhibit");
+function lsGet(k,d){try{const v=localStorage.getItem(k);return v===null?d:v}catch{return d}}
+function lsSet(k,v){try{localStorage.setItem(k,v)}catch{}}
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
-function stopCam(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}}
+function releaseCam(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}}
+// 展示モードではカメラを開いたままにする（毎回の起動待ちと許可確認をなくす）
+function stopCam(){if(!EXHIBIT)releaseCam()}
+
+/* ===== カメラ：外部USBカメラを優先して使う ===== */
+async function listCams(){try{return (await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==="videoinput")}catch{return[]}}
+const BUILTIN=/integrated|built-?in|facetime|内蔵|front|back camera/i;
+async function getCam(){
+  if(stream&&stream.getVideoTracks().some(t=>t.readyState==="live"))return stream;
+  if(!navigator.mediaDevices?.getUserMedia)throw {code:"no_api"};
+  let id=lsGet("mirai_cam_id","");
+  if(!id){const ext=(await listCams()).find(c=>c.label&&!BUILTIN.test(c.label));if(ext)id=ext.deviceId}
+  const base={width:{ideal:1920},height:{ideal:1080}};
+  try{stream=await navigator.mediaDevices.getUserMedia({video:id?{...base,deviceId:{exact:id}}:{...base,facingMode:"environment"},audio:false})}
+  catch(e){
+    if(!id)throw e;
+    // 登録したカメラが見つからないときは、使えるカメラで開く
+    stream=await navigator.mediaDevices.getUserMedia({video:base,audio:false});
+  }
+  // 初回の許可後はカメラ名が取れるので、外部カメラがあれば切り替える
+  if(!lsGet("mirai_cam_id","")){
+    const cur=stream.getVideoTracks()[0]?.getSettings().deviceId;
+    const ext=(await listCams()).find(c=>c.label&&!BUILTIN.test(c.label));
+    if(ext&&cur&&ext.deviceId!==cur){releaseCam();return getCam2(ext.deviceId)}
+  }
+  stream.getVideoTracks().forEach(t=>t.onended=()=>{stream=null});
+  return stream;
+}
+async function getCam2(id){stream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:1920},height:{ideal:1080},deviceId:{exact:id}},audio:false});return stream}
+function camLabel(){return stream?.getVideoTracks()[0]?.label||"未接続"}
+
+/* ===== 物理ボタン：画面ごとに「押したら何をするか」を登録する ===== */
+let pushAct=null,lastPush=0;
+function setPush(label,fn){pushAct=fn;const el=$("#push");if(!el)return;if(!label){el.hidden=true;return}el.hidden=false;$("#pushL").textContent=label}
+function clearPush(){setPush(null,null)}
+function pushCodes(){try{const c=JSON.parse(lsGet("mirai_push_codes","null"));if(Array.isArray(c)&&c.length)return c}catch{}return["Enter","NumpadEnter","Space"]}
+function firePush(){
+  const now=performance.now();if(now-lastPush<800)return; // 連打・二重入力を防ぐ
+  lastPush=now;SND.unlock();
+  const f=pushAct;if(!f)return;
+  pushAct=null; // 実行中は次の入力を受け付けない（次の画面で登録し直す）
+  $("#push")?.classList.add("hit");setTimeout(()=>$("#push")?.classList.remove("hit"),250);
+  f();
+}
+document.addEventListener("click",e=>{if(e.target.closest("#push"))firePush()});
+document.addEventListener("keydown",e=>{
+  if(staffOpen()||e.ctrlKey||e.metaKey||e.altKey)return;
+  if(!pushCodes().includes(e.code))return;
+  e.preventDefault();e.stopPropagation();
+  if(e.repeat)return; // 長押しの連続入力は無視
+  firePush();
+},true);
 
 function render(html){
+  clearPush();
   if(unmountFig){unmountFig();unmountFig=null}
   cleanup.forEach(f=>{try{f()}catch{}});cleanup=[];
   document.body.dataset.calm="";card.dataset.page="";
@@ -440,6 +521,7 @@ function pageTitle(){
   card.dataset.page="title";
   setTimeout(()=>SND.glitch(),300);
   $("#go").onclick=pageStory;
+  setPush("START",pageStory);
 }
 
 /* 2. minatoが2060年の状況を話す */
@@ -451,19 +533,21 @@ function pageStory(){
     <div><button class="btn hidden-until" id="next">次へ</button></div></div></div>`);
   card.dataset.page="story";
   unmountFig=minatoFigure($("#fig"),{talk:true});
-  const line=$("#line");let alive=true;cleanup.push(()=>alive=false);
+  const line=$("#line");let alive=true,skip=false,done=false;cleanup.push(()=>alive=false);
+  const finish=()=>{if(done)return;done=true;$("#next").classList.remove("hidden-until");setPush("CONTINUE",pageMission)};
+  setPush("CONTINUE",()=>{skip=true;line.innerHTML=`<span class="intro-l">${esc("2060年の時間郵便局で働いてる、minato。")}</span>${esc(story.text)}<span class="cur"></span>`;finish()});
   (async()=>{
     await sleep(700);
     const intro="2060年の時間郵便局で働いてる、minato。",txt=story.text;
-    const type=async(pre,t)=>{for(let i=1;i<=t.length&&alive;i++){
+    const type=async(pre,t)=>{for(let i=1;i<=t.length&&alive&&!skip;i++){
       line.innerHTML=pre+esc(t.slice(0,i))+'<span class="cur"></span>';
       if(i%2)SND.type();
       const c=t[i-1];await sleep("。、".includes(c)?320:55);
     }};
-    await type("",intro);if(!alive)return;
-    await sleep(600);
+    await type("",intro);if(!alive||skip)return;
+    await sleep(600);if(skip)return;
     await type(`<span class="intro-l">${esc(intro)}</span>`,txt);
-    if(alive)$("#next").classList.remove("hidden-until");
+    if(alive&&!skip)finish();
   })();
   $("#next").onclick=pageMission;
 }
@@ -479,6 +563,7 @@ function pageMission(){
   card.dataset.page="mission";
   setTimeout(()=>SND.tick(),1500);
   $("#go").onclick=pageQuestion;
+  setPush("CONTINUE",pageQuestion);
 }
 
 /* 3.5 minatoからのリクエスト */
@@ -494,6 +579,7 @@ function pageQuestion(){
   card.dataset.page="request";document.body.dataset.calm="1";
   setTimeout(()=>SND.tick(),500);
   $("#go").onclick=pageCamera;
+  setPush("CONTINUE",pageCamera);
 }
 
 /* 4. カメラ */
@@ -509,23 +595,54 @@ async function pageCamera(){
     <div class="camside">
       <div class="camq"><div class="lbl">minatoからのリクエスト</div><p>「${esc(story.q)}」</p></div>
       <p class="camhint">minato「枠の真ん中に映して。ブレてたら受け取らないから」</p>
-      <div class="shootbox"><button class="shoot" id="shot" aria-label="撮影して未来へ送る"></button><span class="shootlbl">TAP TO TRANSMIT</span></div>
+      <div class="shootbox"><button class="shoot" id="shot" aria-label="撮影する"></button><span class="shootlbl" id="shotlbl">CAMERA STARTING…</span></div>
     </div></div>
     <input type="file" id="file" accept="image/*" capture="environment" hidden>`);
   card.dataset.page="camera";document.body.dataset.calm="1";
   const clk=()=>{const c=$("#clk");if(c){const d=new Date();c.textContent=`REC 2026.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getDate()).padStart(2,"0")} ${d.toTimeString().slice(0,8)}`}};
   clk();const iv=setInterval(()=>{clk();const o=$("#obj");if(o)o.textContent="OBJECT: "+(Math.random()<.5?"SEARCHING…":"LOCK "+(60+Math.random()*39|0)+"%")},700);cleanup.push(()=>clearInterval(iv));
   const fileIn=$("#file");
-  fileIn.onchange=e=>{const f=e.target.files[0];if(!f)return;const img=new Image();img.onload=()=>{const c=document.createElement("canvas");c.width=img.naturalWidth;c.height=img.naturalHeight;c.getContext("2d").drawImage(img,0,0);URL.revokeObjectURL(img.src);SND.shutter();send(c)};img.src=URL.createObjectURL(f)};
+  fileIn.onchange=e=>{const f=e.target.files[0];if(!f)return;const img=new Image();img.onload=()=>{const c=document.createElement("canvas");c.width=img.naturalWidth;c.height=img.naturalHeight;c.getContext("2d").drawImage(img,0,0);URL.revokeObjectURL(img.src);SND.shutter();pageConfirm(c)};img.src=URL.createObjectURL(f)};
+  let alive=true;cleanup.push(()=>alive=false);
   try{
-    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment",width:{ideal:1280}},audio:false});
-    const v=$("#v");if(!v){stopCam();return}v.srcObject=stream;
-    $("#shot").onclick=()=>{if(!v.videoWidth)return;const c=document.createElement("canvas");c.width=v.videoWidth;c.height=v.videoHeight;c.getContext("2d").drawImage(v,0,0);SND.shutter();stopCam();send(c)};
+    const st=await getCam();
+    const v=$("#v");if(!alive||!v){stopCam();return}
+    v.srcObject=st;await v.play().catch(()=>{});
+    const shoot=()=>{
+      if(!v.videoWidth){setPush("SCAN",shoot);return}
+      const c=document.createElement("canvas");c.width=v.videoWidth;c.height=v.videoHeight;c.getContext("2d").drawImage(v,0,0);
+      SND.shutter();flash();pageConfirm(c);
+    };
+    $("#shot").onclick=shoot;$("#shotlbl").textContent=EXHIBIT?"PUSH TO SCAN":"TAP TO SCAN";
+    setPush("SCAN",shoot);
   }catch(e){
+    if(!alive)return;
     const cam=$("#cam");if(!cam)return;
-    cam.insertAdjacentHTML("beforeend",`<div class="nocam">この画面ではカメラ映像を直接表示できません。<br>下のボタンからカメラか写真を選んでください。</div>`);
-    $("#shot").onclick=()=>fileIn.click();
+    const why=e?.name==="NotAllowedError"?"カメラの使用が許可されていません。":e?.name==="NotFoundError"||e?.name==="OverconstrainedError"?"カメラが見つかりません。":"カメラを起動できませんでした。";
+    cam.insertAdjacentHTML("beforeend",`<div class="nocam"><b>${why}</b><br>USBカメラの接続を確認してください。${EXHIBIT?"<br>（スタッフ：Ctrl+Shift+S）":"<br>下のボタンから写真を選んで送ることもできます。"}</div>`);
+    if(EXHIBIT){$("#shotlbl").textContent="PUSH TO RETRY";$("#shot").onclick=pageCamera;setPush("RETRY",pageCamera)}
+    else{$("#shotlbl").textContent="写真を選ぶ";$("#shot").onclick=()=>fileIn.click()}
   }
+}
+
+/* 4.5 撮影画像の確認（誤って転送しないように） */
+function pageConfirm(c){
+  const url=square(c,720);
+  render(`<div class="camgrid"><div class="hud-cam conf"><img src="${url}" alt="撮影した物"><div class="tint"></div>
+      <i class="br b1"></i><i class="br b2"></i><i class="br b3"></i><i class="br b4"></i>
+      <div class="hud-txt ht1">● CAPTURED</div><div class="hud-txt ht4">DEST 2060 / SHIBUYA</div></div>
+    <div class="camside">
+      <div class="camq"><div class="lbl">確認</div><p>この物を2060年へ送りますか？</p></div>
+      <p class="camhint" id="cdn"></p>
+      <div class="row"><button class="btn" id="go">未来へ送る</button><button class="btn ghost" id="redo">撮り直す</button></div>
+    </div></div>`);
+  card.dataset.page="confirm";document.body.dataset.calm="1";
+  const go=()=>send(c);
+  $("#go").onclick=go;$("#redo").onclick=pageCamera;
+  setPush("TRANSMIT",go);
+  // しばらく押されなければ撮り直しに戻る
+  let n=15;const tick=()=>{const el=$("#cdn");if(el)el.textContent=`押さずに${n}秒たつと、撮り直しに戻ります。`};tick();
+  const iv=setInterval(()=>{n--;if(n<=0){clearInterval(iv);pageCamera()}else tick()},1000);cleanup.push(()=>clearInterval(iv));
 }
 
 /* 5. 時空転送 */
@@ -600,6 +717,7 @@ function pageResult(r){
   if(o==="lost")setTimeout(()=>{if(alive)document.body.classList.add("desat")},T[4]+600);
   $("#again").onclick=()=>{document.body.classList.remove("desat");pageQuestion()};
   $("#top").onclick=pageTitle;
+  const pt=setTimeout(()=>{if(alive)setPush("CONTINUE",pageTitle)},T[5]);cleanup.push(()=>clearTimeout(pt));
 }
 
 function fail(e){
@@ -611,6 +729,7 @@ function fail(e){
     :"転送に失敗しました。もう一度送ってください。";
   render(`<div class="err">${esc(msg)}</div>${e?.detail?`<div class="mute" style="font-size:12px;word-break:break-all">詳細：${esc(e.detail)}</div>`:""}<div><button class="btn" id="go">もう一度撮る</button></div>`);
   $("#go").onclick=pageCamera;
+  setPush("RETRY",pageCamera);
 }
 
 function scaled(src,max){const k=Math.min(1,max/Math.max(src.width,src.height));const c=document.createElement("canvas");c.width=Math.round(src.width*k);c.height=Math.round(src.height*k);c.getContext("2d").drawImage(src,0,0,c.width,c.height);return c}
@@ -770,10 +889,10 @@ const SND=(()=>{
           notes:[220,261.6,293.7,329.6,392,440,523.3],every:700,skip:.35,wave:"triangle",nv:.05,len:1.6,order:"rand"},
     // 救われた：明るく温かい（ハ長調）
     saved:{drone:[[65.4,"triangle"],[98,"sine"],[164.8,"sine"]],cut:1600,q:1,lfo:300,vol:.13,
-          notes:[523.3,587.3,659.3,784,880,1046.5,1174.7,1318.5],every:240,skip:.12,wave:"triangle",nv:.045,len:.9,order:"up"},
+          notes:[523.3,587.3,659.3,784,880,1046.5,1174.7,1318.5],every:240,skip:.12,wave:"triangle",nv:.07,len:.9,order:"up"},
     // あと一歩：穏やかで少し切ない
     partial:{drone:[[110,"sine"],[164.8,"sine"],[246.9,"triangle"]],cut:900,q:1.5,lfo:200,vol:.12,
-          notes:[440,493.9,523.3,587.3,659.3,587.3,523.3,493.9],every:560,skip:.3,wave:"sine",nv:.045,len:1.6,order:"up"},
+          notes:[440,493.9,523.3,587.3,659.3,587.3,523.3,493.9],every:560,skip:.3,wave:"sine",nv:.065,len:1.6,order:"up"},
     // 救えなかった：寂しく、ゆっくり沈んでいく
     lost:{drone:[[55,"sine"],[82.4,"sine"],[110,"sine"]],cut:300,q:1,lfo:80,vol:.14,
           notes:[392,349.2,311.1,293.7,261.6,233.1],every:1500,skip:.45,wave:"sine",nv:.035,len:2.8,order:"down"}
@@ -799,7 +918,7 @@ const SND=(()=>{
     if(!ac){mood=m;return}
     if(drone&&m===mood)return;
     mood=m;
-    if(drone){const old=drone,t=ac.currentTime;old.g.gain.cancelScheduledValues(t);old.g.gain.setTargetAtTime(0,t,.6);old.oscs.forEach(o=>o.stop(t+3))}
+    if(drone){const old=drone,t=ac.currentTime;old.g.gain.cancelScheduledValues(t);old.g.gain.setValueAtTime(old.g.gain.value,t);old.g.gain.linearRampToValueAtTime(0,t+1.2);old.oscs.forEach(o=>o.stop(t+1.4))}
     drone=buildDrone(m);startArp(m);
   }
   function bgmStart(){
@@ -815,7 +934,9 @@ const SND=(()=>{
   btn.onclick=()=>setOn(!on);
   ui();
   // ブラウザは操作前に音を鳴らせないので、最初のクリックで開始
-  document.addEventListener("pointerdown",()=>{if(on){init();ac.resume();bgmStart()}},{once:true});
+  function unlock(){if(on){init();if(ac.state!=="running")ac.resume();bgmStart()}}
+  document.addEventListener("pointerdown",unlock);
+  document.addEventListener("keydown",unlock);
   // ボタンのクリック音
   document.addEventListener("click",e=>{if(e.target.closest(".btn,.li"))tone(880,.08,{type:"square",vol:.06,slide:1320})});
   return{
@@ -851,6 +972,7 @@ const SND=(()=>{
     },
     glitch(){for(let i=0;i<7;i++)tone(200+Math.random()*1800,.05,{type:"square",vol:.06,at:i*.09})},
     stamp(){tone(90,.25,{vol:.5,slide:50});noise(.1,{vol:.4,f:1200,q:.8})},
+    unlock(){unlock()},
     mood(m){setMood(m);bgmDuck(1,1)},
     win(big){[523.3,659.3,784,1046.5].forEach((f,i)=>tone(f,.5,{type:"triangle",vol:.09,at:i*.11}));if(big)tone(1568,1.2,{type:"sine",vol:.06,at:.5})},
     lose(){tone(392,.3,{type:"triangle",vol:.08,slide:370});tone(311,.6,{type:"triangle",vol:.08,at:.28,slide:260})},
@@ -952,6 +1074,51 @@ function minatoFigure(cv,{talk=false}={}){
   setTimeout(big,12000);
 })();
 
+
+/* ===== スタッフ用パネル（Ctrl+Shift+S で開閉） ===== */
+function staffOpen(){return !!$("#staff")&&!$("#staff").hidden}
+(function(){
+  const el=document.createElement("div");el.id="staff";el.hidden=true;el.innerHTML=`
+    <div class="sp-box"><div class="sp-hd"><b>STAFF</b><button id="spX">閉じる</button></div>
+    <section><h3>カメラ</h3><div class="sp-row"><select id="spCam"></select><button id="spCamUse">このカメラを使う</button></div>
+      <video id="spV" autoplay playsinline muted></video><div class="sp-st" id="spCamSt"></div></section>
+    <section><h3>物理ボタン</h3><div class="sp-st">今のキー：<b id="spKeys"></b></div>
+      <div class="sp-row"><button id="spLearn">ボタンを登録（押して覚えさせる）</button><button id="spKeyReset">既定に戻す</button></div>
+      <div class="sp-st" id="spKeySt">最後に押されたキー：-</div></section>
+    <section><h3>音</h3><div class="sp-row"><button id="spSnd">テスト音を鳴らす</button></div><div class="sp-st" id="spSndSt"></div></section>
+    <section><h3>展示モード</h3><div class="sp-st">今：<b>${EXHIBIT?"ON":"OFF"}</b>（URLに ?exhibit=1 / ?exhibit=0 で切替）</div></section>
+    <section><h3>リセット</h3><div class="sp-row"><button id="spReset" class="warn">TOPへ強制リセット</button><button id="spReload">ページを再読み込み</button></div></section>
+    </div>`;
+  document.body.appendChild(el);
+  let learning=false;
+  const keysUI=()=>{$("#spKeys").textContent=pushCodes().join(" / ")};
+  async function fillCams(){
+    const cams=await listCams(),sel=$("#spCam"),cur=stream?.getVideoTracks()[0]?.getSettings().deviceId||lsGet("mirai_cam_id","");
+    sel.innerHTML=cams.map((c,i)=>`<option value="${esc(c.deviceId)}"${c.deviceId===cur?" selected":""}>${esc(c.label||"カメラ "+(i+1))}</option>`).join("")||"<option>カメラが見つかりません</option>";
+    $("#spCamSt").textContent=`使用中：${camLabel()}　／　見つかったカメラ：${cams.length}台`;
+  }
+  async function open(){
+    el.hidden=false;keysUI();
+    try{await getCam();$("#spV").srcObject=stream}catch(e){$("#spCamSt").textContent="カメラを起動できません："+(e?.name||e?.code||e)}
+    fillCams();
+  }
+  function close(){el.hidden=true;learning=false;$("#spV").srcObject=null}
+  document.addEventListener("keydown",e=>{
+    if(e.ctrlKey&&e.shiftKey&&e.code==="KeyS"){e.preventDefault();staffOpen()?close():open();return}
+    if(!staffOpen())return;
+    $("#spKeySt").textContent="最後に押されたキー："+e.code;
+    if(learning&&!["ShiftLeft","ShiftRight","ControlLeft","ControlRight","AltLeft","AltRight","MetaLeft","MetaRight"].includes(e.code)){
+      e.preventDefault();learning=false;lsSet("mirai_push_codes",JSON.stringify([e.code]));keysUI();$("#spLearn").textContent="ボタンを登録（押して覚えさせる）";
+    }
+  },true);
+  $("#spX").onclick=close;
+  $("#spCamUse").onclick=async()=>{const id=$("#spCam").value;lsSet("mirai_cam_id",id);releaseCam();try{await getCam();$("#spV").srcObject=stream}catch(e){$("#spCamSt").textContent="切り替えに失敗："+(e?.name||e)}fillCams()};
+  $("#spLearn").onclick=()=>{learning=true;$("#spLearn").textContent="物理ボタンを押してください…"};
+  $("#spKeyReset").onclick=()=>{try{localStorage.removeItem("mirai_push_codes")}catch{};keysUI()};
+  $("#spSnd").onclick=()=>{SND.unlock();SND.win(true);$("#spSndSt").textContent="音が鳴らない場合：右上のSOUND表示がONか、PCの出力先スピーカーと音量を確認してください。"};
+  $("#spReset").onclick=()=>{close();document.body.classList.remove("desat");pageTitle()};
+  $("#spReload").onclick=()=>location.reload();
+})();
 
 pageTitle();
 </script>
