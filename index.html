@@ -399,6 +399,8 @@ body.exhibit .card{padding-bottom:calc(var(--u)*4)}
 #fxb{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;background:#000}
 body.fxmode{background:#000;overflow:hidden}
 body.fxmode #stage{display:block;position:fixed;inset:0;z-index:1;transform:scale(var(--fxs,.9));transform-origin:center;background:var(--bk);overflow:hidden}
+
+.idle{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--u)*5.2 + env(safe-area-inset-bottom,0px));z-index:30;font-family:var(--f-mono);font-size:clamp(12px,calc(var(--u)*.85),18px);letter-spacing:.08em;color:var(--mute);background:rgba(0,0,0,.7);padding:.3em .9em;white-space:nowrap}
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0}
 img{max-width:100%}
@@ -416,6 +418,7 @@ img{max-width:100%}
 <div class="wrap">
   <header><div class="logo" data-fx="css">未来救出局<em>.</em></div><div class="hr"><button class="snd" id="snd" aria-pressed="false">SOUND OFF</button><div class="lbl" data-fx="text">Tokyo 2060</div></div></header>
   <main class="card" id="card"></main>
+  <div class="idle" id="idle" hidden></div>
   <div class="push" id="push" hidden aria-live="polite"><i></i><span>PUSH TO</span> <b id="pushL">START</b></div>
 </div>
 </div>
@@ -740,6 +743,7 @@ function fail(e){
     :"転送に失敗しました。もう一度送ってください。";
   render(`<div class="err">${esc(msg)}</div>${e?.detail?`<div class="mute" style="font-size:12px;word-break:break-all">詳細：${esc(e.detail)}</div>`:""}<div><button class="btn" id="go">もう一度撮る</button></div>`);
   $("#go").onclick=pageCamera;
+  card.dataset.page="error";
   setPush("RETRY",pageCamera);
 }
 
@@ -1181,6 +1185,27 @@ const FXB=(()=>{
   return api;
 })();
 
+/* ===== 自動リセット（展示モード）：操作がないまま時間がたつと待機画面に戻る ===== */
+const IDLE=(()=>{
+  // 画面ごとの「操作なしで待つ秒数」。title と warp（転送中）は対象外、confirm は画面側で撮り直しに戻す
+  const LIMIT={story:60,mission:45,request:60,camera:60,error:20,result:Number(lsGet("mirai_result_sec","40"))||40};
+  let since=performance.now(),page="";
+  const touch=()=>{since=performance.now()};
+  const api={touch,resultSec:()=>LIMIT.result,setResultSec(v){LIMIT.result=v;lsSet("mirai_result_sec",String(v))}};
+  if(!EXHIBIT)return api;
+  ["pointerdown","keydown"].forEach(ev=>document.addEventListener(ev,touch,true));
+  setInterval(()=>{
+    const el=$("#idle"),pg=card.dataset.page||"";
+    if(pg!==page){page=pg;touch()}
+    const lim=LIMIT[pg];
+    if(!lim||staffOpen()){if(el)el.hidden=true;return}
+    const left=Math.ceil(lim-(performance.now()-since)/1000);
+    if(left<=0){el.hidden=true;document.body.classList.remove("desat");pageTitle();return}
+    if(left<=10){el.hidden=false;el.textContent=`あと${left}秒で最初の画面に戻ります`}else el.hidden=true;
+  },500);
+  return api;
+})();
+
 /* ===== スタッフ用パネル（Ctrl+Shift+S で開閉） ===== */
 function staffOpen(){return !!$("#staff")&&!$("#staff").hidden}
 (function(){
@@ -1197,6 +1222,8 @@ function staffOpen(){return !!$("#staff")&&!$("#staff").hidden}
       <div class="sp-row"><button id="spFx">${FXMODE?"OFFにする":"ONにする"}</button>
       <label>外周の幅（片側） <select id="spFxM">${[3,5,8,10,12,15].map(v=>`<option value="${v}">${v}%</option>`).join("")}</select></label>
       <button id="spFxTest">演出を順番にテスト</button></div></section>
+    <section><h3>自動リセット</h3><div class="sp-row"><label>結果画面を表示する時間 <select id="spRes">${[20,30,40,60,90,120].map(v=>`<option value="${v}">${v}秒</option>`).join("")}</select></label></div>
+      <div class="sp-st">ほかの画面は、操作がないまま45〜60秒たつと最初の画面に戻ります（転送中は除く）。</div></section>
     <section><h3>リセット</h3><div class="sp-row"><button id="spReset" class="warn">TOPへ強制リセット</button><button id="spReload">ページを再読み込み</button></div></section>
     </div>`;
   document.body.appendChild(el);
@@ -1228,6 +1255,7 @@ function staffOpen(){return !!$("#staff")&&!$("#staff").hidden}
   $("#spSnd").onclick=()=>{SND.unlock();SND.win(true);$("#spSndSt").textContent="音が鳴らない場合：右上のSOUND表示がONか、PCの出力先スピーカーと音量を確認してください。"};
   $("#spReset").onclick=()=>{close();document.body.classList.remove("desat");pageTitle()};
   $("#spReload").onclick=()=>location.reload();
+  $("#spRes").value=String(IDLE.resultSec());$("#spRes").onchange=e=>IDLE.setResultSec(Number(e.target.value));
   $("#spFx").onclick=()=>{lsSet("mirai_fx",FXMODE?"0":"1");if(!FXMODE)lsSet("mirai_exhibit","1");location.href=location.pathname};
   $("#spFxM").value=String(FXB.margin());
   $("#spFxM").onchange=e=>FXB.setMargin(Number(e.target.value));
