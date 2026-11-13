@@ -8,7 +8,8 @@
  * 設定は「プロジェクトの設定 > スクリプト プロパティ」で行う：
  *   ANTHROPIC_API_KEY  （必須）Claude API のキー
  *   MODEL              （任意）既定は claude-sonnet-5-5
- *   RATE_PER_MIN       （任意）1分あたりの受付上限。既定 30
+ *   RATE_PER_MIN       （任意）1分あたりの受付上限。既定 60（1回の体験で、判定と想像図の2回呼ぶ）
+ *   ILLUST_MODEL       （任意）想像図を描くモデル。既定は MODEL と同じ
  *   SAVE_IMAGES        （任意）"false" にすると写真を保存しない
  *   IMAGE_FOLDER_ID    （任意）写真の保存先フォルダID。未設定なら自動で作る
  *   RESCUE_GOAL        （任意）未来救済モードで回復率100%になる合計ポイント。既定 3000
@@ -193,6 +194,58 @@ function missionStats_() {
   return { saved: saved, lost: lost };
 }
 
+// ===== 結果画面の想像図（線画SVG）=====
+const PROMPT_ILLUST = `あなたは線画のイラストレーターです。2060年の東京・渋谷の一場面を、線だけのSVGで描いてください。
+
+【世界】{{THEME}}
+【送られてきた物】{{ITEM}}
+【起きたこと】{{HAPPENED}}
+【結果】{{OUTCOME}}
+
+【描き方】
+- 「起きたこと」の場面を1枚の絵にする。手前に、送られてきた物と、それを使っている人（棒人間に近い簡単な人物でよい）。奥に、この世界だとわかる背景（海・ビル・ボート・工場など）
+- 送られてきた物は、形でそれとわかるように大きめに描く
+- 結果が「救われた」なら人が楽しそうな構図、「救えなかった」なら物が役に立っていない・放置されている構図にする
+- viewBox は "0 0 800 600"。画面いっぱいに使う
+- 使える要素は path, line, circle, ellipse, rect, polyline, polygon, g だけ。text、image、style、色や線の太さの指定は使わない（線の色と太さは表示側で決める）
+- 塗りつぶしは使わず、線だけで描く
+- 要素は25〜45個。細かすぎる曲線は使わず、すっきりした線にする
+- 座標は整数にする
+
+以下のJSONオブジェクトだけを返す：
+{"svg":"<svg viewBox=\\"0 0 800 600\\">…</svg>"}`;
+
+function drawIllust_(body) {
+  const idx = Math.max(0, Math.min(MISSION_STORIES.length - 1, Number(body.story) || 0));
+  const label = { saved: '救われた', partial: 'あと一歩だった', lost: '救えなかった' }[body.outcome] || 'あと一歩だった';
+  const clip = function (v, n) { return String(v || '').replace(/[`{}]/g, '').slice(0, n); };
+  const prompt = PROMPT_ILLUST.replace('{{THEME}}', MISSION_STORIES[idx].theme)
+    .replace('{{ITEM}}', clip(body.item, 40)).replace('{{HAPPENED}}', clip(body.happened, 200)).replace('{{OUTCOME}}', label);
+  const r = callClaudeText_(prompt);
+  return String(r.svg || '').slice(0, 60000);
+}
+
+// 画像なしで Claude を呼ぶ（想像図用）
+function callClaudeText_(promptText) {
+  const key = (PROPS.getProperty('ANTHROPIC_API_KEY') || '').trim();
+  if (!key) throw new Error('ANTHROPIC_API_KEY が未設定です');
+  const res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+    payload: JSON.stringify({ model: PROPS.getProperty('ILLUST_MODEL') || PROPS.getProperty('MODEL') || 'claude-sonnet-5-5', max_tokens: 8000, messages: [{ role: 'user', content: promptText }] }),
+    muteHttpExceptions: true
+  });
+  const code = res.getResponseCode();
+  if (code === 429 || code === 529) throw new Error('rate limited by API');
+  if (code !== 200) throw new Error('Claude API error ' + code + ': ' + res.getContentText().slice(0, 300));
+  const data = JSON.parse(res.getContentText());
+  const text = data.content.filter(function (c) { return c.type === 'text'; }).map(function (c) { return c.text; }).join('');
+  const s = text.indexOf('{'), t = text.lastIndexOf('}');
+  if (s < 0 || t < s) throw new Error('JSONが見つかりません（stop_reason: ' + data.stop_reason + '）');
+  return JSON.parse(text.slice(s, t + 1));
+}
+
 function doPost(e) {
   if (!e || !e.postData) {
     // エディタの「実行」で doPost を直接動かした場合。動作確認は testClaude を使う
@@ -202,6 +255,7 @@ function doPost(e) {
   try {
     if (!rateOk_()) return out_({ ok: false, error: 'rate_limited' });
     const body = JSON.parse(e.postData.contents || '{}');
+    if (body.mode === 'illust') return out_({ ok: true, svg: drawIllust_(body) });
     const image = body.image;
     if (typeof image !== 'string' || image.length < 1000 || image.length > 4000000) {
       return out_({ ok: false, error: 'bad_image' });
@@ -276,7 +330,7 @@ function callClaude_(imageBase64, promptText) {
 }
 
 function rateOk_() {
-  const limit = Number(PROPS.getProperty('RATE_PER_MIN') || 30);
+  const limit = Number(PROPS.getProperty('RATE_PER_MIN') || 60);
   const cache = CacheService.getScriptCache();
   const key = 'rate_' + Math.floor(Date.now() / 60000);
   const lock = LockService.getScriptLock();
