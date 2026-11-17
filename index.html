@@ -436,6 +436,39 @@ body.fxmode #stage{display:block;position:fixed;inset:0;z-index:1;transform:scal
 .res2 .r-req{font-size:clamp(16px,calc(var(--u)*1.5),32px)}
 #staff input[type=range]{vertical-align:middle;width:140px}
 @media (max-width:820px),(max-aspect-ratio:1/1){.story2{grid-template-columns:1fr}.tx{height:auto;aspect-ratio:3/4}.tx-min{max-width:90%}.illust{max-height:none}}
+
+/* ===== ギャラリー（白基調のカタログ風） ===== */
+#gallery{position:fixed;inset:0;z-index:60;background:#f2f2f0;color:#111;display:flex;flex-direction:column;gap:calc(var(--u)*1.2);padding:calc(var(--u)*1.6) calc(var(--u)*2.4);font-family:var(--f-body);animation:fin .5s ease both}
+.gload{margin:auto;font-family:var(--f-mono);letter-spacing:.3em;color:#666}
+.ghead{display:flex;align-items:center;gap:calc(var(--u)*1.6)}
+.glogo{height:calc(var(--u)*1.6);width:auto;display:block;mix-blend-mode:multiply}
+.glogo.big{height:calc(var(--u)*2.6)}
+.gh-t{display:flex;flex-direction:column;gap:.2em}.gh-t b{font-family:var(--f-mono);letter-spacing:.24em;font-size:clamp(12px,calc(var(--u)*1),22px)}.gh-t span{font-size:clamp(11px,calc(var(--u)*.8),17px);color:#555}
+.ggrid{flex:1;min-height:0;display:grid;grid-template-rows:repeat(3,minmax(0,1fr));gap:calc(var(--u)*.7)}
+.grow{display:grid;grid-template-columns:calc(var(--u)*5.6) repeat(3,minmax(0,1fr));gap:calc(var(--u)*.7);min-height:0}
+.glab{display:flex;flex-direction:column;justify-content:center;gap:.3em;border-left:3px solid #111;padding-left:.6em}
+.glab b{font-family:var(--f-mono);letter-spacing:.14em;font-size:clamp(11px,calc(var(--u)*.85),18px)}.glab span{white-space:nowrap;font-size:clamp(10px,calc(var(--u)*.7),15px);color:#555}
+.grow.saved .glab{border-color:#ff5c00}.grow.partial .glab{border-color:#999}.grow.lost .glab{border-color:#c62828}
+.gcard{position:relative;overflow:hidden;background:#fff;border:1px solid #ddd;min-height:0;animation:fin .5s ease both}
+.gph{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+/* 写真の上にかける「フィルター」：上下に白いもや、全体にうっすら白 */
+.gcard::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(255,255,255,.92) 0%,rgba(255,255,255,.35) 26%,rgba(255,255,255,.08) 50%,rgba(255,255,255,.35) 72%,rgba(255,255,255,.94) 100%)}
+.gcard.lost .gph{filter:grayscale(1) contrast(1.05)}
+.gcard.partial .gph{filter:saturate(.55)}
+.gtop,.gbot,.ghatch,.gnone{position:absolute;z-index:2}
+.gtop{left:6%;right:5%;top:8%;display:flex;justify-content:space-between;align-items:center;gap:.6em}
+.gttl{font-family:var(--f-mono);font-weight:700;letter-spacing:.14em;font-size:clamp(11px,calc(var(--u)*1.05),24px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gttl i{font-style:normal;margin-left:.5em;font-weight:400}
+.gbot{left:6%;bottom:9%;display:flex;flex-direction:column;gap:.15em;max-width:70%}
+.gslash{width:calc(var(--u)*1.2);height:1px;background:#111;transform:rotate(-55deg);transform-origin:left;margin:0 0 .6em .1em}
+.gbot small{font-family:var(--f-mono);font-size:clamp(9px,calc(var(--u)*.6),13px);letter-spacing:.1em;color:#333}
+.gbot b{font-family:var(--f-mono);font-size:clamp(11px,calc(var(--u)*.85),19px);letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ghatch{right:6%;bottom:9%;font-family:var(--f-mono);color:#888;letter-spacing:-.1em;font-size:clamp(10px,calc(var(--u)*.8),17px);transform:skewX(-20deg)}
+.gcard.saved{box-shadow:inset 0 0 0 2px rgba(255,92,0,.0)}
+.gcard.empty{background:repeating-linear-gradient(135deg,#f7f7f5 0 10px,#efefed 10px 20px)}
+.gcard.empty::before{display:none}
+.gnone{inset:0;display:flex;align-items:center;justify-content:center;color:#999;font-size:clamp(11px,calc(var(--u)*.8),17px)}
+.gfoot{font-family:var(--f-mono);font-size:clamp(10px,calc(var(--u)*.65),14px);color:#888;text-align:right;letter-spacing:.08em}
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0}
 img{max-width:100%}
@@ -509,6 +542,7 @@ function pushCodes(){try{const c=JSON.parse(lsGet("mirai_push_codes","null"));if
 function firePush(){
   const now=performance.now();if(now-lastPush<800)return; // 連打・二重入力を防ぐ
   lastPush=now;SND.unlock();
+  if(GAL.isOpen()){GAL.close();pageTitle();return}
   const f=pushAct;if(!f)return;
   pushAct=null; // 実行中は次の入力を受け付けない（次の画面で登録し直す）
   $("#push")?.classList.add("hit");setTimeout(()=>$("#push")?.classList.remove("hit"),250);
@@ -861,7 +895,7 @@ function txScene(cv,img){
   };
 }
 async function send(srcCanvas){
-  const img=scaled(srcCanvas,1024),thumb=square(srcCanvas,360);
+  const img=scaled(srcCanvas,1024),thumb=square(srcCanvas,360),gthumb=crop32(srcCanvas,450);
   render(`<div class="tx"><canvas id="txc"></canvas>
     <div class="tx-top"><div class="status" id="st">品物を粒子に分解中</div><div class="coord" id="co">YEAR 2026.00</div></div>
     <div class="tx-arr" id="txa" hidden data-fx="text">ARRIVED · 2060 SHIBUYA TIME POST OFFICE</div>
@@ -878,7 +912,7 @@ async function send(srcCanvas){
     try{
       if(!window.GAS_URL)throw {code:"no_config"};
       const image=img.toDataURL("image/jpeg",.85).split(",")[1];
-      const r=await fetch(window.GAS_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({image,mode:"mission",story:storyIdx})});
+      const r=await fetch(window.GAS_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({image,mode:"mission",story:storyIdx,gthumb:gthumb.split(",")[1]})});
       const t=await r.text();let d;
       try{d=JSON.parse(t)}catch{throw {code:"bad_response",detail:"GASからJSON以外の応答（"+r.status+"）。デプロイのアクセス権が「全員」か、URLが /exec で終わっているか確認してください。"}}
       if(!d.ok)throw {code:d.error||"server_error",detail:d.detail};
@@ -901,6 +935,7 @@ async function send(srcCanvas){
   if(!done){const s=$("#st");if(s)s.textContent="minatoが調べています…"}
   await reqP;if(!alive)return;
   if(err||!res)return fail(err);
+  GAL.remember({outcome:outcomeOf(Math.max(0,Math.min(100,Number(res.score)||0))),item:res.item_name,story:storyIdx,at:Date.now(),thumb:gthumb});
   pageResult({...res,thumb});
 }
 
@@ -970,6 +1005,7 @@ function fail(e){
 }
 
 function scaled(src,max){const k=Math.min(1,max/Math.max(src.width,src.height));const c=document.createElement("canvas");c.width=Math.round(src.width*k);c.height=Math.round(src.height*k);c.getContext("2d").drawImage(src,0,0,c.width,c.height);return c}
+function crop32(src,w){const h=Math.round(w*2/3),sa=src.width/src.height;let sw=src.width,sh=src.height,sx=0,sy=0;if(sa>1.5){sw=sh*1.5;sx=(src.width-sw)/2}else{sh=sw/1.5;sy=(src.height-sh)/2}const c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(src,sx,sy,sw,sh,0,0,w,h);return c.toDataURL("image/jpeg",.6)}
 function square(src,size){const s=Math.min(src.width,src.height);const c=document.createElement("canvas");c.width=c.height=size;c.getContext("2d").drawImage(src,(src.width-s)/2,(src.height-s)/2,s,s,0,0,size,size);return c.toDataURL("image/jpeg",.75)}
 
 
@@ -1487,12 +1523,63 @@ const IDLE=(()=>{
     const el=$("#idle"),pg=card.dataset.page||"";
     if(pg!==page){page=pg;touch()}
     const lim=LIMIT[pg];
-    if(!lim||staffOpen()){if(el)el.hidden=true;return}
+    if(!lim||staffOpen()||GAL.isOpen()){if(el)el.hidden=true;if(GAL.isOpen())touch();return}
     const left=Math.ceil(lim-(performance.now()-since)/1000);
     if(left<=0){el.hidden=true;document.body.classList.remove("desat");pageTitle();return}
     if(left<=10){el.hidden=false;el.textContent=`あと${left}秒で最初の画面に戻ります`}else el.hidden=true;
   },500);
   return api;
+})();
+
+/* ===== ギャラリーモード（G キーで開閉）：これまで未来に送られた物の一覧 =====
+   1行目＝救われた、2行目＝あと一歩、3行目＝救えなかった。それぞれ新しい順に3つ */
+const WORLD_TITLES=[["海上都市","FLOATING CITY"],["45℃の夜","45°C NIGHTS"],["水没した渋谷","SUNKEN SHIBUYA"],["1日3時間の電気","3-HOUR POWER"],["3つの味","THREE FLAVORS"]];
+const GAL=(()=>{
+  const LK="mirai_gallery_local";let el=null,open=false,timer=null;
+  function local(){try{return JSON.parse(lsGet(LK,"[]"))||[]}catch{return[]}}
+  function remember(e){const a=local();a.unshift(e);
+    // この端末にも控えを残す（スプレッドシートに届かないときの予備）。各結果5件まで
+    const c={saved:0,partial:0,lost:0};const keep=a.filter(x=>c[x.outcome]!==undefined&&++c[x.outcome]<=5);
+    try{localStorage.setItem(LK,JSON.stringify(keep))}catch{try{localStorage.setItem(LK,JSON.stringify(keep.slice(0,6)))}catch{}}}
+  async function load(){
+    let items=null;
+    if(window.GAS_URL){try{const r=await fetch(window.GAS_URL+"?gallery=3",{signal:AbortSignal.timeout(8000)});const d=await r.json();if(d.ok&&Array.isArray(d.items))items=d.items.map(x=>({...x,thumb:"data:image/jpeg;base64,"+x.thumb}))}catch{}}
+    const L=local();
+    if(!items)return{items:L,src:"local"};
+    // スプレッドシートの分に、この端末だけにある新しい分を足して並べ直す
+    const seen=new Set(items.map(x=>x.outcome+"|"+x.item+"|"+Math.round(x.at/60000)));
+    for(const x of L)if(!seen.has(x.outcome+"|"+x.item+"|"+Math.round(x.at/60000)))items.push(x);
+    return{items,src:"sheet"};
+  }
+  const ROWS=[["saved","SAVED","救われた"],["partial","ALMOST","あと一歩"],["lost","LOST","救えなかった"]];
+  function cardHTML(x,i){
+    if(!x)return `<div class="gcard empty"><div class="gtop"><img class="glogo" src="assets/mvmnt-logo.png" alt="MVMNT"><span class="gttl">NO SIGNAL</span></div><div class="gnone">まだ届いていません</div><span class="ghatch">////</span></div>`;
+    const w=WORLD_TITLES[x.story]||WORLD_TITLES[0];
+    return `<div class="gcard ${x.outcome}" style="animation-delay:${i*90}ms"><img class="gph" src="${x.thumb}" alt="">
+      <div class="gtop"><img class="glogo" src="assets/mvmnt-logo.png" alt="MVMNT"><span class="gttl">${esc(w[1])}<i>›</i></span></div>
+      <div class="gbot"><span class="gslash"></span><small>SENT TO 2060 · ${esc(w[0])}</small><b>${esc(x.item)}</b></div><span class="ghatch">////</span></div>`;
+  }
+  async function render(){
+    const {items}=await load();if(!open)return;
+    const by=o=>items.filter(x=>x.outcome===o).sort((a,b)=>b.at-a.at).slice(0,3);
+    let k=0;
+    el.innerHTML=`<div class="ghead"><img class="glogo big" src="assets/mvmnt-logo.png" alt="MVMNT"><div class="gh-t"><b>ARCHIVE OF RESCUE ATTEMPTS</b><span>未来に送られた物たち ／ 2026 → 2060</span></div></div>
+      <div class="ggrid">${ROWS.map(([o,en,ja])=>{const a=by(o);return `<div class="grow ${o}"><div class="glab"><b>${en}</b><span>${ja}</span></div>${[0,1,2].map(i=>cardHTML(a[i],k++)).join("")}</div>`}).join("")}</div>
+      <div class="gfoot">G：閉じる　／　ボタン：最初の画面へ</div>`;
+  }
+  function show(){
+    if(open)return;open=true;VOICE.stop();
+    el=document.createElement("div");el.id="gallery";el.innerHTML=`<div class="gload">LOADING ARCHIVE…</div>`;
+    ($("#stage")&&getComputedStyle($("#stage")).display!=="contents"?$("#stage"):document.body).appendChild(el);
+    render();timer=setInterval(render,60000); // 開いている間は1分ごとに更新
+  }
+  function close(){if(!open)return;open=false;clearInterval(timer);el?.remove();el=null}
+  document.addEventListener("keydown",e=>{
+    if(staffOpen()||e.ctrlKey||e.metaKey||e.altKey)return;
+    if(e.code==="KeyG"&&!e.repeat){e.preventDefault();open?close():show()}
+    else if(e.code==="Escape"&&open){close()}
+  });
+  return{remember,show,close,isOpen:()=>open};
 })();
 
 /* ===== スタッフ用パネル（Ctrl+Shift+S で開閉） ===== */
@@ -1518,6 +1605,7 @@ function staffOpen(){return !!$("#staff")&&!$("#staff").hidden}
       <button id="spFxTest">演出を順番にテスト</button></div></section>
     <section><h3>自動リセット</h3><div class="sp-row"><label>結果画面を表示する時間 <select id="spRes">${[20,30,40,60,90,120].map(v=>`<option value="${v}">${v}秒</option>`).join("")}</select></label></div>
       <div class="sp-st">ほかの画面は、操作がないまま45〜60秒たつと最初の画面に戻ります（転送中は除く）。</div></section>
+    <section><h3>ギャラリー</h3><div class="sp-row"><button id="spGal">ギャラリーを開く（G キー）</button></div></section>
     <section><h3>リセット</h3><div class="sp-row"><button id="spReset" class="warn">TOPへ強制リセット</button><button id="spReload">ページを再読み込み</button></div></section>
     </div>`;
   document.body.appendChild(el);
@@ -1559,6 +1647,7 @@ function staffOpen(){return !!$("#staff")&&!$("#staff").hidden}
   $("#spSnd").onclick=()=>{SND.unlock();SND.win(true);$("#spSndSt").textContent="音が鳴らない場合：右上のSOUND表示がONか、PCの出力先スピーカーと音量を確認してください。"};
   $("#spReset").onclick=()=>{close();document.body.classList.remove("desat");pageTitle()};
   $("#spReload").onclick=()=>location.reload();
+  $("#spGal").onclick=()=>{close();GAL.show()};
   $("#spRes").value=String(IDLE.resultSec());$("#spRes").onchange=e=>IDLE.setResultSec(Number(e.target.value));
   $("#spFx").onclick=()=>{lsSet("mirai_fx",FXMODE?"0":"1");if(!FXMODE)lsSet("mirai_exhibit","1");location.href=location.pathname};
   $("#spFxM").value=String(FXB.margin());

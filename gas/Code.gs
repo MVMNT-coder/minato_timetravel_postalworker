@@ -113,7 +113,7 @@ minatoは窓口で、消えてしまった品物が過去から届くと、2060�
 
 // ===== 未来救出局（メイン：index.html）=====
 const MISSION_SHEET = 'mission_log_v2';
-const MISSION_HEADERS = ['日時', '品物', 'リクエスト', '2060年で起きたこと', 'ツッコミ', '一言', '点数', '結果', '写真'];
+const MISSION_HEADERS = ['日時', '品物', 'リクエスト', '2060年で起きたこと', 'ツッコミ', '一言', '点数', '結果', '写真', 'ギャラリー用', '世界No'];
 // index.html の STORIES と同じ順番にしておくこと
 const MISSION_STORIES = [
   { request: "海の上の暮らしを、ちょっとでも人間らしくする物を送って。", theme: "陸地が暑すぎて、人々は海上都市へ引っ越している。持っていけるのは、AIが「必要」と判定した1人1箱分だけ。思い出の品はすべて「不要」と判定されて捨てられた" },
@@ -180,12 +180,36 @@ function missionSheet_() {
   return sh;
 }
 
-function logMission_(r, story, outcome, photoUrl) {
+function logMission_(r, story, outcome, photoUrl, gthumb, idx) {
   const label = { saved: '救われた', partial: 'あと一歩', lost: '色を失った' }[outcome];
-  missionSheet_().appendRow([new Date(), r.item_name, story.request, r.happened, r.tsukkomi, '', r.score, label, photoUrl]);
+  const sh = missionSheet_();
+  if (sh.getRange(1, 10).getValue() === '') sh.getRange(1, 10, 1, 2).setValues([['ギャラリー用', '世界No']]);
+  // ギャラリー用の小さい画像（base64）。セルの上限（5万字）を超えるものは保存しない
+  const g = (typeof gthumb === 'string' && gthumb.length < 45000 && /^[A-Za-z0-9+/=]+$/.test(gthumb)) ? gthumb : '';
+  sh.appendRow([new Date(), r.item_name, story.request, r.happened, r.tsukkomi, '', r.score, label, photoUrl, g, idx]);
 }
 
 // 救われた世界／救えなかった世界の数
+// ギャラリー：結果ごとに新しい順で n 件ずつ（ギャラリー用の画像があるものだけ）
+function missionGallery_(n) {
+  n = Math.max(1, Math.min(6, n));
+  const sh = missionSheet_();
+  const last = sh.getLastRow();
+  if (last < 2) return [];
+  const from = Math.max(2, last - 600 + 1);
+  const rows = sh.getRange(from, 1, last - from + 1, 11).getValues();
+  const key = { '救われた': 'saved', 'あと一歩': 'partial', '色を失った': 'lost' };
+  const cnt = { saved: 0, partial: 0, lost: 0 }, out = [];
+  for (let i = rows.length - 1; i >= 0; i--) {
+    const r = rows[i], o = key[r[7]];
+    if (!o || !r[9] || cnt[o] >= n) continue;
+    cnt[o]++;
+    out.push({ outcome: o, item: String(r[1]).slice(0, 40), story: Number(r[10]) || 0, at: r[0] instanceof Date ? r[0].getTime() : 0, thumb: r[9] });
+    if (cnt.saved >= n && cnt.partial >= n && cnt.lost >= n) break;
+  }
+  return out;
+}
+
 function missionStats_() {
   const sh = missionSheet_();
   const n = sh.getLastRow() - 1;
@@ -268,7 +292,7 @@ function doPost(e) {
       result.score = Math.max(0, Math.min(100, Math.round(Number(result.score) || 0)));
       const outcome = missionOutcome_(result.score);
       try { photoUrl = saveImage_(image); } catch (err) { console.error('saveImage', err); }
-      try { logMission_(result, story, outcome, photoUrl); } catch (err) { console.error('logMission', err); }
+      try { logMission_(result, story, outcome, photoUrl, body.gthumb, idx); } catch (err) { console.error('logMission', err); }
       return out_({ ok: true, result: result, stats: missionStats_() });
     }
     if (body.mode === 'rescue') {
@@ -293,6 +317,7 @@ function doPost(e) {
 // ブラウザでURLを開いたときの動作確認用
 function doGet(e) {
   if (e && e.parameter && e.parameter.stats === 'mission') return out_({ ok: true, stats: missionStats_() });
+  if (e && e.parameter && e.parameter.gallery) return out_({ ok: true, items: missionGallery_(Number(e.parameter.gallery) || 3) });
   if (e && e.parameter && e.parameter.stats === 'rescue') return out_({ ok: true, stats: rescueStats_() });
   return out_({ ok: true, service: 'minato', ready: !!PROPS.getProperty('ANTHROPIC_API_KEY') });
 }
