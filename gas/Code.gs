@@ -113,7 +113,7 @@ minatoは窓口で、消えてしまった品物が過去から届くと、2060�
 
 // ===== 未来救出局（メイン：index.html）=====
 const MISSION_SHEET = 'mission_log_v2';
-const MISSION_HEADERS = ['日時', '品物', 'リクエスト', '2060年で起きたこと', 'ツッコミ', '一言', '点数', '結果', '写真', 'ギャラリー用', '世界No'];
+const MISSION_HEADERS = ['日時', '品物', 'リクエスト', '2060年で起きたこと', 'ツッコミ', '一言', '点数', '結果', '写真', 'ギャラリー用', '世界No', '想像図'];
 // index.html の STORIES と同じ順番にしておくこと
 const MISSION_STORIES = [
   { request: "海の上の暮らしを、ちょっとでも人間らしくする物を送って。", theme: "陸地が暑すぎて、人々は海上都市へ引っ越している。持っていけるのは、AIが「必要」と判定した1人1箱分だけ。思い出の品はすべて「不要」と判定されて捨てられた" },
@@ -183,13 +183,32 @@ function missionSheet_() {
 function logMission_(r, story, outcome, photoUrl, gthumb, idx) {
   const label = { saved: '救われた', partial: 'あと一歩', lost: '色を失った' }[outcome];
   const sh = missionSheet_();
-  if (sh.getRange(1, 10).getValue() === '') sh.getRange(1, 10, 1, 2).setValues([['ギャラリー用', '世界No']]);
+  if (sh.getRange(1, 12).getValue() === '') sh.getRange(1, 10, 1, 3).setValues([['ギャラリー用', '世界No', '想像図']]);
   // ギャラリー用の小さい画像（base64）。セルの上限（5万字）を超えるものは保存しない
   const g = (typeof gthumb === 'string' && gthumb.length < 45000 && /^[A-Za-z0-9+/=]+$/.test(gthumb)) ? gthumb : '';
   sh.appendRow([new Date(), r.item_name, story.request, r.happened, r.tsukkomi, '', r.score, label, photoUrl, g, idx]);
+  return sh.getLastRow();
 }
 
 // 救われた世界／救えなかった世界の数
+// 配達記録（サブディスプレイ）：新しい順に n 件。after を渡すと、その行より新しいものだけ
+function missionArchive_(n, after) {
+  n = Math.max(1, Math.min(60, n));
+  const sh = missionSheet_(), last = sh.getLastRow();
+  if (last < 2 || last <= after) return [];
+  const from = Math.max(2, after + 1, last - 300 + 1);
+  const rows = sh.getRange(from, 1, last - from + 1, 12).getValues();
+  const key = { '救われた': 'saved', 'あと一歩': 'partial', '色を失った': 'lost' };
+  const out = [];
+  for (let i = rows.length - 1; i >= 0 && out.length < n; i--) {
+    const r = rows[i], o = key[r[7]];
+    if (!o || !r[9]) continue;
+    out.push({ row: from + i, outcome: o, item: String(r[1]).slice(0, 40), happened: String(r[3]).slice(0, 200), tsukkomi: String(r[4]).slice(0, 160),
+      story: Number(r[10]) || 0, at: r[0] instanceof Date ? r[0].getTime() : 0, thumb: r[9], svg: String(r[11] || '').slice(0, 45000) });
+  }
+  return out;
+}
+
 // ギャラリー：結果ごとに新しい順で n 件ずつ（ギャラリー用の画像があるものだけ）
 function missionGallery_(n) {
   n = Math.max(1, Math.min(6, n));
@@ -246,7 +265,13 @@ function drawIllust_(body) {
   const prompt = PROMPT_ILLUST.replace('{{THEME}}', MISSION_STORIES[idx].theme)
     .replace('{{ITEM}}', clip(body.item, 40)).replace('{{HAPPENED}}', clip(body.happened, 200)).replace('{{OUTCOME}}', label);
   const r = callClaudeText_(prompt);
-  return String(r.svg || '').slice(0, 60000);
+  const svg = String(r.svg || '').slice(0, 60000);
+  // 配達記録で見せるため、その回の行に想像図を保存する（品名が一致するときだけ。セル上限を超えるものは保存しない）
+  try {
+    const row = Number(body.row) || 0, sh = missionSheet_();
+    if (row >= 2 && row <= sh.getLastRow() && svg.length < 45000 && String(sh.getRange(row, 2).getValue()) === String(body.item || '')) sh.getRange(row, 12).setValue(svg);
+  } catch (err) { console.error('saveIllust', err); }
+  return svg;
 }
 
 // 画像なしで Claude を呼ぶ（想像図用）
@@ -292,8 +317,9 @@ function doPost(e) {
       result.score = Math.max(0, Math.min(100, Math.round(Number(result.score) || 0)));
       const outcome = missionOutcome_(result.score);
       try { photoUrl = saveImage_(image); } catch (err) { console.error('saveImage', err); }
-      try { logMission_(result, story, outcome, photoUrl, body.gthumb, idx); } catch (err) { console.error('logMission', err); }
-      return out_({ ok: true, result: result, stats: missionStats_() });
+      let row = 0;
+      try { row = logMission_(result, story, outcome, photoUrl, body.gthumb, idx); } catch (err) { console.error('logMission', err); }
+      return out_({ ok: true, result: result, stats: missionStats_(), row: row });
     }
     if (body.mode === 'rescue') {
       const result = callClaude_(image, PROMPT_RESCUE);
@@ -317,6 +343,7 @@ function doPost(e) {
 // ブラウザでURLを開いたときの動作確認用
 function doGet(e) {
   if (e && e.parameter && e.parameter.stats === 'mission') return out_({ ok: true, stats: missionStats_() });
+  if (e && e.parameter && e.parameter.archive) return out_({ ok: true, items: missionArchive_(Number(e.parameter.archive) || 30, Number(e.parameter.after) || 0) });
   if (e && e.parameter && e.parameter.gallery) return out_({ ok: true, items: missionGallery_(Number(e.parameter.gallery) || 3) });
   if (e && e.parameter && e.parameter.stats === 'rescue') return out_({ ok: true, stats: rescueStats_() });
   return out_({ ok: true, service: 'minato', ready: !!PROPS.getProperty('ANTHROPIC_API_KEY') });
