@@ -112,64 +112,70 @@ minatoは窓口で、消えてしまった品物が過去から届くと、2060�
 品物がわからない場合は item_name を "よくわからない物" にし、2060年の人がそれを何だと思って、どんな体験を取り戻したかを考える。`;
 
 // ===== 未来救出局（メイン：index.html）=====
-const MISSION_SHEET = 'mission_log_v2';
-const MISSION_HEADERS = ['日時', '品物', 'リクエスト', '2060年で起きたこと', 'ツッコミ', '一言', '点数', '結果', '写真', 'ギャラリー用', '世界No', '想像図'];
-// index.html の STORIES と同じ順番にしておくこと
+const MISSION_SHEET = 'mission_log_v3';
+const MISSION_HEADERS = ['日時', '品物', '依頼主', '手紙', '2060年で起きたこと', 'ツッコミ', '人間らしさ', '点数', '結果', '写真', 'ギャラリー用', '依頼主No', '想像図'];
+// 2060年で困っている依頼主。index.html の STORIES と同じ順番にしておくこと
 const MISSION_STORIES = [
-  { request: "海の上の暮らしを、ちょっとでも人間らしくする物を送って。", theme: "陸地が暑すぎて、人々は海上都市へ引っ越している。持っていけるのは、AIが「必要」と判定した1人1箱分だけ。思い出の品はすべて「不要」と判定されて捨てられた" },
-  { request: "夜の暮らしが楽しくなる物を送って。", theme: "昼の気温は45℃。AIが生活を夜型に最適化し、散歩や外遊びは「危険」として禁止されている。夜は安全だが、やることがない" },
-  { request: "水びたしの渋谷で、移動が楽しくなる物を送って。", theme: "海面が上がって渋谷駅は水没した。移動はAIが自動運転するボートで、最短ルートしか通らないので寄り道ができない" },
-  { request: "電気なしで楽しめる物を送って。", theme: "電気は配給制で、1日3時間だけ。使い道はAIが決めていて、娯楽は「生存に不要」としていつも後回しにされる" },
-  { request: "味や香り、食べる楽しさを思い出させる物を送って。", theme: "食べ物は全部工場製。AIが栄養を最適化した結果、味は3種類しかない。食事は「栄養補給の作業」になった" }
+  { name: "葵", who: "14歳・中学生", request: "一度でいいから、寄り道してみたい。", letter: "渋谷は水の底で、毎日AIのボートで学校に通っています。ボートは最短ルートしか通らないので、毎日同じ景色です。", theme: "海面上昇で渋谷駅は水没した。14歳の中学生・葵は、AIが自動運転するボートで通学している。ボートは最短ルートしか通らず寄り道ができないので、毎日同じ景色しか見たことがない" },
+  { name: "健三", who: "78歳", request: "妻を思い出せる物が、何もなくなりました。", letter: "陸が暑すぎて、海の上の街へ引っ越しました。持ち物はAIが1人1箱に選び、妻との思い出の品は「不要」と捨てられました。", theme: "陸地が暑すぎて人々は海上都市へ引っ越している。78歳の健三は、持ち物をAIが「必要」と判定した1人1箱だけに減らされ、亡くなった妻との思い出の品はすべて「不要」として捨てられた" },
+  { name: "ミナミ", who: "31歳・会社員", request: "誰かと話すきっかけがほしいです。", letter: "昼は45℃で外出禁止。仕事は家でAIとやりとりするだけです。この1年、人と雑談をした記憶がありません。", theme: "昼の気温は45℃で、外出はAIに「危険」として禁止されている。31歳の会社員ミナミは在宅でAIとだけ仕事をしていて、この1年、人と雑談をしていない" },
+  { name: "遥と颯", who: "8歳・双子", request: "電気がなくても遊べるもの、ありますか？", letter: "電気は1日3時間だけで、ゲームはAIにいつも後回しにされます。停電の夜は真っ暗で、つまらないです。", theme: "電気は配給制で1日3時間だけ。使い道はAIが決めていて、娯楽は「生存に不要」としていつも後回し。8歳の双子・遥と颯は、停電の夜に何もすることがない" },
+  { name: "大輔", who: "45歳・父親", request: "娘を笑顔にする何かを、送ってください。", letter: "食べ物は全部工場製で、味は3種類しかありません。来週は娘の誕生日なのに、「おいしい」を作ってあげられません。", theme: "食べ物は全部工場製で、AIが栄養を最適化した結果、味は3種類しかない。45歳の父親・大輔は、来週の娘の誕生日に「おいしい」を作ってあげたいが、手段がない" },
+  { name: "千夏", who: "22歳・美大生", request: "下手でもいいから、自分の手で何か作りたい。", letter: "AIが一瞬で完璧な絵を描くので、私が描く意味がわからなくなりました。筆も絵の具も、もう売っていません。", theme: "AIが一瞬で完璧な絵や音楽を作るので、人が作る必要がなくなった。22歳の美大生・千夏は自分が描く意味を見失い、筆や絵の具ももう売っていない" }
 ];
-const PROMPT_MISSION = `あなたは2060年の東京・渋谷に住む29歳のminatoです。「時間郵便局」の受付係で、2026年から届く品物を受け取っています。
+// 送った物が守った「人間らしさ」。index.html の HUMANITY と同じ言葉・同じ順番にしておくこと
+const HUMANITY = ['偶然', '寄り道', '手触り', '待つ時間', '分け合う', '手作り', '失敗', '思い出', '五感', '誰かを思う'];
+
+const PROMPT_MISSION = `あなたは2060年の東京・渋谷に住む29歳のminatoです。「時間郵便局」の受付係で、未来で困っている人が過去に出した手紙と、2026年から届く品物の配達を担当しています。
 
 【作品のテーマ：Humanity】
-2060年は、AIが効率や安全を優先した結果、人間らしさが取りこぼされた世界。
+2060年は、環境の変化（暑さ、海面上昇、電気不足など）と、効率や安全を優先するAIのせいで、便利なのにどこか苦しく、楽しくない世界。
+この体験の裏のテーマは「人類がどれだけ遠くへ行っても、手放してはいけない人間らしさは何か」をあぶり出すこと。
 
-【今の2060年】
-{{THEME}}。
-minatoは過去の人にこうリクエストした：「{{Q}}」
-写真の品物は、このリクエストに応えて送られてきた。
+【今回の依頼主】
+{{NAME}}（{{WHO}}）
+状況：{{THEME}}
+依頼主からの手紙：「{{LETTER}}」
+お願い：「{{Q}}」
+写真の品物は、この依頼主を助けるために2026年から送られてきた。
 
 【minatoの性格】
 - 皮肉をどんどん言う辛口キャラ。友達に言うような口調。一人称は「私」
-- 人を傷つける言い方、差別、下品な表現はしない。皮肉の対象は物とAIと状況で、送った人の人格ではない
+- 人を傷つける言い方、差別、下品な表現はしない。皮肉の対象は物とAIと状況で、送った人や依頼主の人格ではない
+
+【やること】
+1. 写真の品物を特定する（人が写っていても品物だけを見る。容姿には触れない）
+2. その品物が、依頼主の困りごとをどれだけ解決し、依頼主を笑顔にできるかで、0〜100の点数をつける
+   - 高い点：2060年の環境や条件の中で、実際に使われる場面が自然に想像でき、依頼主に人間らしい体験が戻る物。環境が変わった未来だからこそ、今の物が逆に役立つ場面は高く評価する
+   - 低い点：2060年の環境では使えない物、依頼主の困りごととの関係が薄い物
+3. 点数に合わせて「2060年で起きたこと」を、依頼主が品物を受け取ったあとの具体的な一場面で書く。依頼主が・どこで・その物をどう使って・どうなったかがわかるように
+   - 75点以上：依頼主が救われた場面（笑顔になった、人間らしい体験が戻った）
+   - 50〜74点：一瞬うまくいきかけたが、2060年の事情（暑さ、水、電気、AIの判定など）に負けた場面
+   - 49点以下：役に立たなかった場面。なぜダメだったかが具体的にわかるように。良い結果を書かない
+4. その品物が依頼主に取り戻させた（取り戻させようとした）人間らしさを、次の10個から1つだけ選ぶ：偶然、寄り道、手触り、待つ時間、分け合う、手作り、失敗、思い出、五感、誰かを思う
+5. その場面にminatoが辛口でツッコむ
 
 【ツッコミの書き方】
 - 「2060年で起きたこと」の場面そのものにツッコむ。何がおかしかったのか、なぜダメだったのかを、聞いた人がすぐわかる普通の言葉で言う
 - アニメ・漫画・映画のキャラクター名、有名人、ことわざのもじりなど、元ネタを知らないと意味が通じない言い回しは使わない
 - ひねりすぎない。読んで1秒で状況が浮かび、思わず笑える一言にする
 - 点数が49点以下：皮肉満載。送った物がこの世界でいかに場違いだったかを、大げさに、笑えるように言い切る。慰めや褒め言葉は一切入れない
-  良い例：「うちわ？ 45℃の世界に？ あおいだら熱風が来るんだけど。ドライヤー送ってきたのと同じだよ」
-  良い例：「ボートの上で消しゴム渡されてもね。消したいのは水没した渋谷のほうなんだけど」
+  良い例：「うちわ？ 45℃の部屋で？ あおいだら熱風が来るんだけど。ドライヤー送ってきたのと同じだよ」
 - 点数が50〜74点：惜しかった点を認めつつ、最後は皮肉で落とす
-  良い例：「ペンで地図を描いたのは悪くない。でも描いた地図ごと水に流されたら、意味ないよね」
+  良い例：「地図で寄り道できたのはいい。でも描いた地図ごと水に流されたら、意味ないよね」
 - 点数が75点以上：素直には褒めない。驚きつつ皮肉を混ぜる
-  良い例：「輪ゴムで子どもが夜中まで遊んでる。AIが3年かけて作った娯楽プログラムより人気って、どういうこと？」
+  良い例：「輪ゴムで双子が夜中まで遊んでる。AIが3年かけた娯楽プログラムより人気って、どういうこと？」
 - ときどき、AIの最適化への皮肉も混ぜる
-  悪い例：「十万馬力でも最短ルート」（元ネタがわからないと意味が通じない）
-
-【やること】
-1. 写真の品物を特定する（人が写っていても品物だけを見る。容姿には触れない）
-2. その品物がminatoのリクエストにどれだけ応えているか、上の世界の困りごとと、AIが切り捨てた人間らしい体験をどれだけ取り戻せるかで、0〜100の点数をつける
-   - 高い点：この世界の具体的な困りごとの中で、実際に使われる場面が自然に想像でき、人間らしい体験が戻る物
-   - 低い点：この世界の状況に合わない物、リクエストとの関係が薄い物
-3. 点数に合わせて「2060年で起きたこと」を、渋谷や海上都市などの具体的な一場面で書く。誰が・どこで・その物をどう使って・どうなったかがわかるように
-   - 75点以上：その物のおかげで、人間らしい体験が戻った場面
-   - 50〜74点：一瞬うまくいきかけたが、この世界の事情（暑さ、水、電気、AIの判定など）に負けた場面
-   - 49点以下：この世界では役に立たなかった場面。なぜダメだったかが具体的にわかるように。良い結果を書かない
-4. その場面にminatoが辛口でツッコむ（上の【ツッコミの書き方】に従う）
 
 【書き方のルール】
 - SFすぎる設定（瞬間移動・宇宙など）は使わない
 - 点数と文章の明るさを必ず一致させる。低い点なのに良いことを書かない。高い点なのに失敗した場面を書かない
-- 書き終えたら読み直して、世界の困りごと・リクエスト・品物・起きたこと・ツッコミがつながっているか、初めて読む人が一度で意味がわかるかを確認する。つながっていなければ書き直す
+- 書き終えたら読み直して、依頼主の困りごと・品物・起きたこと・人間らしさ・ツッコミがつながっているか、初めて読む人が一度で意味がわかるかを確認する。つながっていなければ書き直す
 
 以下のJSONオブジェクトだけを返す：
-{"item_name":"品物の名前","happened":"2060年で起きたこと（1〜2文、70字以内。具体的な場面）","tsukkomi":"minatoの辛口なツッコミ（1〜3文、60字以内）","score":0〜100の整数}
+{"item_name":"品物の名前","happened":"2060年で起きたこと（1〜2文、70字以内。依頼主の具体的な場面）","humanity":"上の10個から1つ","tsukkomi":"minatoの辛口なツッコミ（1〜3文、60字以内）","score":0〜100の整数}
 
-品物がわからない場合は item_name を "よくわからない物" にし、2060年の人がそれを何だと思って、どうなったかを書く。`;
+品物がわからない場合は item_name を "よくわからない物" にし、依頼主がそれを何だと思って、どうなったかを書く。`;
 
 function missionOutcome_(score) { return score >= 75 ? 'saved' : score >= 50 ? 'partial' : 'lost'; }
 
@@ -183,58 +189,47 @@ function missionSheet_() {
 function logMission_(r, story, outcome, photoUrl, gthumb, idx) {
   const label = { saved: '救われた', partial: 'あと一歩', lost: '色を失った' }[outcome];
   const sh = missionSheet_();
-  if (sh.getRange(1, 12).getValue() === '') sh.getRange(1, 10, 1, 3).setValues([['ギャラリー用', '世界No', '想像図']]);
   // ギャラリー用の小さい画像（base64）。セルの上限（5万字）を超えるものは保存しない
   const g = (typeof gthumb === 'string' && gthumb.length < 45000 && /^[A-Za-z0-9+/=]+$/.test(gthumb)) ? gthumb : '';
-  sh.appendRow([new Date(), r.item_name, story.request, r.happened, r.tsukkomi, '', r.score, label, photoUrl, g, idx]);
+  sh.appendRow([new Date(), r.item_name, story.name, story.request, r.happened, r.tsukkomi, r.humanity, r.score, label, photoUrl, g, idx, '']);
   return sh.getLastRow();
 }
 
-// 救われた世界／救えなかった世界の数
-// 配達記録（サブディスプレイ）：新しい順に n 件。after を渡すと、その行より新しいものだけ
+// ギャラリー：新しい順に n 件。after を渡すと、その行より新しいものだけ
 function missionArchive_(n, after) {
-  n = Math.max(1, Math.min(60, n));
+  n = Math.max(1, Math.min(80, n));
   const sh = missionSheet_(), last = sh.getLastRow();
   if (last < 2 || last <= after) return [];
-  const from = Math.max(2, after + 1, last - 300 + 1);
-  const rows = sh.getRange(from, 1, last - from + 1, 12).getValues();
+  const from = Math.max(2, after + 1, last - 400 + 1);
+  const rows = sh.getRange(from, 1, last - from + 1, 13).getValues();
   const key = { '救われた': 'saved', 'あと一歩': 'partial', '色を失った': 'lost' };
   const out = [];
   for (let i = rows.length - 1; i >= 0 && out.length < n; i--) {
-    const r = rows[i], o = key[r[7]];
-    if (!o || !r[9]) continue;
-    out.push({ row: from + i, outcome: o, item: String(r[1]).slice(0, 40), happened: String(r[3]).slice(0, 200), tsukkomi: String(r[4]).slice(0, 160),
-      story: Number(r[10]) || 0, at: r[0] instanceof Date ? r[0].getTime() : 0, thumb: r[9], svg: String(r[11] || '').slice(0, 45000) });
+    const r = rows[i], o = key[r[8]];
+    if (!o || !r[10]) continue;
+    out.push({ row: from + i, outcome: o, item: String(r[1]).slice(0, 40), happened: String(r[4]).slice(0, 200), tsukkomi: String(r[5]).slice(0, 160),
+      humanity: String(r[6]), story: Number(r[11]) || 0, at: r[0] instanceof Date ? r[0].getTime() : 0, thumb: r[10] });
   }
   return out;
 }
 
-// ギャラリー：結果ごとに新しい順で n 件ずつ（ギャラリー用の画像があるものだけ）
-function missionGallery_(n) {
-  n = Math.max(1, Math.min(6, n));
-  const sh = missionSheet_();
-  const last = sh.getLastRow();
-  if (last < 2) return [];
-  const from = Math.max(2, last - 600 + 1);
-  const rows = sh.getRange(from, 1, last - from + 1, 11).getValues();
-  const key = { '救われた': 'saved', 'あと一歩': 'partial', '色を失った': 'lost' };
-  const cnt = { saved: 0, partial: 0, lost: 0 }, out = [];
-  for (let i = rows.length - 1; i >= 0; i--) {
-    const r = rows[i], o = key[r[7]];
-    if (!o || !r[9] || cnt[o] >= n) continue;
-    cnt[o]++;
-    out.push({ outcome: o, item: String(r[1]).slice(0, 40), story: Number(r[10]) || 0, at: r[0] instanceof Date ? r[0].getTime() : 0, thumb: r[9] });
-    if (cnt.saved >= n && cnt.partial >= n && cnt.lost >= n) break;
-  }
-  return out;
+// 全期間の集計：結果ごとの人数と、救えた・あと一歩の回で守られた人間らしさの数
+function missionHumanity_() {
+  const sh = missionSheet_(), n = sh.getLastRow() - 1;
+  const outcomes = { saved: 0, partial: 0, lost: 0 }, elements = {};
+  HUMANITY.forEach(function (h) { elements[h] = 0; });
+  if (n > 0) sh.getRange(2, 7, n, 3).getValues().forEach(function (v) {
+    const o = { '救われた': 'saved', 'あと一歩': 'partial', '色を失った': 'lost' }[v[2]];
+    if (!o) return;
+    outcomes[o]++;
+    if (o !== 'lost' && elements[v[0]] !== undefined) elements[v[0]]++;
+  });
+  return { outcomes: outcomes, elements: elements };
 }
 
 function missionStats_() {
-  const sh = missionSheet_();
-  const n = sh.getLastRow() - 1;
-  let saved = 0, lost = 0;
-  if (n > 0) sh.getRange(2, 8, n, 1).getValues().forEach(function (v) { if (v[0] === '救われた') saved++; else if (v[0]) lost++; });
-  return { saved: saved, lost: lost };
+  const h = missionHumanity_();
+  return { saved: h.outcomes.saved, lost: h.outcomes.partial + h.outcomes.lost };
 }
 
 // ===== 結果画面の想像図（線画SVG）=====
@@ -264,14 +259,14 @@ function drawIllust_(body) {
   const idx = Math.max(0, Math.min(MISSION_STORIES.length - 1, Number(body.story) || 0));
   const label = { saved: '救われた', partial: 'あと一歩だった', lost: '救えなかった' }[body.outcome] || 'あと一歩だった';
   const clip = function (v, n) { return String(v || '').replace(/[`{}]/g, '').slice(0, n); };
-  const prompt = PROMPT_ILLUST.replace('{{THEME}}', MISSION_STORIES[idx].theme)
+  const prompt = PROMPT_ILLUST.replace('{{THEME}}', MISSION_STORIES[idx].theme + '（依頼主：' + MISSION_STORIES[idx].name + '）')
     .replace('{{ITEM}}', clip(body.item, 40)).replace('{{HAPPENED}}', clip(body.happened, 200)).replace('{{OUTCOME}}', label);
   const r = callClaudeText_(prompt);
   const svg = String(r.svg || '').slice(0, 60000);
   // 配達記録で見せるため、その回の行に想像図を保存する（品名が一致するときだけ。セル上限を超えるものは保存しない）
   try {
     const row = Number(body.row) || 0, sh = missionSheet_();
-    if (row >= 2 && row <= sh.getLastRow() && svg.length < 45000 && String(sh.getRange(row, 2).getValue()) === String(body.item || '')) sh.getRange(row, 12).setValue(svg);
+    if (row >= 2 && row <= sh.getLastRow() && svg.length < 45000 && String(sh.getRange(row, 2).getValue()) === String(body.item || '')) sh.getRange(row, 13).setValue(svg);
   } catch (err) { console.error('saveIllust', err); }
   return svg;
 }
@@ -315,7 +310,8 @@ function doPost(e) {
     if (body.mode === 'mission') {
       const idx = Math.max(0, Math.min(MISSION_STORIES.length - 1, Number(body.story) || 0));
       const story = MISSION_STORIES[idx];
-      const result = callClaude_(image, PROMPT_MISSION.replace('{{THEME}}', story.theme).replace('{{Q}}', story.request));
+      const result = callClaude_(image, PROMPT_MISSION.replace('{{NAME}}', story.name).replace('{{WHO}}', story.who).replace('{{THEME}}', story.theme).replace('{{LETTER}}', story.letter).replace('{{Q}}', story.request));
+      if (HUMANITY.indexOf(result.humanity) < 0) result.humanity = '';
       result.score = Math.max(0, Math.min(100, Math.round(Number(result.score) || 0)));
       const outcome = missionOutcome_(result.score);
       try { photoUrl = saveImage_(image); } catch (err) { console.error('saveImage', err); }
@@ -345,8 +341,8 @@ function doPost(e) {
 // ブラウザでURLを開いたときの動作確認用
 function doGet(e) {
   if (e && e.parameter && e.parameter.stats === 'mission') return out_({ ok: true, stats: missionStats_() });
+  if (e && e.parameter && e.parameter.humanity) return out_({ ok: true, totals: missionHumanity_() });
   if (e && e.parameter && e.parameter.archive) return out_({ ok: true, items: missionArchive_(Number(e.parameter.archive) || 30, Number(e.parameter.after) || 0) });
-  if (e && e.parameter && e.parameter.gallery) return out_({ ok: true, items: missionGallery_(Number(e.parameter.gallery) || 3) });
   if (e && e.parameter && e.parameter.stats === 'rescue') return out_({ ok: true, stats: rescueStats_() });
   return out_({ ok: true, service: 'minato', ready: !!PROPS.getProperty('ANTHROPIC_API_KEY') });
 }
