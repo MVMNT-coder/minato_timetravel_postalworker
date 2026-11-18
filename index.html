@@ -438,63 +438,54 @@ body.fxmode #stage{display:block;position:fixed;inset:0;z-index:1;transform:scal
 @media (max-width:820px),(max-aspect-ratio:1/1){.story2{grid-template-columns:1fr}.tx{height:auto;aspect-ratio:3/4}.tx-min{max-width:90%}.illust{max-height:none}}
 
 
-/* ===== ギャラリー：人間らしさの棚と、3つの写真の山 ===== */
+/* ===== ギャラリー：判定のスタンプを押す作業台 ===== */
 body.archive-only{overflow:hidden;background:#0b0b0c}
 body.archive-only .wrap,body.archive-only #bg,body.archive-only .hud,body.archive-only #fxb{display:none!important}
-#archive{position:fixed;inset:0;z-index:60;background:radial-gradient(ellipse at 50% 30%,#1b1c1f 0%,#0b0b0c 70%);color:var(--fg);display:grid;grid-template-rows:auto minmax(0,2fr) minmax(0,1fr);gap:calc(var(--u)*1);padding:calc(var(--u)*1.4) calc(var(--u)*2.4) calc(var(--u)*1.4);animation:fin .5s ease both;overflow:hidden}
+#archive{position:fixed;inset:0;z-index:60;background:radial-gradient(ellipse at 50% 45%,#1d1e21 0%,#0b0b0c 72%);color:var(--fg);display:grid;grid-template-rows:auto minmax(0,1fr);gap:calc(var(--u)*1.4);padding:calc(var(--u)*1.4) calc(var(--u)*2.4) calc(var(--u)*2);animation:fin .5s ease both;overflow:hidden}
 .gv-hd{display:flex;align-items:center;gap:calc(var(--u)*1.6);border-bottom:1px solid #2b2b2b;padding-bottom:calc(var(--u)*.8)}
 .arc-logo{height:calc(var(--u)*2.2);filter:invert(1)}
 .gv-t{display:flex;flex-direction:column;gap:.25em;flex:1;min-width:0}
-.gv-t b{font-family:var(--f-disp);font-weight:900;font-size:clamp(20px,calc(var(--u)*2.1),46px);letter-spacing:.06em}
-.gv-t span{font-size:clamp(11px,calc(var(--u)*.85),18px);color:var(--mute)}
-.gv-cnt{font-family:var(--f-mono);text-align:right;color:var(--mute)}.gv-cnt b{display:block;color:var(--or);font-size:clamp(26px,calc(var(--u)*2.8),60px);line-height:1}.gv-cnt small{font-size:clamp(10px,calc(var(--u)*.7),15px);letter-spacing:.1em}
-.arc-empty{font-family:var(--f-disp);font-size:clamp(18px,calc(var(--u)*1.8),38px);color:var(--mute);margin:auto}
-/* 棚 */
-.gv-shelves{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:calc(var(--u)*.9);min-height:0;align-items:stretch}
-.shelf{display:grid;grid-template-rows:minmax(0,1fr) auto;gap:calc(var(--u)*.5);min-width:0;transition:opacity .4s}
-.stack{position:relative;border-bottom:2px solid #3a3a3a;min-height:0;container-type:size}
-.bar{position:absolute;left:12%;right:12%;bottom:0;height:calc(var(--fill)*100%);background:linear-gradient(180deg,rgba(255,92,0,.0),rgba(255,92,0,.16));border-left:1px solid rgba(255,92,0,.35);border-right:1px solid rgba(255,92,0,.35);transition:height .8s cubic-bezier(.2,.9,.3,1)}
-.tile{position:absolute;left:50%;width:84%;aspect-ratio:3/2;object-fit:cover;background:#fff;padding:2px;box-shadow:0 2px 6px rgba(0,0,0,.55);
-  transform:translateX(calc(-50% + var(--dx))) rotate(var(--r));z-index:var(--z)}
-.shelf .tile{bottom:calc(var(--y) * max(0px, var(--fill) * 100cqh - 56cqw - 4px))}
-.tile.fresh,.pp.fresh{outline:3px solid var(--or);animation:dropIn .7s cubic-bezier(.2,1.4,.4,1) both, glowP 1.4s ease-in-out 4 .7s}
-@keyframes dropIn{from{opacity:0;translate:0 -120%}to{opacity:1;translate:0 0}}
-@keyframes glowP{50%{box-shadow:0 0 22px 4px rgba(255,92,0,.8)}}
-.slab{display:flex;flex-direction:column;align-items:center;gap:.1em;text-align:center}
-.slab b{font-family:var(--f-disp);font-weight:900;font-size:clamp(14px,calc(var(--u)*1.35),30px);white-space:nowrap}
-.slab i{font-style:normal;font-family:var(--f-mono);font-size:clamp(8px,calc(var(--u)*.55),12px);letter-spacing:.12em;color:var(--mute)}
-.slab span{font-family:var(--f-mono);font-weight:700;font-size:clamp(14px,calc(var(--u)*1.4),30px);color:var(--fg)}
-.shelf.top .slab b,.shelf.top .slab span{color:var(--or)}
-.shelf.top .slab b{font-size:clamp(16px,calc(var(--u)*1.7),36px)}
-.shelf.none{opacity:.35}.shelf.none .stack{border-bottom-style:dashed}
-/* 写真の山 */
-.gv-piles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:calc(var(--u)*2);min-height:0;border-top:1px solid #2b2b2b;padding-top:calc(var(--u)*.8)}
-.pile{display:grid;grid-template-rows:auto minmax(0,1fr);min-height:0}
-.pl-hd{display:flex;align-items:baseline;justify-content:space-between;border-left:3px solid var(--mute);padding-left:.6em}
-.pl-hd b{font-family:var(--f-disp);font-weight:900;font-size:clamp(14px,calc(var(--u)*1.3),28px)}
-.pl-hd span{font-family:var(--f-mono);font-weight:700;font-size:clamp(18px,calc(var(--u)*1.8),40px)}.pl-hd small{font-size:.5em;margin-left:.2em;color:var(--mute)}
-.pile.saved .pl-hd{border-color:var(--or)}.pile.saved .pl-hd span{color:var(--or)}
-.pile.lost .pl-hd{border-color:#c62828}
-.pl-in{position:relative;min-height:0}
-.pp{position:absolute;left:50%;top:50%;width:min(34%,calc(var(--u)*11));aspect-ratio:3/2;object-fit:cover;background:#fff;padding:2px;box-shadow:0 2px 8px rgba(0,0,0,.6);transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y))) rotate(var(--r));z-index:var(--z)}
-.pile.lost .pp{filter:grayscale(1) brightness(.85)}.pile.partial .pp{filter:saturate(.55)}
-.pl-none{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--mute);font-size:clamp(11px,calc(var(--u)*.8),17px)}
-/* 新着 */
-.gv-new{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.72);animation:fin .4s ease both}
-.gv-new.out{animation:fadeOut .6s ease forwards}@keyframes fadeOut{to{opacity:0}}
-.gn-in{display:grid;grid-template-columns:auto minmax(0,1fr);gap:calc(var(--u)*2.4);align-items:center;background:#111;border:2px solid var(--or);padding:calc(var(--u)*2) calc(var(--u)*2.6);max-width:84%;animation:slapIn .55s cubic-bezier(.2,1.4,.4,1) both}
-@keyframes slapIn{from{opacity:0;transform:scale(1.25) rotate(-2deg)}to{opacity:1;transform:none}}
-.gn-lbl{grid-column:1/-1;font-family:var(--f-mono);letter-spacing:.24em;color:var(--or);font-size:clamp(11px,calc(var(--u)*.9),20px)}
-.gn-in img{width:calc(var(--u)*30);max-width:40vw;aspect-ratio:3/2;object-fit:cover;background:#fff;padding:4px;transform:rotate(-2deg)}
-.gv-new.lost .gn-in img{filter:grayscale(1)}
-.gn-txt{display:flex;flex-direction:column;gap:.35em;min-width:0}
-.gn-txt span{font-size:clamp(14px,calc(var(--u)*1.2),26px);color:var(--mute)}
-.gn-txt b{font-family:var(--f-disp);font-weight:900;font-size:clamp(26px,calc(var(--u)*3.4),72px);line-height:1.2}
-.gn-txt em{font-style:normal;font-family:var(--f-disp);font-weight:900;font-size:clamp(18px,calc(var(--u)*1.8),40px);color:var(--or)}
-.gv-new.lost .gn-txt em{color:#e05545}.gv-new.partial .gn-txt em{color:var(--fg)}
-.gn-txt p{margin:.4em 0 0;font-size:clamp(14px,calc(var(--u)*1.2),26px);color:var(--fg)}
-.gn-txt strong{font-family:var(--f-disp);font-weight:900;font-size:1.6em;color:var(--or)}
-@media (prefers-reduced-motion:reduce){.tile.fresh,.pp.fresh,.gn-in,.gv-new{animation:none}}
+.gv-t b{font-family:var(--f-disp);font-weight:900;font-size:clamp(18px,calc(var(--u)*1.7),38px);letter-spacing:.08em}
+.gv-t span{font-family:var(--f-mono);font-size:clamp(10px,calc(var(--u)*.7),15px);letter-spacing:.14em;color:var(--mute)}
+.gv-cnt{display:flex;gap:calc(var(--u)*1.6);font-size:clamp(12px,calc(var(--u)*.95),20px);color:var(--mute)}
+.gv-cnt b{font-family:var(--f-mono);font-size:1.7em;margin-left:.2em}.gv-cnt .c-s b{color:var(--or)}.gv-cnt .c-p b{color:var(--fg)}.gv-cnt .c-l b{color:#e05545}
+.arc-empty{font-family:var(--f-disp);font-size:clamp(18px,calc(var(--u)*1.8),38px);color:var(--mute);margin:auto;text-align:center;line-height:1.8;grid-column:1/-1}
+.gv-desk{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.5fr) minmax(0,1fr);gap:calc(var(--u)*1.6);align-items:center;min-height:0}
+.gd-l,.gd-r{display:flex;flex-direction:column;gap:calc(var(--u)*1);min-width:0;opacity:0}
+.gv-desk.in .gd-l{animation:fromL .7s cubic-bezier(.2,.9,.3,1) forwards}
+.gv-desk.in .gd-r{animation:fromR .7s cubic-bezier(.2,.9,.3,1) forwards .25s}
+@keyframes fromL{from{opacity:0;transform:translateX(-12%)}to{opacity:1;transform:none}}
+@keyframes fromR{from{opacity:0;transform:translateX(12%) rotate(2deg)}to{opacity:1;transform:none}}
+.gd-cap{font-size:clamp(13px,calc(var(--u)*1.05),22px);color:var(--mute)}.gd-cap b{font-family:var(--f-disp);font-weight:900;font-size:1.5em;color:var(--fg)}
+.gd-art{aspect-ratio:4/3;border:1px solid rgba(255,92,0,.45);background:#000;overflow:hidden}
+.gd-req{margin:0;font-family:var(--f-disp);font-weight:700;font-size:clamp(15px,calc(var(--u)*1.35),30px);line-height:1.5}
+.gd-ph{aspect-ratio:3/2;background:#fff;padding:calc(var(--u)*.5);box-shadow:0 calc(var(--u)*.4) calc(var(--u)*1.6) rgba(0,0,0,.6);transform:rotate(1.5deg)}
+.gd-ph img{width:100%;height:100%;object-fit:cover;display:block}
+.gd-item{margin:0;font-family:var(--f-disp);font-weight:900;font-size:clamp(22px,calc(var(--u)*2.6),56px);line-height:1.2}
+/* 真ん中：スタンプ台 */
+.gd-c{position:relative;display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*1)}
+.gd-pad{position:relative;width:100%;aspect-ratio:1/1.1;display:flex;align-items:center;justify-content:center}
+.ink{display:flex;flex-direction:column;align-items:center;gap:.1em;padding:.35em .7em .3em;border:calc(var(--u)*.38) double currentColor;border-radius:calc(var(--u)*.6);transform:rotate(var(--r)) scale(1.2);opacity:0}
+.ink b{font-family:var(--f-disp);font-weight:900;font-size:clamp(30px,calc(var(--u)*3.6),78px);letter-spacing:.08em;white-space:nowrap;line-height:1.15}
+.ink span{font-family:var(--f-mono);font-weight:700;font-size:clamp(11px,calc(var(--u)*.9),20px);letter-spacing:.36em}
+.ink.saved{color:#ff6a14;text-shadow:0 0 18px rgba(255,106,20,.35)}.ink.partial{color:#d9d9d9}.ink.lost{color:#e0473a}
+.gv-desk.press .ink{animation:inkIn .25s ease-out forwards}
+@keyframes inkIn{0%{opacity:0;transform:rotate(var(--r)) scale(1.25)}100%{opacity:.95;transform:rotate(var(--r)) scale(1)}}
+/* スタンプ（ゴム印）本体 */
+.tool{position:absolute;left:50%;top:50%;width:62%;height:62%;transform:translate(-50%,-120%);transition:transform .45s cubic-bezier(.3,0,.2,1),opacity .4s;pointer-events:none;display:flex;flex-direction:column;align-items:center}
+.tool .knob{width:38%;aspect-ratio:1/.8;border-radius:50% 50% 40% 40%;background:linear-gradient(180deg,#6b4a30,#3d2817);box-shadow:inset 0 -4px 0 rgba(0,0,0,.3)}
+.tool .neck{width:16%;height:22%;background:linear-gradient(90deg,#4a3220,#7a5636,#4a3220)}
+.tool .base{width:100%;height:24%;border-radius:6px;background:linear-gradient(180deg,#8a6644,#5a3f27);box-shadow:0 6px 0 currentColor,0 10px 18px rgba(0,0,0,.5)}
+.tool.saved{color:#ff6a14}.tool.partial{color:#bdbdbd}.tool.lost{color:#e0473a}
+.gv-desk.in .tool{transform:translate(-50%,-95%)}
+.gv-desk.lift .tool{transform:translate(-50%,-150%) rotate(-4deg)}
+.gv-desk.press .tool{transition-duration:.12s;transition-timing-function:cubic-bezier(.6,0,1,1);transform:translate(-50%,-62%) scaleY(.96)}
+.gv-desk.done .tool{transition-duration:.6s;transform:translate(-50%,-185%) rotate(6deg);opacity:0}
+.gv-desk.shake{animation:dshake .3s ease}
+@keyframes dshake{25%{transform:translateY(.6%)}50%{transform:translateY(-.4%)}75%{transform:translateY(.2%)}100%{transform:none}}
+.gd-new{font-family:var(--f-mono);font-weight:700;letter-spacing:.2em;font-size:clamp(11px,calc(var(--u)*.9),20px);color:#000;background:var(--or);padding:.3em .8em;animation:blink 1s steps(2) 5}
+@media (max-width:820px),(max-aspect-ratio:1/1){.gv-desk{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.gv-desk *{animation-duration:.01s!important;transition-duration:.01s!important}}
 
 /* 手紙・人間らしさ */
 .letter .lt-body{margin:0;max-width:30em;font-size:clamp(16px,calc(var(--u)*1.45),30px);line-height:1.8;color:var(--fg)}
@@ -1586,23 +1577,22 @@ const IDLE=(()=>{
   return api;
 })();
 
-/* ===== ギャラリー（サブディスプレイ）：未来に残すべき「人間らしさ」が溜まっていく様子 =====
-   上2/3：送った物が守った人間らしさの棚（多い順。写真が積み上がる）
-   下1/3：救えた・あと一歩・救えなかったの3つの写真の山
+/* ===== ギャラリー（サブディスプレイ）：判定のスタンプを押していく作業台 =====
+   左＝依頼主の世界のイラスト、右＝送られた物の写真、真ん中＝「救えた／あと一歩／救えなかった」のスタンプを押す
    ・メイン画面で G キー、またはサブディスプレイ用に URL に ?view=archive を付けて開く
-   ・メインで結果が出ると、同じPCで開いているギャラリーに新着として飛び込む */
+   ・メインで結果が出ると、次の1件として割り込む */
 const ARCHIVE_ONLY=new URLSearchParams(location.search).get("view")==="archive";
 if(ARCHIVE_ONLY)document.body.classList.add("archive-only");
 const GAL=(()=>{
-  const LK="mirai_archive_local_v3";
-  let el=null,open=false,items=[],totals=null,maxRow=0,poll=null,fresh=new Set(),busy=false,queue=[];
+  const LK="mirai_archive_local_v3",HOLD=4200;
+  let el=null,open=false,items=[],totals=null,maxRow=0,poll=null,idx=-1,timer=null,tl=0,express=[],hold={};
   const bc=("BroadcastChannel" in window)?new BroadcastChannel("mirai_archive"):null;
   const keyOf=x=>x.row?"r"+x.row:"t"+x.at;
   function local(){try{return JSON.parse(lsGet(LK,"[]"))||[]}catch{return[]}}
   function saveLocal(a){let k=a.slice(0,30);while(k.length){try{localStorage.setItem(LK,JSON.stringify(k));return}catch{k=k.slice(0,k.length-3)}}}
   // メイン側：結果が出たら控えを残し、ギャラリーに知らせる
   function remember(rec){const a=local().filter(x=>keyOf(x)!==keyOf(rec));a.unshift(rec);saveLocal(a);bc?.postMessage({type:"new",rec})}
-  function attachSvg(){} // 以前の配達記録の名残（今は使わない）
+  function attachSvg(){}
   async function get(q){if(!window.GAS_URL)return null;try{const r=await fetch(window.GAS_URL+q,{signal:AbortSignal.timeout(12000)});const d=await r.json();return d.ok?d:null}catch{return null}}
   function merge(list){
     const m=new Map(items.map(x=>[keyOf(x),x]));
@@ -1612,90 +1602,76 @@ const GAL=(()=>{
       m.set(keyOf(x),{...m.get(keyOf(x)),...x});
       if(x.row)maxRow=Math.max(maxRow,x.row);
     }
-    items=[...m.values()].sort((a,b)=>b.at-a.at).slice(0,90);
+    items=[...m.values()].sort((a,b)=>b.at-a.at).slice(0,60);
   }
-  function calcTotals(){
-    // スプレッドシートの集計が取れないときは、手元にある分から数える
-    const t={outcomes:{saved:0,partial:0,lost:0},elements:{}};HUMANITY.forEach(h=>t.elements[h[0]]=0);
-    for(const x of items){if(t.outcomes[x.outcome]!==undefined)t.outcomes[x.outcome]++;if(x.outcome!=="lost"&&t.elements[x.humanity]!==undefined)t.elements[x.humanity]++}
-    return t;
+  const VJ={saved:["救えた","SAVED"],partial:["あと一歩","ALMOST"],lost:["救えなかった","NOT SAVED"]};
+  function counts(){
+    if(totals)return totals.outcomes;
+    const c={saved:0,partial:0,lost:0};items.forEach(x=>{if(c[x.outcome]!==undefined)c[x.outcome]++});return c;
   }
-  function T(){return totals||calcTotals()}
-  /* ---------- 描画 ---------- */
-  // 同じ写真はいつも同じ位置・角度に置く（行番号から作る乱数）
-  function rnd(seed){let x=Math.sin(seed*999.13)*43758.5453;return x-Math.floor(x)}
-  function seedOf(x){return x.row||Math.floor(x.at/1000)}
-  function shelvesHTML(){
-    const t=T(),list=HUMANITY.map(([ja,en])=>({ja,en,n:t.elements[ja]||0})).sort((a,b)=>b.n-a.n);
-    const max=Math.max(1,...list.map(x=>x.n));
-    return list.map((h,rank)=>{
-      const ph=items.filter(x=>x.outcome!=="lost"&&x.humanity===h.ja).slice(0,14); // 新しい順
-      const fill=h.n?Math.max(.16,h.n/max):0,k=Math.min(ph.length,h.n);
-      // 下から上へ積む（いちばん新しい物がいちばん上）
-      const tiles=ph.slice(0,k).reverse().map((x,i)=>{const s=seedOf(x),y=k>1?i/(k-1):0;
-        return `<img class="tile${fresh.has(keyOf(x))?" fresh":""}" src="${x.thumb}" alt="" style="--y:${y};--r:${(rnd(s)-.5)*14}deg;--dx:${(rnd(s+7)-.5)*18}%;--z:${i}">`}).join("");
-      return `<div class="shelf${rank<3&&h.n?" top":""}${h.n?"":" none"}" style="--fill:${fill}">
-        <div class="stack"><div class="bar"></div>${tiles}</div>
-        <div class="slab"><b>${esc(h.ja)}</b><i>${h.en}</i><span>${h.n}</span></div></div>`;
-    }).join("");
+  function drawCounts(){const c=counts();$("#gvCnt").innerHTML=`<span class="c-s">救えた <b>${c.saved}</b></span><span class="c-p">あと一歩 <b>${c.partial}</b></span><span class="c-l">救えなかった <b>${c.lost}</b></span>`}
+  /* ---------- 1件分：左に世界、右に送られた物、真ん中でスタンプ ---------- */
+  function show(x,isNew){
+    if(!open)return;const my=++tl;const st=STORIES[x.story]||STORIES[0],v=VJ[x.outcome]||VJ.lost;
+    $("#gvDesk").innerHTML=`
+      <div class="gd-l"><div class="gd-cap"><b>${esc(st.name)}</b>（${esc(st.who)}）の手紙</div><div class="gd-art" id="gdArt"></div><p class="gd-req">「${esc(st.q)}」</p></div>
+      <div class="gd-c"><div class="gd-pad"><div class="ink ${x.outcome}" style="--r:${-14+Math.random()*10}deg"><b>${v[0]}</b><span>${v[1]}</span></div>
+        <div class="tool ${x.outcome}"><i class="knob"></i><i class="neck"></i><i class="base"></i></div></div>
+        ${isNew?'<div class="gd-new">NEW DELIVERY</div>':""}</div>
+      <div class="gd-r"><div class="gd-cap">送られてきた物</div><div class="gd-ph"><img src="${x.thumb}" alt=""></div><p class="gd-item">${esc(x.item)}</p></div>`;
+    const art=worldArtEl(x.story);$("#gdArt").append(art);
+    const desk=$("#gvDesk"),alive=()=>open&&my===tl;
+    desk.className="gv-desk in";
+    drawIn(art,60,800);
+    (async()=>{
+      await sleep(1700);if(!alive())return;
+      desk.classList.add("lift");                 // スタンプを持ち上げる
+      await sleep(700);if(!alive())return;
+      desk.classList.add("press");                // ドン
+      desk.classList.remove("shake");void desk.offsetWidth;desk.classList.add("shake");
+      await sleep(420);if(!alive())return;
+      desk.classList.add("done");                 // 持ち上げると判定が残る
+      clearTimeout(timer);timer=setTimeout(next,isNew?HOLD+3000:HOLD);
+    })();
+    clearTimeout(timer);timer=setTimeout(next,20000);
   }
-  function pileHTML(o,ja){
-    const t=T(),n=t.outcomes[o]||0,ph=items.filter(x=>x.outcome===o).slice(0,22).reverse(); // 古い物から置き、新しい物を上に
-    const spread=Math.min(1,.25+n/18);
-    const imgs=ph.map((x,i)=>{const s=seedOf(x);return `<img class="pp${fresh.has(keyOf(x))?" fresh":""}" src="${x.thumb}" alt="" style="--x:${(rnd(s+1)-.5)*spread*100}%;--y:${(rnd(s+2)-.5)*spread*56}%;--r:${(rnd(s+3)-.5)*26}deg;--z:${i}">`}).join("");
-    return `<div class="pile ${o}"><div class="pl-hd"><b>${ja}</b><span>${n}<small>人</small></span></div><div class="pl-in">${imgs||'<div class="pl-none">まだいません</div>'}</div></div>`;
-  }
-  function draw(){
+  function next(){
     if(!open)return;
-    const t=T(),all=t.outcomes.saved+t.outcomes.partial+t.outcomes.lost;
-    $("#gvCnt").innerHTML=`<b>${all}</b><small>件の配達</small>`;
-    $("#gvShelves").innerHTML=shelvesHTML();
-    $("#gvPiles").innerHTML=pileHTML("saved","救えた")+pileHTML("partial","あと一歩")+pileHTML("lost","救えなかった");
-  }
-  /* ---------- 新着：まず大きく見せてから、棚と山に入れる ---------- */
-  const VJ={saved:"救えた",partial:"あと一歩",lost:"救えなかった"};
-  async function arrive(x){
-    queue.push(x);if(busy)return;busy=true;
-    while(queue.length&&open){
-      const r=queue.shift(),st=STORIES[r.story]||STORIES[0],h=humanityOf(r.humanity);
-      const ov=document.createElement("div");ov.className="gv-new "+r.outcome;
-      ov.innerHTML=`<div class="gn-in"><div class="gn-lbl">NEW DELIVERY · 2026 → 2060</div><img src="${r.thumb}" alt="">
-        <div class="gn-txt"><span>${esc(st.name)}（${esc(st.who)}）へ</span><b>${esc(r.item)}</b>
-        <em>${VJ[r.outcome]}</em>${r.outcome!=="lost"&&h?`<p>未来に残した人間らしさ <strong>〈${esc(h[0])}〉</strong></p>`:`<p>未来に残せたものは、なかった</p>`}</div></div>`;
-      el.appendChild(ov);
-      await sleep(6500);if(!open){ov.remove();break}
-      ov.classList.add("out");await sleep(600);ov.remove();
-      merge([r]);fresh=new Set([keyOf(r)]);
-      if(totals){totals.outcomes[r.outcome]=(totals.outcomes[r.outcome]||0)+1;if(r.outcome!=="lost"&&totals.elements[r.humanity]!==undefined)totals.elements[r.humanity]++}
-      draw();await sleep(4000);
-    }
-    busy=false;
+    const ready=express.filter(k=>!(hold[k]>Date.now()));
+    if(ready.length){const k=ready[0];express=express.filter(y=>y!==k);const x=items.find(y=>keyOf(y)===k);if(x)return show(x,true)}
+    if(!items.length){$("#gvDesk").innerHTML=`<div class="arc-empty">まだ配達がありません。<br>最初の挑戦を待っています。</div>`;clearTimeout(timer);timer=setTimeout(next,8000);return}
+    idx=(idx+1)%items.length;show(items[idx],false);
   }
   async function refresh(){
     const [a,b]=await Promise.all([get(`?archive=60${maxRow?"&after="+maxRow:""}`),get("?humanity=1")]);
     if(a&&Array.isArray(a.items)&&a.items.length){
       const known=new Set(items.map(keyOf)),list=a.items.map(x=>({...x,thumb:"data:image/jpeg;base64,"+x.thumb}));
-      const news=maxRow?list.filter(x=>!known.has(keyOf(x))&&!items.some(y=>!y.row&&y.item===x.item&&Math.abs(y.at-x.at)<180000)):[];
-      if(news.length){news.reverse().forEach(arrive);merge(list.filter(x=>!news.includes(x)))}else merge(list);
+      const before=maxRow;merge(list);
+      // 別のPCから届いた新着は、次の1件として割り込ませる
+      if(before)list.filter(x=>!known.has(keyOf(x))&&!items.some(y=>!y.row&&y.item===x.item&&Math.abs(y.at-x.at)<180000&&y!==x)).forEach(x=>{if(!express.includes(keyOf(x)))express.push(keyOf(x))});
     }
-    if(b&&b.totals&&!busy)totals=b.totals;
-    if(!busy)draw();
+    if(b&&b.totals)totals=b.totals;
+    if(open)drawCounts();
   }
-  function onMsg(e){const d=e.data||{};if(open&&d.type==="new"&&d.rec)setTimeout(()=>arrive(d.rec),6000)} // 結果画面の判定が出るころに合わせる
+  function onMsg(e){
+    const d=e.data||{};if(!open||d.type!=="new"||!d.rec)return;
+    merge([d.rec]);const k=keyOf(d.rec);if(!express.includes(k))express.unshift(k);hold[k]=Date.now()+5800;
+    if(totals)totals.outcomes[d.rec.outcome]=(totals.outcomes[d.rec.outcome]||0)+1;
+    // 結果画面の判定が出るころに割り込む
+    setTimeout(()=>{if(!open)return;drawCounts();if(express.includes(k)){clearTimeout(timer);next()}},6000);
+  }
   async function showView(){
     if(open)return;open=true;VOICE.stop?.();
     el=document.createElement("div");el.id="archive";
-    el.innerHTML=`<div class="gv-hd"><img class="arc-logo" src="assets/mvmnt-logo.png" alt="MVMNT">
-        <div class="gv-t"><b>未来に残すべき、人間らしさ</b><span>どれだけ遠くへ行っても、手放してはいけないもの ── 来場者が2060年に送った物が守ったもの</span></div>
-        <div class="gv-cnt" id="gvCnt"></div></div>
-      <div class="gv-shelves" id="gvShelves"><div class="arc-empty">読み込んでいます…</div></div>
-      <div class="gv-piles" id="gvPiles"></div>`;
+    el.innerHTML=`<div class="gv-hd"><img class="arc-logo" src="assets/mvmnt-logo.png" alt="MVMNT"><div class="gv-t"><b>時間郵便局 渋谷窓口</b><span>TIME POST OFFICE · SHIBUYA ／ 2026 → 2060 配達の判定</span></div><div class="gv-cnt" id="gvCnt"></div></div>
+      <div class="gv-desk" id="gvDesk"><div class="arc-empty">読み込んでいます…</div></div>`;
     ($("#stage")&&getComputedStyle($("#stage")).display!=="contents"&&!ARCHIVE_ONLY?$("#stage"):document.body).appendChild(el);
-    merge(local());draw();
-    await refresh();
+    merge(local());drawCounts();
+    await refresh();if(!open)return;
+    idx=-1;next();
     poll=setInterval(refresh,15000);bc&&(bc.onmessage=onMsg);
   }
-  function close(){if(!open)return;open=false;clearInterval(poll);if(bc)bc.onmessage=null;queue=[];busy=false;el?.remove();el=null}
+  function close(){if(!open)return;open=false;clearTimeout(timer);clearInterval(poll);if(bc)bc.onmessage=null;express=[];el?.remove();el=null}
   document.addEventListener("keydown",e=>{
     if(ARCHIVE_ONLY||staffOpen()||e.ctrlKey||e.metaKey||e.altKey)return;
     if(e.code==="KeyG"&&!e.repeat){e.preventDefault();open?close():showView()}
