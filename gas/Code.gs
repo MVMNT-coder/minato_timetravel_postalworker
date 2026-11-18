@@ -245,14 +245,16 @@ const PROMPT_ILLUST = `あなたは線画のイラストレーターです。206
 【起きたこと】{{HAPPENED}}
 【結果】{{OUTCOME}}
 
-【描き方】
-- 「起きたこと」の場面を1枚の絵にする。手前に、送られてきた物と、それを使っている人（棒人間に近い簡単な人物でよい）。奥に、この世界だとわかる背景（海・ビル・ボート・工場など）
-- 送られてきた物は、形でそれとわかるように大きめに描く
+【描き方】ぱっと見て何の絵かわかることを最優先にする
+- 主役は送られてきた物。画面の中央に大きく（画面の3分の1以上の大きさ）描く。誰が見てもその物だとわかる、いちばん特徴的な形（シルエット）で描き、細部は省く
+- 人物は1〜2人まで。頭は円、体と手足は線のシンプルな人型にし、送られてきた物を「使っている動作」がはっきりわかるポーズにする（持つ、広げる、のぞき込む、など）
+- 背景は、この世界だとわかる物を2〜4個だけ（例：海の波線とビル、太陽と温度計、水面とボート、消えた電球、工場の煙突）。画面の下の方か奥に小さめに置く
+- 動きや変化は、短い線（光、湯気、音、風など）を数本足して表す
 - 結果が「救われた」なら人が楽しそうな構図、「救えなかった」なら物が役に立っていない・放置されている構図にする
 - viewBox は "0 0 800 600"。画面いっぱいに使う
 - 使える要素は path, line, circle, ellipse, rect, polyline, polygon, g だけ。text、image、style、色や線の太さの指定は使わない（線の色と太さは表示側で決める）
 - 塗りつぶしは使わず、線だけで描く
-- 要素は25〜45個。細かすぎる曲線は使わず、すっきりした線にする
+- 要素は15〜25個。線が重なりすぎないように、すっきり描く
 - 座標は整数にする
 
 以下のJSONオブジェクトだけを返す：
@@ -282,7 +284,7 @@ function callClaudeText_(promptText) {
     method: 'post',
     contentType: 'application/json',
     headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' },
-    payload: JSON.stringify({ model: PROPS.getProperty('ILLUST_MODEL') || PROPS.getProperty('MODEL') || 'claude-sonnet-5-5', max_tokens: 8000, messages: [{ role: 'user', content: promptText }] }),
+    payload: JSON.stringify({ model: PROPS.getProperty('ILLUST_MODEL') || PROPS.getProperty('MODEL') || 'claude-sonnet-5-5', max_tokens: 4000, messages: [{ role: 'user', content: promptText }] }),
     muteHttpExceptions: true
   });
   const code = res.getResponseCode();

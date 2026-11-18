@@ -442,7 +442,7 @@ body.fxmode #stage{display:block;position:fixed;inset:0;z-index:1;transform:scal
 :root{--paper:#f3f3f0;--ink:#16171a;--ink2:#5d5f66;--rule:#c9cac6;--red:#d23a2a;--hand:"Klee One","Zen Kaku Gothic New",cursive}
 body.archive-only{overflow:hidden;background:#0b0b0c}
 body.archive-only .wrap,body.archive-only #bg,body.archive-only .hud,body.archive-only #fxb{display:none!important}
-#archive{position:fixed;inset:0;z-index:60;background:radial-gradient(ellipse at 50% 40%,#1b1c1f 0%,#0b0b0c 70%);color:var(--fg);display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;gap:calc(var(--u)*1.1);padding:calc(var(--u)*1.4) calc(var(--u)*2.4) calc(var(--u)*1.2);animation:fin .5s ease both}
+#archive{position:fixed;inset:0;z-index:60;background:radial-gradient(ellipse at 50% 40%,#1b1c1f 0%,#0b0b0c 70%);color:var(--fg);display:grid;grid-template-rows:auto minmax(0,1fr);gap:calc(var(--u)*1.2);padding:calc(var(--u)*1.4) calc(var(--u)*2.4) calc(var(--u)*1.8);animation:fin .5s ease both}
 .arc-hd{display:flex;align-items:center;gap:calc(var(--u)*1.6);border-bottom:1px solid #2b2b2b;padding-bottom:calc(var(--u)*.8)}
 .arc-logo{height:calc(var(--u)*2.2);filter:invert(1)}
 .arc-t{display:flex;flex-direction:column;gap:.2em;flex:1;min-width:0}
@@ -453,7 +453,7 @@ body.archive-only .wrap,body.archive-only #bg,body.archive-only .hud,body.archiv
 .arc-slip{display:flex;align-items:center;justify-content:center;min-height:0}
 .arc-empty{font-family:var(--f-disp);font-size:clamp(18px,calc(var(--u)*1.8),38px);text-align:center;color:var(--mute);line-height:1.8}
 /* 送り状 */
-.slip{position:relative;width:min(100%,calc(var(--u)*92));height:100%;max-height:calc(var(--u)*44);background:var(--paper);color:var(--ink);box-shadow:0 calc(var(--u)*.6) calc(var(--u)*2.4) rgba(0,0,0,.55);display:grid;grid-template-rows:auto minmax(0,1fr);animation:slipIn .7s cubic-bezier(.2,.9,.3,1) both;overflow:hidden}
+.slip{position:relative;width:min(100%,calc(var(--u)*96));height:100%;max-height:calc(var(--u)*50);background:var(--paper);color:var(--ink);box-shadow:0 calc(var(--u)*.6) calc(var(--u)*2.4) rgba(0,0,0,.55);display:grid;grid-template-rows:auto minmax(0,1fr);animation:slipIn .7s cubic-bezier(.2,.9,.3,1) both;overflow:hidden}
 @keyframes slipIn{from{opacity:0;transform:translateX(8%) rotate(1.5deg)}to{opacity:1;transform:none}}
 .slip::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.018) 0 2px,transparent 2px 4px)}
 .sl-perf{position:absolute;left:0;top:0;bottom:0;width:calc(var(--u)*1.1);background:radial-gradient(circle at 0 50%,#0b0b0c 38%,transparent 40%) 0 0/100% calc(var(--u)*1.4) repeat-y;border-right:2px dashed var(--rule)}
@@ -479,7 +479,7 @@ body.archive-only .wrap,body.archive-only #bg,body.archive-only .hud,body.archiv
 .sl-sketch .art *,.sl-sketch .art{stroke:var(--ink)!important}
 .sl-sketch .art.dim{opacity:.35}
 .sl-sketch span{position:absolute;left:0;top:0;background:var(--paper);font-family:var(--f-mono);font-size:clamp(9px,calc(var(--u)*.62),13px);letter-spacing:.1em;color:var(--ink2);padding:.25em .6em;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule)}
-.sl-right{display:flex;flex-direction:column;min-width:0;min-height:0}
+.sl-right{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
 .sl-f{display:grid;grid-template-columns:calc(var(--u)*7.4) minmax(0,1fr);gap:calc(var(--u)*1);border-bottom:1px solid var(--rule);padding:calc(var(--u)*.7) 0;align-items:baseline}
 .sl-f label{font-weight:700;font-size:clamp(12px,calc(var(--u)*.85),18px);color:var(--ink2);display:flex;flex-direction:column}
 .sl-f label i{font-style:normal;font-family:var(--f-mono);font-weight:400;font-size:.72em;letter-spacing:.12em}
@@ -490,34 +490,49 @@ body.archive-only .wrap,body.archive-only #bg,body.archive-only .hud,body.archiv
 .sl-hap{font-weight:700;font-size:clamp(16px,calc(var(--u)*1.5),32px);line-height:1.6!important}
 .sl-note{border-bottom:0;flex:1;align-content:start;padding-right:calc(var(--u)*15)}
 .sl-tk{font-family:var(--hand);font-weight:600;font-size:clamp(18px,calc(var(--u)*1.85),40px);line-height:1.55!important;color:#1d2a8a}
-.sl-sig{grid-column:2;font-family:var(--hand);font-size:clamp(12px,calc(var(--u)*.9),20px);color:#1d2a8a;text-align:right;margin-top:.3em}
+.sl-sig{grid-column:2;font-family:var(--hand);font-size:clamp(12px,calc(var(--u)*.9),20px);color:#1d2a8a;text-align:left;margin-top:.3em}
 /* ゴム印の判定スタンプ */
 .stamp2{position:absolute;right:calc(var(--u)*3);bottom:calc(var(--u)*2.6);display:flex;flex-direction:column;align-items:center;gap:.1em;padding:.35em .8em .3em;border:calc(var(--u)*.32) double currentColor;border-radius:calc(var(--u)*.5);transform:rotate(-12deg);mix-blend-mode:multiply;opacity:.92}
 .stamp2 b{font-family:var(--f-disp);font-weight:900;font-size:clamp(28px,calc(var(--u)*3.4),72px);letter-spacing:.12em;line-height:1.1}
 .stamp2 span{font-family:var(--f-mono);font-weight:700;font-size:clamp(11px,calc(var(--u)*.95),20px);letter-spacing:.4em}
 .slip.saved .stamp2{color:#e0560b}.slip.partial .stamp2{color:#3d3f46}.slip.lost .stamp2{color:var(--red)}
-/* 1件の中の表示順 */
-.slip .a1,.slip .a2,.slip .a4,.slip .a5,.slip .a6,.slip .a7,.slip .a8,.slip .a9{opacity:0;animation:fin .6s ease forwards}
-.slip .a1{animation-delay:.3s}.slip .a2{animation-delay:.7s}.slip .a4{animation-delay:1.5s}.slip .a5{animation-delay:2.1s}.slip .a6{animation-delay:2.9s}.slip .a7{animation-delay:3.8s}.slip .a8{animation-delay:3.4s}.slip .a9{animation-delay:6.2s}
-.slip .a3{opacity:0;animation:pmIn .35s cubic-bezier(.2,1.6,.4,1) forwards 1.2s}
-@keyframes pmIn{from{opacity:0;transform:rotate(-14deg) scale(1.8)}to{opacity:1;transform:rotate(-14deg) scale(1)}}
-.slip .a10{opacity:0;animation:stIn .4s cubic-bezier(.2,1.6,.4,1) forwards 8.8s}
-@keyframes stIn{from{opacity:0;transform:rotate(-12deg) scale(2.6)}to{opacity:.92;transform:rotate(-12deg) scale(1)}}
-/* 仕分けレーン */
-.arc-lane{display:grid;grid-template-columns:auto minmax(0,1fr);gap:calc(var(--u)*1.2);align-items:center;border-top:1px solid #2b2b2b;padding-top:calc(var(--u)*.8)}
-.arc-lane-l{font-family:var(--f-disp);font-weight:700;font-size:clamp(11px,calc(var(--u)*.85),18px);color:var(--mute);display:flex;flex-direction:column}
-.arc-lane-l i{font-style:normal;font-family:var(--f-mono);font-size:.75em;letter-spacing:.12em}
-.arc-lane-in{display:flex;gap:calc(var(--u)*.7);overflow:hidden;background:repeating-linear-gradient(90deg,#141414 0 calc(var(--u)*2),#191919 calc(var(--u)*2) calc(var(--u)*4));padding:calc(var(--u)*.5);animation:belt 4s linear infinite}
-@keyframes belt{to{background-position:calc(var(--u)*4) 0}}
-.ln{position:relative;flex:0 0 calc(var(--u)*7.2);aspect-ratio:3/2;background:#fff;padding:3px;opacity:.55;transition:opacity .3s,transform .3s}
-.ln img{width:100%;height:100%;object-fit:cover;display:block}
-.ln.lost img{filter:grayscale(1)}
-.ln span{position:absolute;left:3px;bottom:3px;font-family:var(--f-mono);font-size:clamp(8px,calc(var(--u)*.5),11px);background:rgba(0,0,0,.7);color:#fff;padding:0 .3em}
-.ln::after{content:"";position:absolute;right:3px;top:3px;width:.7em;height:.7em;border-radius:50%;background:var(--red)}
-.ln.saved::after{background:var(--or)}.ln.partial::after{background:#999}
-.ln.on{opacity:1;transform:translateY(-6%);outline:2px solid var(--or)}
-.arc-foot{font-family:var(--f-mono);font-size:clamp(10px,calc(var(--u)*.65),14px);color:var(--mute);text-align:right;letter-spacing:.08em}
-@media (prefers-reduced-motion:reduce){.slip,.slip *{animation-duration:.01s!important;animation-delay:0s!important}.arc-lane-in{animation:none}}
+/* 1件の中の演出：スポットライト・マーカー・1文字ずつ・ゴム印 */
+.slip .a1{opacity:0;animation:fin .6s ease forwards .3s}
+.sl-photo{opacity:0}
+.sl-photo.on{animation:slap .45s cubic-bezier(.2,1.5,.4,1) forwards}
+@keyframes slap{0%{opacity:0;transform:rotate(-8deg) scale(1.35) translateY(-6%)}100%{opacity:1;transform:rotate(-1.2deg)}}
+.pm{opacity:0}
+.pm.on{animation:pmIn .32s cubic-bezier(.2,1.6,.4,1) forwards}
+@keyframes pmIn{from{opacity:0;transform:rotate(-14deg) scale(2.2)}to{opacity:1;transform:rotate(-14deg) scale(1)}}
+.sl-sketch{opacity:0;transition:opacity .6s}.sl-sketch.on{opacity:1}
+.sl-f{opacity:0;transform:translateX(3%);transition:opacity .45s ease,transform .45s ease,filter .45s}
+.sl-f.on{opacity:1;transform:none}
+.slip.focus .sl-f.done{opacity:.32;filter:grayscale(1)}
+.slip.focus .sl-left{filter:brightness(.97)}
+.sl-f.cur{position:relative}
+.sl-f.cur::before{content:"";position:absolute;left:calc(var(--u)*-1.2);top:12%;bottom:12%;width:calc(var(--u)*.35);background:var(--or);animation:barIn .3s ease both}
+@keyframes barIn{from{transform:scaleY(0)}to{transform:none}}
+.sl-f mark{background:linear-gradient(transparent 58%,rgba(255,120,30,.45) 58%,rgba(255,120,30,.45) 92%,transparent 92%) no-repeat 0 0/0% 100%;color:inherit;padding:0 .08em}
+.sl-f.cur mark{animation:marker .7s cubic-bezier(.6,0,.3,1) forwards .25s}
+.sl-f.done mark{background-size:100% 100%}
+@keyframes marker{to{background-size:100% 100%}}
+.sl-f[data-k="item"].cur .sl-item{animation:itemIn .55s cubic-bezier(.2,1.5,.4,1) both;transform-origin:left center}
+@keyframes itemIn{0%{transform:scale(1.9);opacity:0;letter-spacing:.3em}100%{transform:none;opacity:1}}
+.ch{opacity:0;transition:opacity .12s}
+.ch.in{opacity:1}
+.sl-tk .ch{display:inline-block;transform:translateY(.25em);filter:blur(2px);transition:opacity .25s,transform .25s,filter .25s}
+.sl-tk .ch.in{transform:none;filter:none}
+.sl-f[data-k="tk"].cur{background:rgba(29,42,138,.05)}
+.slip.shake{animation:shake .32s ease}
+@keyframes shake{20%{transform:translate(-.5%,.3%) rotate(-.3deg)}45%{transform:translate(.45%,-.2%) rotate(.25deg)}70%{transform:translate(-.2%,.1%)}100%{transform:none}}
+.stamp2{opacity:0}
+.slip.stamped .stamp2{animation:stIn .38s cubic-bezier(.2,1.6,.4,1) forwards}
+@keyframes stIn{from{opacity:0;transform:rotate(-12deg) scale(3)}to{opacity:.92;transform:rotate(-12deg) scale(1)}}
+.sl-flash{position:absolute;inset:0;pointer-events:none;opacity:0}
+.slip.stamped.saved .sl-flash{background:radial-gradient(ellipse at 75% 80%,rgba(255,190,80,.55),transparent 60%);animation:flashOut 1.6s ease forwards .15s}
+.slip.stamped.lost .sl-flash{background:rgba(210,58,42,.18);animation:flashOut 1s ease forwards .15s}
+@keyframes flashOut{0%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.slip,.slip *{animation-duration:.01s!important;animation-delay:0s!important;transition:none!important}}
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0}
 img{max-width:100%}
@@ -967,6 +982,8 @@ async function send(srcCanvas){
       if(!d.ok)throw {code:d.error||"server_error",detail:d.detail};
       if(d.stats)setTally(d.stats);
       res=d.result;res._row=Number(d.row)||0;
+      // 判定が届いたらすぐに想像図を頼んでおく（結果画面が出るまでの待ち時間に描かせる）
+      res._illP=fetchIllust(res,outcomeOf(Math.max(0,Math.min(100,Number(res.score)||0)))).catch(()=>null);
     }catch(e){err=e&&e.code?e:{code:"network",detail:String(e&&e.message||e)}}
     done=true;
   })();
@@ -1028,7 +1045,7 @@ function pageResult(r){
   let alive=true;cleanup.push(()=>alive=false);
   // 想像図：届くまでは世界の線画を薄く出しておき、届いたら1本ずつ描いていく
   const ill=$("#ill"),ph=worldArtEl(storyIdx);ph.classList.add("dim");ill.prepend(ph);
-  fetchIllust(r,o).then(svg=>{
+  (r._illP||fetchIllust(r,o)).then(svg=>{
     if(!alive)return;const cap=$("#illcap");
     if(svg){ph.remove();ill.prepend(svg);drawIn(svg,45,700);cap.textContent="2060年のようす（AIが描いた想像図）";if(r._rec)GAL.attachSvg(r._rec,svg.outerHTML)}
     else{ph.classList.remove("dim");cap.textContent="2060年の世界"}
@@ -1588,7 +1605,7 @@ const WORLD_TITLES=[["海上都市","FLOATING CITY"],["45℃の夜","45°C NIGHT
 const ARCHIVE_ONLY=new URLSearchParams(location.search).get("view")==="archive";
 if(ARCHIVE_ONLY)document.body.classList.add("archive-only");
 const GAL=(()=>{
-  const LK="mirai_archive_local",HOLD=15000;
+  const LK="mirai_archive_local";
   let el=null,open=false,items=[],idx=-1,timer=null,poll=null,maxRow=0,express=[];
   const bc=("BroadcastChannel" in window)?new BroadcastChannel("mirai_archive"):null;
   const keyOf=x=>x.row?"r"+x.row:"t"+x.at;
@@ -1631,33 +1648,59 @@ const GAL=(()=>{
               <text x="100" y="96" text-anchor="middle" class="pm-big">2060</text><text x="100" y="122" text-anchor="middle" class="pm-sm">FROM 2026</text>
               <path d="M200 70 q20 -10 40 0 t40 0 t40 0 M200 100 q20 -10 40 0 t40 0 t40 0 M200 130 q20 -10 40 0 t40 0 t40 0"/></svg>
           </figure>
-          <div class="sl-sketch a8" id="slsk"><span>配達時のスケッチ</span></div>
+          <div class="sl-sketch" id="slsk"><span>配達時のスケッチ</span></div>
         </div>
         <div class="sl-right">
-          <div class="sl-f a4"><label>届け先<i>DESTINATION</i></label><p class="sl-dest">2060年・${esc(w[0])}<small>${esc(w[1])}</small></p></div>
-          <div class="sl-f a5"><label>依頼<i>REQUEST</i></label><p class="sl-req">「${esc(st.q)}」</p></div>
-          <div class="sl-f a6"><label>内容品<i>CONTENTS</i></label><p class="sl-item">${esc(x.item)}</p></div>
-          <div class="sl-f a7"><label>配達結果<i>DELIVERY REPORT</i></label><p class="sl-hap">${esc(x.happened||"")}</p></div>
-          <div class="sl-f sl-note a9"><label>受取人より<i>FROM THE RECIPIENT</i></label><p class="sl-tk">${esc(x.tsukkomi||"")}</p><span class="sl-sig">— minato（2060・渋谷）</span></div>
+          <div class="sl-f" data-k="dest"><label>届け先<i>DESTINATION</i></label><p class="sl-dest"><mark>2060年・${esc(w[0])}</mark><small>${esc(w[1])}</small></p></div>
+          <div class="sl-f" data-k="req"><label>依頼<i>REQUEST</i></label><p class="sl-req"><mark>「${esc(st.q)}」</mark></p></div>
+          <div class="sl-f" data-k="item"><label>内容品<i>CONTENTS</i></label><p class="sl-item"><mark>${esc(x.item)}</mark></p></div>
+          <div class="sl-f" data-k="hap"><label>配達結果<i>DELIVERY REPORT</i></label><p class="sl-hap">${chars(x.happened||"")}</p></div>
+          <div class="sl-f sl-note" data-k="tk"><label>受取人より<i>FROM THE RECIPIENT</i></label><p class="sl-tk">${chars(x.tsukkomi||"")}</p><span class="sl-sig">— minato（2060・渋谷）</span></div>
         </div>
       </div>
-      <div class="stamp2 a10"><b>${v[0]}</b><span>${v[1]}</span></div>
+      <div class="stamp2"><b>${v[0]}</b><span>${v[1]}</span></div><div class="sl-flash"></div>
     </article>`;
   }
-  function laneHTML(cur){
-    return items.slice(0,14).map((x,i)=>`<div class="ln ${x.outcome}${i===cur?" on":""}"><img src="${x.thumb}" alt=""><span>${no(x).replace("No.","")}</span></div>`).join("");
-  }
+  // 1文字ずつ出すために、文字を span で包む（先に全文を置いて大きさを決めておく）
+  function chars(t){return [...String(t)].map(c=>`<span class="ch">${esc(c)}</span>`).join("")}
   function tally(){const s=items.filter(x=>x.outcome==="saved").length;return{all:items.length,saved:s}}
+  let tl=0; // 表示中の1件のタイムライン（切り替えたら前のものは止める）
   function show(i,isExpress=false){
     if(!open||!items.length)return;
-    idx=i;const x=items[idx],box=$("#arcSlip");
+    idx=i;const x=items[idx],box=$("#arcSlip"),my=++tl;
     box.innerHTML=slipHTML(x,isExpress);
-    $("#arcLane").innerHTML=laneHTML(idx);
     const t=tally();$("#arcCnt").innerHTML=`<b>${t.saved}</b> / ${t.all}<small>最近の挑戦のうち救出成功</small>`;
-    const sk=$("#slsk");
-    const svg=x.svg?safeSvg(x.svg):null;
-    if(svg){sk.prepend(svg);setTimeout(()=>drawIn(svg,40,700),3600)}else{const a=worldArtEl(x.story);a.classList?.add("dim");sk.prepend(a);sk.querySelector("span").textContent="届け先の世界"}
-    clearTimeout(timer);timer=setTimeout(next,isExpress?HOLD+5000:HOLD);
+    const slip=box.querySelector(".slip"),right=slip.querySelector(".sl-right");
+    // 文字が多いときは、右側全体を少し縮めて1画面に収める
+    let z=1;right.style.zoom=1;while(right.scrollHeight>right.clientHeight+2&&z>.62){z-=.04;right.style.zoom=z}
+    const sk=$("#slsk"),svg=x.svg?safeSvg(x.svg):null;
+    if(svg)sk.prepend(svg);else{const a=worldArtEl(x.story);a.classList?.add("dim");sk.prepend(a);sk.querySelector("span").textContent="届け先の世界"}
+    const alive=()=>open&&my===tl;
+    const f=k=>slip.querySelector(`.sl-f[data-k="${k}"]`);
+    // 1項目ずつスポットライトを当てる：今の項目だけ明るく、マーカーを引く
+    const focus=k=>{slip.classList.add("focus");slip.querySelectorAll(".sl-f.cur").forEach(e=>{e.classList.remove("cur");e.classList.add("done")});const e=f(k);e.classList.add("on","cur");return e};
+    const typeIn=async(el,ms)=>{const cs=[...el.querySelectorAll(".ch")];for(const c of cs){if(!alive())return;c.classList.add("in");await sleep("。、？！".includes(c.textContent)?ms*5:ms)}};
+    const shake=()=>{slip.classList.remove("shake");void slip.offsetWidth;slip.classList.add("shake")};
+    (async()=>{
+      await sleep(500);if(!alive())return;
+      slip.querySelector(".sl-photo").classList.add("on");                       // 写真をパンと貼る
+      await sleep(650);if(!alive())return;
+      slip.querySelector(".pm").classList.add("on");shake();                      // 消印
+      await sleep(900);if(!alive())return;
+      focus("dest");await sleep(1300);if(!alive())return;
+      focus("req");await sleep(1700);if(!alive())return;
+      focus("item");shake();await sleep(1900);if(!alive())return;                 // 内容品は大きく飛び込む
+      sk.classList.add("on");if(svg)drawIn(svg,40,700);
+      await typeIn(focus("hap").querySelector("p"),38);if(!alive())return;
+      await sleep(700);if(!alive())return;
+      await typeIn(focus("tk").querySelector("p"),70);if(!alive())return;      // minatoの手書き
+      await sleep(900);if(!alive())return;
+      slip.querySelectorAll(".sl-f.cur").forEach(e=>{e.classList.remove("cur");e.classList.add("done")});
+      slip.classList.add("stamped");shake();                                      // ゴム印
+      await sleep(500);slip.classList.remove("focus");
+      clearTimeout(timer);timer=setTimeout(next,isExpress?11000:7000);           // 全体を見せてから次へ
+    })();
+    clearTimeout(timer);timer=setTimeout(next,60000); // 念のための保険
   }
   function next(){
     if(!open)return;
@@ -1676,15 +1719,14 @@ const GAL=(()=>{
     if(d.type==="new"&&d.rec){merge([d.rec]);const k=keyOf(d.rec);if(!express.includes(k))express.unshift(k);
       // 結果画面の演出（約6秒）が終わるころに割り込む
       clearTimeout(timer);timer=setTimeout(next,7000)}
-    if(d.type==="svg"){const x=items.find(y=>keyOf(y)===d.key);if(x){x.svg=d.svg;if(items[idx]===x){const sk=$("#slsk"),svg=safeSvg(d.svg);if(sk&&svg){sk.querySelector(".art")?.remove();sk.prepend(svg);drawIn(svg,40,700);sk.querySelector("span").textContent="配達時のスケッチ"}}}}
+    if(d.type==="svg"){const x=items.find(y=>keyOf(y)===d.key);if(x){x.svg=d.svg;if(items[idx]===x){const sk=$("#slsk"),svg=safeSvg(d.svg);if(sk&&svg){sk.querySelector(".art,.artimg")?.remove();sk.prepend(svg);if(sk.classList.contains("on"))drawIn(svg,40,700);sk.querySelector("span").textContent="配達時のスケッチ"}}}}
   }
   async function showView(){
     if(open)return;open=true;VOICE.stop?.();
     el=document.createElement("div");el.id="archive";
     el.innerHTML=`<div class="arc-hd"><img class="arc-logo" src="assets/mvmnt-logo.png" alt="MVMNT"><div class="arc-t"><b>時間郵便局 渋谷窓口</b><span>TIME POST OFFICE · SHIBUYA BRANCH ／ 2026 → 2060 配達記録</span></div><div class="arc-cnt" id="arcCnt"></div></div>
       <div class="arc-slip" id="arcSlip"><div class="arc-empty">配達記録を読み込んでいます…</div></div>
-      <div class="arc-lane"><div class="arc-lane-l">仕分けレーン<i>SORTING LANE</i></div><div class="arc-lane-in" id="arcLane"></div></div>
-      ${ARCHIVE_ONLY?"":'<div class="arc-foot">G：閉じる ／ ボタン：最初の画面へ</div>'}`;
+`;
     ($("#stage")&&getComputedStyle($("#stage")).display!=="contents"&&!ARCHIVE_ONLY?$("#stage"):document.body).appendChild(el);
     merge(local());
     const list=await fetchSheet(0);if(list)merge(list);
