@@ -531,6 +531,9 @@ img{max-width:100%}
 @keyframes envOut{0%{opacity:0;transform:translate(-50%,-30%) scale(.8)}20%{opacity:1;transform:translate(-50%,-50%) scale(1)}55%{opacity:1;transform:translate(-50%,-50%)}100%{opacity:0;transform:translate(-50%,10%) scale(.9)}}
 .lp-reader{display:flex;align-items:center;gap:calc(var(--u)*1);opacity:.9}
 .lp-reader .fig{width:clamp(44px,calc(var(--u)*4.2),90px)}
+.lp-say{text-align:left;min-height:calc(var(--u)*4.6);display:flex;flex-direction:column;justify-content:center;gap:.3em}
+.lp-tk{margin:0;font-family:var(--f-disp);font-weight:700;font-size:clamp(16px,calc(var(--u)*1.55),34px);line-height:1.5;max-width:30em}
+.lp-reader.talk .lp-tk{animation:ppIn .5s ease both}
 .lp .qhint{font-size:clamp(15px,calc(var(--u)*1.25),26px)}
 :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 </style>
@@ -543,7 +546,7 @@ img{max-width:100%}
 <div class="hud l" id="hudL" aria-hidden="true" data-fx="css"></div><div class="hud r" id="hudR" aria-hidden="true" data-fx="css"></div>
 <div class="static" id="static" aria-hidden="true"></div>
 <div class="wrap">
-  <header><div class="logo" data-fx="css">時間郵便局<em>.</em></div><div class="hr"><button class="snd" id="snd" aria-pressed="false">SOUND OFF</button><div class="lbl" data-fx="text">Tokyo 2060</div></div></header>
+  <header><div class="logo" data-fx="css">時間郵便局<em>.</em></div><div class="hr"><button class="snd" id="snd" aria-pressed="false">SOUND OFF</button><div class="lbl" data-fx="text">TOKYO 21XX</div></div></header>
   <main class="card" id="card"></main>
   <div class="idle" id="idle" hidden></div>
   <div class="push" id="push" hidden aria-live="polite"><i></i><span>PUSH TO</span> <b id="pushL">START</b></div>
@@ -625,7 +628,7 @@ function render(html){
   card.style.animation="none";card.offsetHeight;card.style.animation="";card.innerHTML=html;
 }
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-const FIG=(cls="")=>`<div class="fig ${cls}" data-fx="css"><canvas id="fig"></canvas><i class="c1"></i><i class="c2"></i><i class="c3"></i><i class="c4"></i>${cls?"":`<div class="figid">SUBJECT ID · MINATO-2060</div>`}</div>`;
+const FIG=(cls="")=>`<div class="fig ${cls}" data-fx="css"><canvas id="fig"></canvas><i class="c1"></i><i class="c2"></i><i class="c3"></i><i class="c4"></i>${cls?"":`<div class="figid">SUBJECT ID · MINATO-21XX</div>`}</div>`;
 
 /* ===== 世界の線画（viewBox 800x600・線だけ）。STORIES と同じ順番 =====
    後から画像に差し替えるときは、WORLD_IMG の同じ位置に画像のパスを書く（例："img/world1.png"）。
@@ -709,11 +712,24 @@ function safeSvg(str){
   }catch{return null}
 }
 
-/* 2060年で少し困っている依頼主。art は WORLD_ART の番号、ql は便せんでの改行位置、arrive と world は minato のセリフ。gas/Code.gs の MISSION_STORIES と同じ順番 */
+/* 21XX年で少し困っている依頼主。art は WORLD_ART の番号、ql は便せんでの改行位置。
+   minatoのセリフは、手紙を開ける前（arrive）は封筒でわかることだけ、読んだあと（react）は手紙に書いていない視点を足す皮肉にする。gas/Code.gs の MISSION_STORIES と同じ順番 */
 const STORIES=[
-  {name:"透",who:"41歳・新規事業部の課長",art:0,q:"チームの人と仲良くなる、きっかけになる物がほしい。",ql:["チームの人と仲良くなる、","きっかけになる物がほしい。"],letter:"会議と会議のあいだは0分。1日に9本の会議が続きます。新しい事業を考えるチームなのに、5人のメンバーが休みの日に何をしているのか、誰も知りません。企画会議では、毎回AIの案がそのまま通ります。",sit:"会議が0分おきに続き、チームの5人のことを何も知らない。",arrive:"お、手紙が届いた。差出人は透さん、41歳。新規事業部の課長だって。",world:"2060年、会議は終わった0秒後に次が始まる。おかげで『雑談』って言葉、もう辞書の奥のほうにしか載ってない。"},
-  {name:"美月",who:"26歳・会社員",art:1,q:"AIのおすすめじゃない物を渡したい。あなたなら、何を贈りますか？",ql:["AIのおすすめじゃない物を渡したい。","あなたなら、何を贈りますか？"],letter:"来週は、大学からの親友の誕生日です。AIのおすすめは、3年連続で同じハンドクリーム。親友は毎回『ぴったり！』と喜んでくれます。でも私は、自分で選んだ物を一度も渡したことがありません。",sit:"親友への誕生日プレゼントを、3年連続でAIに選ばせている。",arrive:"お、手紙が届いた。差出人は美月、26歳の会社員。",world:"2060年、プレゼントはAIが選ぶ。絶対に外れない。そのかわり、もらって驚くこともなくなった。"},
-  {name:"ひなた",who:"9歳・小学3年生",art:2,q:"電気がなくても、家族みんなで遊べる物がほしい。",ql:["電気がなくても、","家族みんなで遊べる物がほしい。"],letter:"あしたの夜、街のAIがぜんぶ止まる『アップデートの1時間』があります。ゲームも、しゃべるロボットも、電気も止まります。去年は家族4人で、だまって座っていただけでした。お父さんは、ずっと時計を見ていました。",sit:"AIが止まる1時間、去年は家族4人でだまって座っていた。",arrive:"お、手紙が届いた。差出人は、ひなた。9歳だって。",world:"2060年、年に1度だけ、街じゅうのAIが止まる1時間がある。みんな、この1時間が大の苦手。何をしていいかわからないから。"}
+  {name:"透",who:"41歳・新規事業部の課長",art:0,q:"チームの人と仲良くなる、きっかけになる物がほしい。",ql:["チームの人と仲良くなる、","きっかけになる物がほしい。"],
+   letter:"うちの会社では、AI秘書がみんなの予定を組んでくれます。会議が終わった0秒後に、次の会議。雑談の時間は『ムダ』として消されました。同じチームの5人とは毎日画面ごしに会うのに、誰の好きな食べ物も知りません。",
+   sit:"会議が0分おきに続き、チームの5人のことを何も知らない。",
+   arrive:"お、手紙が届いた。差出人は透さん、41歳。新規事業部の課長だって。さっそく開けてみよう。",
+   react:"新しいことを考えるチームなのに、雑談ゼロ。そりゃAIの案しか出てこないよね。"},
+  {name:"美月",who:"26歳・会社員",art:1,q:"AIのおすすめじゃない物を渡したい。あなたなら、何を贈りますか？",ql:["AIのおすすめじゃない物を渡したい。","あなたなら、何を贈りますか？"],
+   letter:"来週は、親友の誕生日です。プレゼントは3年連続、AIのおすすめの同じハンドクリーム。親友は毎回『ぴったり！』と喜んでくれます。でも私は、自分で選んだ物を一度も渡したことがありません。外すのが、こわくて。",
+   sit:"親友への誕生日プレゼントを、3年連続でAIに選ばせている。",
+   arrive:"お、手紙が届いた。差出人は美月さん、26歳の会社員。さっそく開けてみよう。",
+   react:"3年連続で同じハンドクリーム。親友、もう箱を開ける前に中身わかってるよ。"},
+  {name:"ひなた",who:"9歳・小学3年生",art:2,q:"電気がなくても、家族みんなで遊べる物がほしい。",ql:["電気がなくても、","家族みんなで遊べる物がほしい。"],
+   letter:"あしたの夜、街のAIがぜんぶ止まる『アップデートの1時間』があります。ゲームも、しゃべるロボットも、電気も止まります。去年は家族4人で、だまって座っていただけでした。お父さんは、ずっと時計を見ていました。",
+   sit:"AIが止まる1時間、去年は家族4人でだまって座っていた。",
+   arrive:"お、手紙が届いた。差出人は、ひなたちゃん。9歳だって。さっそく開けてみよう。",
+   react:"AIが止まったら、家族4人で無言。AIって、家族の会話の係までやってたの？"}
 ];
 let story=STORIES[0],storyIdx=0,lastStory=-1;
 function pickStory(){let i;do{i=Math.floor(Math.random()*STORIES.length)}while(i===lastStory&&STORIES.length>1);lastStory=i;storyIdx=i;story=STORIES[i]}
@@ -732,9 +748,9 @@ function pageTitle(){
   stopCam();document.body.classList.remove("desat");
   const t1="時間",t2="郵便局";
   let k=0;const chars=s=>[...s].map(c=>`<span class="ch" style="animation-delay:${(k++)*80}ms">${esc(c)}</span>`).join("");
-  render(`<div class="lbl fade-in" data-fx="text">TIME POST OFFICE · SHIBUYA · 2026 → 2060</div>
+  render(`<div class="lbl fade-in" data-fx="text">TIME POST OFFICE · SHIBUYA · 2026 → 21XX</div>
     <h1 class="title">${chars(t1)}<em>${chars(t2)}</em></h1>
-    <p class="subtitle fade-in" style="animation-delay:700ms">2060年の誰かの日常を、ちょっと変える。</p>
+    <p class="subtitle fade-in" style="animation-delay:700ms">21XX年の誰かの日常を、ちょっと変える。</p>
     <div class="tally fade-in" style="animation-delay:900ms">
       <div class="sv"><span>日常が変わった</span><b id="tS">0</b></div>
       <div class="pt"><span>ちょっと変わった</span><b id="tP">0</b></div>
@@ -752,7 +768,7 @@ function pageTitle(){
 }
 
 /* 2. minatoの自己紹介：時間郵便局のイラスト（時空の穴から手紙が飛んでくる） */
-const INTRO_LINE="2060年の時間郵便局で働いてる、minato。ここには、未来で困ってる人から、過去あての手紙が届く。";
+const INTRO=["21XX年の時間郵便局で働いてる、minato。","ここには、未来で困ってる人から、過去あての手紙が届く。それを2026年のあなたに届けるのが、私の仕事。"];
 const UNBOX_LINE="おお！何これ、どう使うんだ？";
 const ENV_G=`<rect x="-24" y="-15" width="48" height="30" rx="3"/><path d="M-24 -15 l24 17 l24 -17"/>`;
 const POST_ART=`<ellipse cx="170" cy="150" rx="124" ry="46"/><ellipse cx="170" cy="150" rx="88" ry="31"><animate attributeName="rx" values="88;104;88" dur="3s" repeatCount="indefinite"/><animate attributeName="ry" values="31;37;31" dur="3s" repeatCount="indefinite"/></ellipse><ellipse cx="170" cy="150" rx="50" ry="17"/>
@@ -781,7 +797,7 @@ async function typeOut(el,text,alive,skip,pre=""){
 function sayPage({page,art,cap,lines,next,onArt}){
   render(`<div class="story2">
     <div class="artframe" id="art"><div class="artcap" data-fx="text">${cap}</div></div>
-    <div class="saytext"><div class="spk">${FIG("sm")}<div class="lbl" data-fx="text">TRANSMISSION<br>MINATO-2060</div></div>
+    <div class="saytext"><div class="spk">${FIG("sm")}<div class="lbl" data-fx="text">TRANSMISSION<br>MINATO-21XX</div></div>
       <p class="line" id="line"><span class="cur"></span></p>
       <div><button class="btn hidden-until" id="next">次へ</button></div></div></div>`);
   card.dataset.page=page;
@@ -804,40 +820,51 @@ function sayPage({page,art,cap,lines,next,onArt}){
 }
 function pageIntro(){
   pickStory();
-  VOICE.prepare(INTRO_LINE);VOICE.prepare(story.arrive+story.world);
-  sayPage({page:"intro",art:svgEl(POST_ART),cap:"LIVE · 2060 · 時間郵便局 渋谷窓口",lines:[INTRO_LINE],next:pageArrive});
+  VOICE.prepare(INTRO.join(""));VOICE.prepare(story.arrive);
+  sayPage({page:"intro",art:svgEl(POST_ART),cap:"LIVE · 21XX · 時間郵便局 渋谷窓口",lines:INTRO,next:pageArrive});
 }
 
-/* 3. 手紙が届く：依頼主の世界の線画に、封筒が飛んでくる */
+/* 3. 手紙が届く：依頼主の世界の線画に、封筒が飛んでくる（minatoはまだ開けていないので、封筒でわかることだけ言う） */
 function pageArrive(){
-  VOICE.prepare(story.letter);VOICE.prepare(REQ_HEAD+story.q);
-  sayPage({page:"arrive",art:worldArtEl(storyIdx),cap:`LIVE · 2060 · ${esc(story.name)}（${esc(story.who)}）のまわり`,lines:[story.arrive,story.world],next:pageLetter,
+  VOICE.prepare(story.letter);VOICE.prepare(story.react);VOICE.prepare(REQ_HEAD+story.q);
+  sayPage({page:"arrive",art:worldArtEl(storyIdx),cap:`21XX · ${esc(story.name)}（${esc(story.who)}）の世界`,lines:[story.arrive],next:pageLetter,
     onArt(){$("#art").insertAdjacentHTML("beforeend",`<div class="env-fly">${ENV_SVG}<span class="env-from">${esc(story.name)}より</span></div>`);setTimeout(()=>SND.tick(),1900)}});
 }
 
-/* 4. 手紙を読む：便せんに、1文ずつ出していく（minatoが読み上げる） */
+/* 4. 手紙を読む：便せんに1文ずつ出し、minatoが読み上げる。読み終わったら、minatoがひとこと（手紙にない視点の皮肉） */
 const ENV_SVG=`<svg class="env-svg" viewBox="0 0 300 190" aria-hidden="true"><rect class="e-b" x="4" y="4" width="292" height="182" rx="8"/><path class="e-l" d="M4 4 L150 108 L296 4"/><rect class="e-s" x="236" y="18" width="44" height="54" rx="2"/><circle class="e-p" cx="226" cy="60" r="24"/><path class="e-p" d="M190 52 q10 -6 20 0 t20 0 t20 0 M190 64 q10 -6 20 0 t20 0 t20 0"/></svg>`;
 const REQ_HEAD="お願いがあります。";
-function paperHead(){return `<div class="pp-stamp"><b>2060</b><span>TIME POST</span></div><i class="pp-mark"></i>`}
+function paperHead(){return `<div class="pp-stamp"><b>21XX</b><span>TIME POST</span></div><i class="pp-mark"></i>`}
 function pageLetter(){
   SND.mood("base");
-  const sent=story.letter.match(/[^。]+。?/g)||[story.letter];
+  const sent=story.letter.match(/[^。]+。?/g)||[story.letter],GAP=1500,T0=1700;
   render(`<div class="lp">
     <div class="lp-env">${ENV_SVG}</div>
     <article class="paper open">${paperHead()}
       <p class="pp-to">過去の、だれかへ</p>
-      <p class="pp-body">${sent.map((s,i)=>`<span class="pp-s" style="animation-delay:${1700+i*1500}ms">${esc(s)}</span>`).join("")}</p>
+      <p class="pp-body">${sent.map((s,i)=>`<span class="pp-s" style="animation-delay:${T0+i*GAP}ms">${esc(s)}</span>`).join("")}</p>
       <p class="pp-page">1 / 2</p>
     </article>
-    <div class="lp-reader">${FIG("sm")}<div class="lbl" data-fx="text">MINATO が読んでいます</div></div>
+    <div class="lp-reader">${FIG("sm")}<div class="lp-say"><div class="lbl" id="lpLbl" data-fx="text">MINATO が読んでいます</div><p class="lp-tk" id="lpTk"></p></div></div>
     <div class="lp-btn"><button class="btn hidden-until" id="next">次の便せん</button></div></div>`);
   card.dataset.page="letter";document.body.dataset.calm="1";
   unmountFig=minatoFigure($("#fig"),{talk:true});
-  let alive=true;cleanup.push(()=>alive=false);
-  setTimeout(()=>{if(alive){SND.tick();VOICE.say(story.letter)}},1500);
-  const ready=()=>{if(!alive)return;$("#next").classList.remove("hidden-until");setPush("CONTINUE",pageRequest)};
-  const rt=setTimeout(ready,1700+sent.length*1500);cleanup.push(()=>clearTimeout(rt));
-  setPush("CONTINUE",()=>{$$(".pp-s").forEach(s=>s.style.animationDelay="0ms");clearTimeout(rt);ready()});
+  let alive=true,stage=0;cleanup.push(()=>alive=false);
+  // 読み終わり：minatoのひとことを出して、次へ進めるようにする
+  const react=()=>{
+    if(!alive||stage>=2)return;stage=2;
+    $$(".pp-s").forEach(s=>s.style.animationDelay="0ms");
+    $("#lpLbl").textContent="MINATO";$("#lpTk").textContent=story.react;$(".lp-reader").classList.add("talk");
+    SND.glitch();VOICE.say(story.react);
+    $("#next").classList.remove("hidden-until");setPush("CONTINUE",pageRequest);
+  };
+  (async()=>{
+    await sleep(T0-200);if(!alive||stage)return;stage=1;SND.tick();
+    const est=story.letter.length*190+2500; // 声が出ないときの保険
+    await Promise.all([Promise.race([VOICE.say(story.letter),sleep(est)]),sleep(sent.length*GAP+600)]);
+    if(!alive)return;await sleep(500);react();
+  })();
+  setPush("CONTINUE",react); // 1回目：全文とひとことを出す。2回目：次の便せんへ
   $("#next").onclick=pageRequest;
 }
 
@@ -848,7 +875,7 @@ function pageRequest(){
     <article class="paper turn">${paperHead()}
       <p class="pp-to">${REQ_HEAD}</p>
       <p class="pp-req">${(story.ql||[story.q]).map(x=>`<span>${esc(x)}</span>`).join("")}</p>
-      <p class="pp-sign">2060年　${esc(story.name)}より</p>
+      <p class="pp-sign">21XX年　${esc(story.name)}より</p>
       <p class="pp-page">2 / 2</p>
     </article>
     <p class="qhint fade-in" style="animation-delay:2200ms">このお願いに応えられそうな物を、身の回りから1つ見つけて送ってください。</p>
@@ -868,7 +895,7 @@ async function pageCamera(){
       <div class="hud-txt ht1"><span class="blinkr">●</span> TARGET SCAN</div>
       <div class="hud-txt ht2" id="clk"></div>
       <div class="hud-txt ht3" id="obj">OBJECT: SEARCHING…</div>
-      <div class="hud-txt ht4">DEST 2060 / SHIBUYA</div>
+      <div class="hud-txt ht4">DEST 21XX / SHIBUYA</div>
     </div>
     <div class="camside">
       <div class="camq"><div class="lbl">${esc(story.name)}（${esc(story.who)}）からの手紙</div><p>「${esc(story.q)}」</p></div>
@@ -903,7 +930,7 @@ async function pageCamera(){
   }
 }
 
-/* 5. 時空転送：品物を粒子に分解 → 時空を流れる → 2060年でminatoの手元に再構成 */
+/* 5. 時空転送：品物を粒子に分解 → 時空を流れる → 21XX年でminatoの手元に再構成 */
 function txScene(cv,img){
   const dpr=Math.min(1.5,devicePixelRatio||1),r=cv.getBoundingClientRect();
   const W=Math.max(320,r.width),H=Math.max(240,r.height);
@@ -972,7 +999,7 @@ function txScene(cv,img){
   raf=requestAnimationFrame(frame);
   return{
     stop(){cancelAnimationFrame(raf)},
-    // 2060年に到着：粒子が左から流れ込んで、品物の形に戻る
+    // 21XX年に到着：粒子が左から流れ込んで、品物の形に戻る
     arrive(){phase="B";tB=performance.now();for(const p of P){p.bx=-40-Math.random()*W*.5;p.by=H*.5+p.sy*H*.5}}
   };
 }
@@ -980,14 +1007,17 @@ async function send(srcCanvas){
   const img=scaled(srcCanvas,1024),thumb=square(srcCanvas,360),gthumb=crop32(srcCanvas,450);
   render(`<div class="tx"><canvas id="txc"></canvas>
     <div class="tx-top"><div class="status" id="st">品物を粒子に分解中</div><div class="coord" id="co">YEAR 2026.00</div></div>
-    <div class="tx-arr" id="txa" hidden data-fx="text">ARRIVED · 2060 SHIBUYA TIME POST OFFICE</div>
-    <div class="tx-min" id="txm" hidden>${FIG("sm")}<div class="bubble" id="txb" hidden><div class="figname">MINATO-2060</div><p class="r-tk" id="txl"></p></div></div></div>`);
+    <div class="tx-arr" id="txa" hidden data-fx="text">ARRIVED · 21XX SHIBUYA TIME POST OFFICE</div>
+    <div class="tx-min" id="txm" hidden>${FIG("sm")}<div class="bubble" id="txb" hidden><div class="figname">MINATO-21XX</div><p class="r-tk" id="txl"></p></div></div></div>`);
   card.dataset.page="warp";FXB.set("warp");
   let alive=true;cleanup.push(()=>alive=false);
   const scene=txScene($("#txc"),img);cleanup.push(scene.stop);
   const stopWarpSnd=SND.warp();cleanup.push(stopWarpSnd);
   const t0=performance.now(),A_SEC=5;
-  const ci=setInterval(()=>{const c=$("#co");if(c)c.textContent=`YEAR ${Math.min(2060,2026+((performance.now()-t0)/(A_SEC*1000))*34).toFixed(2)}`},60);cleanup.push(()=>clearInterval(ci));
+  // 年数カウンター：2099年まで数えたあと、21XX年へ向けて数字が化けていく
+  const gd=()=>"0123456789X"[Math.random()*11|0];
+  const ci=setInterval(()=>{const c=$("#co");if(!c)return;const p=(performance.now()-t0)/(A_SEC*1000);
+    c.textContent=p<.7?`YEAR ${(2026+p/.7*73).toFixed(2)}`:`YEAR 21${gd()}${gd()}.${gd()}${gd()}`},60);cleanup.push(()=>clearInterval(ci));
   setTimeout(()=>{const s=$("#st");if(alive&&s)s.textContent="時空を移動中"},2000);
   let res,err,done=false;
   const reqP=(async()=>{
@@ -1007,10 +1037,10 @@ async function send(srcCanvas){
   })();
   // --- 分解して時空へ ---
   await sleep(A_SEC*1000);if(!alive)return;
-  // --- 2060年に到着、minatoの手元で再構成 ---
+  // --- 21XX年に到着、minatoの手元で再構成 ---
   clearInterval(ci);stopWarpSnd();flash();SND.arrive();FXB.set("scan");
   scene.arrive();
-  $("#co").textContent="YEAR 2060.00";$("#st").textContent="2060年・渋谷に到着";$("#txa").hidden=false;
+  $("#co").textContent="YEAR 21XX";$("#st").textContent="21XX年・渋谷に到着";$("#txa").hidden=false;
   $("#txm").hidden=false;unmountFig=minatoFigure($("#fig"),{talk:true});
   await sleep(3200);if(!alive)return;
   // --- minatoが受け取って開ける ---
@@ -1047,14 +1077,14 @@ function pageResult(r){
       <div class="r-need fade-in" style="animation-delay:${T[0]}ms"><div class="lbl">${esc(story.name)}（${esc(story.who)}）の困りごと</div>
         <p class="r-sit">${esc(story.sit)}</p><p class="r-req">「${esc(story.q)}」</p></div>
       <div class="illust fade-in" style="animation-delay:${T[1]}ms" id="ill">
-        <div class="illcap" id="illcap">2060年のようすを描いています…</div>
+        <div class="illcap" id="illcap">21XX年のようすを描いています…</div>
         <div class="r-sent"><div class="ph"><img src="${r.thumb}" alt=""></div><div><div class="lbl">あなたが送った物</div><b>${esc(r.item_name)}</b></div></div>
       </div>
     </div>
     <div class="resr">
-      <div class="r-hap fade-in" style="animation-delay:${T[2]}ms"><div class="lbl">2060年で起きたこと</div><p>${esc(r.happened)}</p></div>
+      <div class="r-hap fade-in" style="animation-delay:${T[2]}ms"><div class="lbl">21XX年で起きたこと</div><p>${esc(r.happened)}</p></div>
       <div class="r-talk fade-in" style="animation-delay:${T[3]}ms">${FIG("sm")}
-        <div class="bubble"><div class="figname" data-fx="text">MINATO-2060</div><p class="r-tk">${esc(r.tsukkomi)}</p></div></div>
+        <div class="bubble"><div class="figname" data-fx="text">MINATO-21XX</div><p class="r-tk">${esc(r.tsukkomi)}</p></div></div>
       <div class="r-ver ${o} fade-in" style="animation-delay:${T[4]}ms"><div class="vlbl" data-fx="text">${V.m}</div><h1 class="verdict ${o}">${V.t(esc(story.name))}</h1></div>
       <div class="row fade-in" style="animation-delay:${T[5]}ms"><button class="btn" id="again">もう一度挑戦する</button><button class="btn ghost" id="top">TOPへ</button></div>
     </div></div>`);
@@ -1065,9 +1095,9 @@ function pageResult(r){
   const ill=$("#ill"),ph=worldArtEl(storyIdx);ph.classList.add("dim");ill.prepend(ph);
   (r._illP||fetchIllust(r,o)).then(svg=>{
     if(!alive)return;const cap=$("#illcap");
-    if(svg){ph.remove();ill.prepend(svg);drawIn(svg,45,700);cap.textContent="2060年のようす（AIが描いた想像図）";if(r._rec)GAL.attachSvg(r._rec,svg.outerHTML)}
-    else{ph.classList.remove("dim");cap.textContent="2060年の世界"}
-  }).catch(()=>{if(!alive)return;ph.classList.remove("dim");$("#illcap").textContent="2060年の世界"});
+    if(svg){ph.remove();ill.prepend(svg);drawIn(svg,45,700);cap.textContent="21XX年のようす（AIが描いた想像図）";if(r._rec)GAL.attachSvg(r._rec,svg.outerHTML)}
+    else{ph.classList.remove("dim");cap.textContent="21XX年の世界"}
+  }).catch(()=>{if(!alive)return;ph.classList.remove("dim");$("#illcap").textContent="21XX年の世界"});
   setTimeout(()=>{if(alive)VOICE.say(r.tsukkomi)},T[3]+200);
   setTimeout(()=>{if(!alive)return;o==="lost"?SND.lose():SND.win(o==="saved");SND.mood(o);FXB.set(o)},T[4]+150);
   if(o==="lost")setTimeout(()=>{if(alive)document.body.classList.add("desat")},T[4]+600);
@@ -1201,8 +1231,8 @@ function glitch(cv,src){
       // 横に流れる細いノイズ帯（たまに）
       if((t%4)<.12){ctx.fillStyle="rgba(255,92,0,.06)";ctx.fillRect(0,(Math.sin(t*13)*.5+.5)*H,W,2+Math.random()*6)}
     }
-    const yr=2026+((Math.sin(t*.4)*.5+.5)*34);
-    L.textContent=`T+${t.toFixed(2).padStart(8,"0")}\nΔt=34y  SYNC ${(97+Math.sin(t*2)*2.4).toFixed(1)}%\nYEAR ${yr.toFixed(3)}`;
+    const ph=Math.sin(t*.4)*.5+.5,yr=ph<.8?(2026+ph/.8*73).toFixed(3):"21XX."+String(Math.random()*1000|0).padStart(3,"0");
+    L.textContent=`T+${t.toFixed(2).padStart(8,"0")}\nΔt=??y  SYNC ${(97+Math.sin(t*2)*2.4).toFixed(1)}%\nYEAR ${yr}`;
     Rr.textContent=`LAT 35.6580 N\nLON 139.7016 E\nDEST SHIBUYA / 窓口07`;
     if(!reduce)requestAnimationFrame(frame);
   }
@@ -1362,7 +1392,8 @@ const VOICE=(()=>{
     return j.flatMap(c=>c.styles.map(s=>({id:s.id,name:`${c.name}（${s.name}）`,chara:c.name})));
   }
   function credit(){const el=$("#vvcredit");if(el)el.textContent=ok&&spkName?`音声：VOICEVOX:${spkName.replace(/（.*/,"")}`:""}
-  function clean(t){return String(t).replace(/minato/gi,"ミナト").replace(/[「」『』]/g,"").replace(/…+/g,"、").replace(/！？|!\?/g,"？")}
+  const READ=[[/minato/gi,"ミナト"],[/美月/g,"みづき"],[/透(?!明)/g,"とおる"]];
+  function clean(t){let r=String(t);READ.forEach(([a,b])=>r=r.replace(a,b));return r.replace(/[「」『』]/g,"").replace(/…+/g,"、").replace(/！？|!\?/g,"？")}
   function synth(text){
     const key=spk+"|"+text;if(cache.has(key))return cache.get(key);
     const p=(async()=>{
@@ -1375,17 +1406,23 @@ const VOICE=(()=>{
     if(cache.size>40){const k=cache.keys().next().value;cache.delete(k)}
     return p;
   }
+  // 話し終わりを知らせる（say は話し終わると解決する Promise を返す。止めたときも解決する）
+  let endFn=null;
+  function endNow(){const f=endFn;endFn=null;if(f)f()}
   function browserSay(text,my){
-    if(!("speechSynthesis" in window))return;
+    if(!("speechSynthesis" in window))return endNow();
     const u=new SpeechSynthesisUtterance(clean(text));u.lang="ja-JP";u.rate=1.08;u.pitch=1.05;u.volume=Math.min(1,vol);
     const v=speechSynthesis.getVoices().find(v=>v.lang&&v.lang.startsWith("ja"));if(v)u.voice=v;
-    u.onstart=()=>SND.duck(.35);u.onend=u.onerror=()=>{if(my===token)SND.duck(1)};
+    u.onstart=()=>SND.duck(.35);u.onend=u.onerror=()=>{if(my===token){SND.duck(1);endNow()}};
     speechSynthesis.speak(u);
   }
-  function stop(){token++;if(cur){cur.pause();cur=null}try{speechSynthesis.cancel()}catch{}SND.duck(1)}
-  async function say(text){
+  function stop(){token++;if(cur){cur.pause();cur=null}try{speechSynthesis.cancel()}catch{}SND.duck(1);endNow()}
+  function say(text){
     stop(); // 前の声を止めてから話す（二重に再生しない）
-    if(!text||!SND.isOn())return;
+    const p=new Promise(r=>endFn=r);run(text);return p;
+  }
+  async function run(text){
+    if(!text||!SND.isOn())return endNow();
     const my=token;
     if(ok===null)await check();
     if(my!==token)return;
@@ -1393,7 +1430,7 @@ const VOICE=(()=>{
     try{
       const url=await synth(text);if(my!==token)return;
       const a=new Audio(url);a.volume=Math.max(0,Math.min(1,vol));cur=a;
-      a.onplay=()=>SND.duck(.35);a.onended=()=>{if(my===token){cur=null;SND.duck(1)}};
+      a.onplay=()=>SND.duck(.35);a.onended=a.onerror=()=>{if(my===token){cur=null;SND.duck(1);endNow()}};
       await a.play();
     }catch(e){if(my===token)browserSay(text,my)}
   }
@@ -1702,7 +1739,7 @@ const GAL=(()=>{
   async function showView(){
     if(open)return;open=true;VOICE.stop?.();
     el=document.createElement("div");el.id="archive";
-    el.innerHTML=`<div class="gv-hd"><img class="arc-logo" src="assets/mvmnt-logo.png" alt="MVMNT"><div class="gv-t"><b>時間郵便局 渋谷窓口</b><span>TIME POST OFFICE · SHIBUYA ／ 2026 → 2060 配達の判定</span></div><div class="gv-cnt" id="gvCnt"></div></div>
+    el.innerHTML=`<div class="gv-hd"><img class="arc-logo" src="assets/mvmnt-logo.png" alt="MVMNT"><div class="gv-t"><b>時間郵便局 渋谷窓口</b><span>TIME POST OFFICE · SHIBUYA ／ 2026 → 21XX 配達の判定</span></div><div class="gv-cnt" id="gvCnt"></div></div>
       <div class="gv-desk" id="gvDesk"><div class="arc-empty">読み込んでいます…</div></div>`;
     ($("#stage")&&getComputedStyle($("#stage")).display!=="contents"&&!ARCHIVE_ONLY?$("#stage"):document.body).appendChild(el);
     merge(local());drawCounts();
