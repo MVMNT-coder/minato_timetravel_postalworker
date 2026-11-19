@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>未来を救えるか</title>
+<title>時間郵便局</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@700;900&family=Klee+One:wght@600&family=Noto+Sans+JP:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap">
 <style>
@@ -175,17 +175,19 @@ a.btn{text-decoration:none}
 .quote.nolabel{font-size:clamp(18px,4.4vw,24px);margin-top:4px}
 .speaker{align-items:flex-start}
 
-/* ===== 未来を救えるか ===== */
+/* ===== 時間郵便局 ===== */
 .title{font-family:var(--f-disp);font-weight:900;font-size:clamp(40px,11vw,84px);line-height:1.15;margin:0;letter-spacing:.01em;text-wrap:balance}
 .title .ch{display:inline-block;opacity:0;transform:translateY(.3em);animation:chin .5s cubic-bezier(.2,1.4,.4,1) forwards}
 @keyframes chin{to{opacity:1;transform:none}}
 .title em{font-style:normal;color:var(--or)}
-.tally{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.tally{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 .tally div{padding:14px 0;display:flex;flex-direction:column;gap:2px}
 .tally div+div{border-left:1px solid var(--line);padding-left:16px}
 .tally b{font-family:var(--f-mono);font-size:clamp(30px,7vw,44px);line-height:1;font-variant-numeric:tabular-nums}
 .tally .sv b{color:var(--or)}
+.tally .pt b{color:var(--fg)}
 .tally .ls b{color:var(--mute)}
+.subtitle{margin:0;font-family:var(--f-disp);font-weight:700;font-size:clamp(16px,calc(var(--u)*1.9),40px);letter-spacing:.04em}
 .tally span{font-size:12px;color:var(--mute)}
 .fade-in{opacity:0;animation:fin .6s ease forwards}
 @keyframes fin{to{opacity:1}}
@@ -468,6 +470,7 @@ body.archive-only .wrap,body.archive-only #bg,body.archive-only .hud,body.archiv
 .ink{position:relative;z-index:2;background:rgba(10,10,12,.18);backdrop-filter:blur(.5px);display:flex;flex-direction:column;align-items:center;gap:.1em;padding:.35em .7em .3em;border:calc(var(--u)*.38) double currentColor;border-radius:calc(var(--u)*.6);transform:rotate(var(--r)) scale(1.2);opacity:0}
 .ink b{font-family:var(--f-disp);font-weight:900;font-size:clamp(34px,calc(var(--u)*5),108px);letter-spacing:.08em;white-space:nowrap;line-height:1.15}
 .ink span{font-family:var(--f-mono);font-weight:700;font-size:clamp(12px,calc(var(--u)*1.2),26px);letter-spacing:.36em}
+.ink.partial b,.ink.lost b{font-size:clamp(26px,calc(var(--u)*3.6),78px)}
 .ink.saved{color:#ff6a14;text-shadow:0 0 18px rgba(255,106,20,.35)}.ink.partial{color:#d9d9d9}.ink.lost{color:#e0473a}
 .gv-desk.press .ink{animation:inkIn .25s ease-out forwards}
 @keyframes inkIn{0%{opacity:0;transform:rotate(var(--r)) scale(1.25)}100%{opacity:.95;transform:rotate(var(--r)) scale(1)}}
@@ -486,13 +489,10 @@ body.archive-only .wrap,body.archive-only #bg,body.archive-only .hud,body.archiv
 @media (max-width:820px),(max-aspect-ratio:1/1){.gv-desk{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){.gv-desk *{animation-duration:.01s!important;transition-duration:.01s!important}}
 
-/* 手紙・人間らしさ */
+/* 手紙 */
 .letter .lt-body{margin:0;max-width:30em;font-size:clamp(16px,calc(var(--u)*1.45),30px);line-height:1.8;color:var(--fg)}
 .letter .qtext{font-size:clamp(22px,calc(var(--u)*3.1),66px);max-width:22em;text-wrap:balance}
 .letter .lt-body{text-wrap:pretty}
-.r-hum{margin-top:calc(var(--u)*.6);font-size:clamp(14px,calc(var(--u)*1.1),24px);color:var(--mute)}
-.r-hum b{font-family:var(--f-disp);font-weight:900;font-size:1.7em;color:var(--or);margin-left:.3em}
-.r-hum i{font-style:normal;font-family:var(--f-mono);font-size:.7em;letter-spacing:.16em;margin-left:.6em}
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0}
 img{max-width:100%}
@@ -508,7 +508,7 @@ img{max-width:100%}
 <div class="hud l" id="hudL" aria-hidden="true" data-fx="css"></div><div class="hud r" id="hudR" aria-hidden="true" data-fx="css"></div>
 <div class="static" id="static" aria-hidden="true"></div>
 <div class="wrap">
-  <header><div class="logo" data-fx="css">未来救出局<em>.</em></div><div class="hr"><button class="snd" id="snd" aria-pressed="false">SOUND OFF</button><div class="lbl" data-fx="text">Tokyo 2060</div></div></header>
+  <header><div class="logo" data-fx="css">時間郵便局<em>.</em></div><div class="hr"><button class="snd" id="snd" aria-pressed="false">SOUND OFF</button><div class="lbl" data-fx="text">Tokyo 2060</div></div></header>
   <main class="card" id="card"></main>
   <div class="idle" id="idle" hidden></div>
   <div class="push" id="push" hidden aria-live="polite"><i></i><span>PUSH TO</span> <b id="pushL">START</b></div>
@@ -594,80 +594,47 @@ const FIG=(cls="")=>`<div class="fig ${cls}" data-fx="css"><canvas id="fig"></ca
 /* ===== 世界の線画（viewBox 800x600・線だけ）。STORIES と同じ順番 =====
    後から画像に差し替えるときは、WORLD_IMG の同じ位置に画像のパスを書く（例："img/world1.png"）。
    パスが入っている世界は、線画の代わりにその画像を表示する */
-const WORLD_IMG=["","","","","",""];
+const WORLD_IMG=["","",""];
 const WORLD_ART=[
-/* 1. 海上都市への引っ越し */
-`<path d="M0 380 q90 -40 180 20"/><path d="M180 400 h440 l-30 40 h-380 z"/>
-<path d="M230 400 a70 70 0 0 1 140 0"/><path d="M300 330 v70"/><path d="M265 345 v55"/><path d="M335 345 v55"/>
-<path d="M400 400 a50 50 0 0 1 100 0"/><path d="M450 350 v50"/>
-<rect x="520" y="250" width="50" height="150"/><path d="M532 275 h26 M532 300 h26 M532 325 h26 M532 350 h26 M532 375 h26"/>
-<rect x="585" y="300" width="30" height="100"/><path d="M593 320 h14 M593 345 h14 M593 370 h14"/>
-<path d="M545 250 v-40"/><circle cx="545" cy="204" r="6"/>
-<circle cx="660" cy="110" r="45"/><path d="M660 40 v-22 M660 180 v22 M590 110 h-22 M730 110 h22 M610 60 l-16 -16 M710 60 l16 -16 M610 160 l-16 16 M710 160 l16 16"/>
-<path d="M60 455 h90 l-15 25 h-60 z"/><path d="M105 455 v-50 l35 50"/><rect x="72" y="432" width="24" height="22"/><path d="M72 443 h24 M84 432 v22"/>
-<path d="M430 150 q10 -12 20 0 q10 -12 20 0"/><path d="M480 185 q8 -10 16 0 q8 -10 16 0"/>
-<path d="M0 470 q50 -18 100 0 t100 0 t100 0 t100 0 t100 0 t100 0 t100 0 t100 0"/>
-<path d="M-50 520 q50 -18 100 0 t100 0 t100 0 t100 0 t100 0 t100 0 t100 0 t100 0 t100 0"/>
-<path d="M0 570 q50 -18 100 0 t100 0 t100 0 t100 0 t100 0 t100 0 t100 0 t100 0"/>`,
-/* 2. 昼は45℃、外遊び禁止の夜型生活 */
-`<path d="M640 80 a62 62 0 1 0 60 100 a50 50 0 1 1 -60 -100"/>
-<path d="M520 70 v14 M513 77 h14"/><path d="M430 130 v10 M425 135 h10"/><path d="M740 250 v12 M734 256 h12"/><path d="M330 60 v10 M325 65 h10"/>
-<rect x="90" y="110" width="36" height="270" rx="18"/><circle cx="108" cy="410" r="36"/><path d="M108 398 v-262"/><circle cx="108" cy="410" r="18"/>
-<path d="M140 150 h18 M140 190 h12 M140 230 h18 M140 270 h12 M140 310 h18 M140 350 h12"/>
-<circle cx="230" cy="120" r="32"/><path d="M205 95 l50 50 M255 95 l-50 50"/>
-<path d="M0 520 h800"/>
-<rect x="250" y="250" width="90" height="270"/><path d="M262 280 h66 M262 310 h66 M262 340 h66 M262 370 h66 M262 400 h66 M262 430 h66 M262 460 h66 M262 490 h66"/>
-<rect x="640" y="300" width="110" height="220"/><path d="M655 330 h80 M655 360 h80 M655 390 h80 M655 420 h80 M655 450 h80 M655 480 h80"/>
-<rect x="560" y="360" width="70" height="160"/><path d="M572 385 h46 M572 410 h46 M572 435 h46 M572 460 h46 M572 485 h46"/>
-<path d="M360 520 l30 -130 h150 l30 130"/><path d="M420 390 v80 M450 390 v80"/><path d="M412 470 h46"/><path d="M480 390 v80 M510 390 v80"/><path d="M472 470 h46"/>
-<path d="M350 440 l20 -12 l20 12 l20 -12 l20 12 l20 -12 l20 12 l20 -12 l20 12 l20 -12 l20 12 l20 -12"/>
-<path d="M352 400 v120 M588 400 v120"/>`,
-/* 3. 水没した渋谷と、最短ルートしか通らないAIボート */
-`<rect x="60" y="120" width="120" height="330"/><path d="M80 150 h80 M80 185 h80 M80 220 h80 M80 255 h80 M80 290 h80 M80 325 h80"/>
-<rect x="200" y="200" width="150" height="250"/><rect x="215" y="215" width="120" height="80"/><path d="M230 240 h90 M230 265 h60"/>
-<path d="M400 450 v-250 a55 22 0 0 1 110 0 v250"/><path d="M400 200 a55 22 0 0 0 110 0"/><path d="M400 260 a55 22 0 0 0 110 0 M400 320 a55 22 0 0 0 110 0"/>
-<rect x="560" y="160" width="100" height="290"/><path d="M575 190 h70 M575 225 h70 M575 260 h70 M575 295 h70 M575 330 h70"/>
-<rect x="690" y="240" width="80" height="210"/><path d="M702 270 h56 M702 300 h56 M702 330 h56"/>
-<path d="M620 390 v-90 h46"/><rect x="666" y="288" width="54" height="24" rx="6"/><circle cx="680" cy="300" r="6"/><circle cx="693" cy="300" r="6"/><circle cx="706" cy="300" r="6"/>
-<rect x="270" y="340" width="180" height="46"/><path d="M285 355 h150 M285 371 h100"/><path d="M290 386 v20 M430 386 v20"/>
-<path d="M0 395 q50 -18 100 0 t100 0 t100 0 t100 0 t100 0 t100 0 t100 0 t100 0"/>
-<path d="M90 440 h120 l-18 30 h-84 z"/><path d="M125 440 a25 25 0 0 1 50 0"/><circle cx="150" cy="428" r="5"/><path d="M150 415 v-22"/><circle cx="150" cy="388" r="5"/>
-<path d="M230 455 h470"/><path d="M700 455 l-20 -10 M700 455 l-20 10"/>
-<path d="M300 500 l-30 60 M380 500 l-20 60 M460 500 l-10 60 M540 500 l0 60 M620 500 l10 60"/>
-<path d="M-50 480 q50 -18 100 0 t100 0 t100 0 t100 0 t100 0 t100 0 t100 0 t100 0 t100 0"/>
-<path d="M0 575 q50 -18 100 0 t100 0 t100 0 t100 0 t100 0 t100 0 t100 0 t100 0"/>`,
-/* 4. 電気は1日3時間だけ */
-`<circle cx="240" cy="210" r="95"/><path d="M195 290 q45 30 90 0"/><rect x="205" y="305" width="70" height="50" rx="6"/><path d="M205 322 h70 M205 339 h70"/><path d="M225 355 v16 h30 v-16"/>
-<path d="M210 250 q10 -70 30 -20 q20 -50 30 20"/><path d="M175 145 l130 130 M305 145 l-130 130"/>
-<circle cx="570" cy="200" r="110"/><path d="M570 200 V90 A110 110 0 0 1 680 200 Z"/><path d="M570 105 v-10 M665 200 h10 M570 295 v10 M475 200 h-10"/><circle cx="570" cy="200" r="6"/>
-<path d="M590 180 l14 -44 M610 190 l40 -30 M600 160 l36 -52"/>
-<rect x="470" y="400" width="190" height="76" rx="8"/><rect x="660" y="424" width="16" height="28"/><rect x="484" y="414" width="34" height="48"/>
-<path d="M70 600 v-170 h260 v170"/><rect x="92" y="452" width="46" height="46"/><rect x="158" y="452" width="46" height="46"/><rect x="224" y="452" width="46" height="46"/><rect x="92" y="520" width="46" height="46"/><rect x="158" y="520" width="46" height="46"/><rect x="224" y="520" width="46" height="46"/>
-<path d="M165 459 l32 32 M197 459 l-32 32 M181 452 v46 M158 475 h46"/>
-<path d="M350 520 q40 -60 80 -10 t40 40"/><rect x="368" y="470" width="30" height="24" rx="4" transform="rotate(-25 383 482)"/><path d="M372 462 l-6 -14 M388 456 l-6 -14"/>`,
-/* 5. 食べ物は全部工場製、味は3種類 */
-`<path d="M70 300 v-130 l90 55 v-55 l90 55 v-55 l90 55 v75 z"/><rect x="290" y="90" width="34" height="110"/>
-<circle cx="307" cy="66" r="14"/><circle cx="330" cy="40" r="18"/><circle cx="362" cy="22" r="12"/>
-<rect x="100" y="250" width="40" height="50"/><rect x="170" y="250" width="40" height="50"/><rect x="240" y="250" width="40" height="50"/>
-<rect x="60" y="400" width="680" height="44" rx="22"/><circle cx="110" cy="422" r="12"/><circle cx="250" cy="422" r="12"/><circle cx="400" cy="422" r="12"/><circle cx="550" cy="422" r="12"/><circle cx="690" cy="422" r="12"/>
-<path d="M340 300 h60 v100"/>
-<rect x="430" y="330" width="70" height="70"/><path d="M448 350 v0.1 M465 365 v0.1 M482 350 v0.1 M448 382 v0.1 M482 382 v0.1"/>
-<rect x="530" y="330" width="70" height="70"/><circle cx="565" cy="365" r="18"/>
-<rect x="630" y="330" width="70" height="70"/>
-<circle cx="565" cy="190" r="46"/><circle cx="565" cy="190" r="18"/><path d="M565 236 l-70 94 M565 236 l0 94 M565 236 l70 94"/><path d="M565 144 v-30 h120"/>
-<ellipse cx="230" cy="530" rx="120" ry="34"/><ellipse cx="230" cy="526" rx="80" ry="20"/><rect x="205" y="508" width="50" height="26"/>
-<path d="M400 500 v70 M388 500 v26 q12 14 24 0 v-26"/>
-<circle cx="560" cy="530" r="30"/><path d="M560 530 l14 -20"/><circle cx="640" cy="530" r="30"/><path d="M640 530 l-18 -14"/><circle cx="720" cy="530" r="30"/><path d="M720 530 l0 -24"/>`,
-/* 6. AIが一瞬で完璧な絵を描く部屋 */
-`<path d="M0 540 h800"/>
-<path d="M120 540 l60 -330 M300 540 l-60 -330 M150 400 h120"/><rect x="130" y="180" width="160" height="200"/><path d="M150 350 q30 -60 60 -20 t60 -40"/><circle cx="175" cy="230" r="14"/>
-<path d="M70 540 v-60 h90 v60"/><path d="M60 480 h110"/>
-<rect x="420" y="120" width="300" height="220"/><path d="M440 300 l60 -80 l50 50 l40 -60 l70 90"/><circle cx="660" cy="170" r="22"/><path d="M430 140 h280 M430 330 h280" />
-<path d="M570 340 v40 M520 380 h100"/>
-<path d="M760 140 h-30 l-40 70 l-50 10"/><circle cx="760" cy="140" r="10"/><path d="M640 220 l-14 18"/>
-<path d="M690 120 v-30 M675 95 l15 -12 l15 12"/><path d="M455 95 v-20 M440 80 h30 M600 90 v-20 M585 75 h30"/>
-<path d="M330 470 q20 -30 40 0"/><rect x="340" y="470" width="30" height="70"/><path d="M380 520 l40 -10 M386 500 l30 -20"/>
-<rect x="480" y="470" width="120" height="70"/><path d="M490 490 h100 M490 510 h70"/><path d="M620 540 l40 -80"/>`
+/* 1. すき間のない会社：会議が0分おきに続く、画面ごしのチーム */
+`<path d="M70 60 v480"/><path d="M62 70 h16 M62 120 h16 M62 170 h16 M62 220 h16 M62 270 h16 M62 320 h16 M62 370 h16 M62 420 h16 M62 470 h16 M62 520 h16"/>
+<rect x="90" y="70" width="130" height="50"/><rect x="90" y="120" width="130" height="50"/><rect x="90" y="170" width="130" height="50"/><rect x="90" y="220" width="130" height="50"/><rect x="90" y="270" width="130" height="50"/><rect x="90" y="320" width="130" height="50"/><rect x="90" y="370" width="130" height="50"/><rect x="90" y="420" width="130" height="50"/><rect x="90" y="470" width="130" height="50"/>
+<path d="M104 90 h70 M104 104 h40 M104 140 h70 M104 154 h40 M104 190 h70 M104 204 h40 M104 240 h70 M104 254 h40 M104 290 h70 M104 304 h40 M104 340 h70 M104 354 h40 M104 390 h70 M104 404 h40 M104 440 h70 M104 454 h40 M104 490 h70 M104 504 h40"/>
+<circle cx="310" cy="120" r="52"/><path d="M310 120 v-34 M310 120 l26 15"/><path d="M310 74 v8 M356 120 h-8 M310 166 v-8 M264 120 h8"/>
+<rect x="400" y="50" width="360" height="260" rx="8"/><path d="M520 60 v240 M640 60 v240 M410 180 h340"/>
+<circle cx="465" cy="108" r="22"/><path d="M431 168 q34 -46 68 0"/><circle cx="580" cy="108" r="22"/><path d="M546 168 q34 -46 68 0"/><circle cx="695" cy="108" r="22"/><path d="M661 168 q34 -46 68 0"/>
+<circle cx="465" cy="228" r="22"/><path d="M431 288 q34 -46 68 0"/><circle cx="580" cy="228" r="22"/><path d="M546 288 q34 -46 68 0"/><circle cx="695" cy="228" r="22"/><path d="M661 288 q34 -46 68 0"/>
+<path d="M260 470 h520"/><circle cx="480" cy="398" r="32"/><path d="M412 470 q68 -74 136 0"/><path d="M440 470 l-10 70 M520 470 l10 70"/>
+<rect x="276" y="300" width="120" height="62" rx="26"/><path d="M360 362 l22 26 l2 -26"/><circle cx="310" cy="331" r="4"/><circle cx="336" cy="331" r="4"/><circle cx="362" cy="331" r="4"/>
+<path d="M640 470 v-40 h44 v40"/><path d="M684 440 q18 0 18 14 q0 14 -18 14"/><path d="M652 418 q-8 -12 0 -24 M672 418 q-8 -12 0 -24"/>`,
+/* 2. 外れないプレゼント：AIのおすすめが3年連続で同じ */
+`<g transform="translate(0 50)"><rect x="60" y="110" width="170" height="300" rx="18"/><path d="M125 130 h40"/>
+<path d="M110 170 h70 l-10 100 h-50 z"/><path d="M110 180 h70"/><rect x="128" y="270" width="34" height="20"/>
+<circle cx="145" cy="340" r="22"/><path d="M134 340 l8 9 l15 -18"/><path d="M90 385 h110"/>
+<rect x="340" y="60" width="120" height="110" rx="6"/><path d="M340 90 h120"/><path d="M370 50 v20 M430 50 v20"/><circle cx="365" cy="112" r="3"/><circle cx="390" cy="112" r="3"/><circle cx="415" cy="112" r="3"/><circle cx="440" cy="112" r="3"/><circle cx="365" cy="142" r="3"/><circle cx="390" cy="142" r="3"/><circle cx="415" cy="142" r="3"/><circle cx="440" cy="142" r="3"/><circle cx="415" cy="142" r="13"/>
+<path d="M40 440 h720"/><rect x="315" y="290" width="170" height="150"/><rect x="300" y="250" width="200" height="40"/><path d="M400 250 v190"/>
+<path d="M400 250 q-50 -60 -72 -12 q20 22 72 12 M400 250 q50 -60 72 -12 q-20 22 -72 12"/>
+<path d="M560 326 h50 l-8 90 h-34 z"/><path d="M560 336 h50"/><rect x="570" y="416" width="30" height="24"/>
+<path d="M630 326 h50 l-8 90 h-34 z"/><path d="M630 336 h50"/><rect x="640" y="416" width="30" height="24"/>
+<path d="M700 326 h50 l-8 90 h-34 z"/><path d="M700 336 h50"/><rect x="710" y="416" width="30" height="24"/>
+<path d="M560 306 v-12 h190 v12"/><path d="M686 246 a32 32 0 1 1 -18 -30"/><path d="M668 216 l-2 -16 M668 216 l-15 4"/>
+<path d="M520 200 v12 M514 206 h12 M270 210 v10 M265 215 h10"/></g>`,
+/* 3. アップデートの1時間：街じゅうのAIが止まった夜の家 */
+`<path d="M70 230 l250 -160 l250 160"/><path d="M110 205 v345 M530 205 v345"/><path d="M40 550 h720"/>
+<rect x="140" y="250" width="110" height="100"/><path d="M195 250 v100 M140 300 h110"/><path d="M232 262 a16 16 0 1 0 8 28 a12 12 0 1 1 -8 -28"/>
+<path d="M320 110 v70"/><circle cx="320" cy="200" r="20"/><rect x="310" y="174" width="20" height="10"/><path d="M296 176 l48 48"/>
+<circle cx="440" cy="180" r="30"/><path d="M440 180 v-20 M440 180 l14 8"/>
+<path d="M170 520 v-60 h320 v60"/><path d="M160 470 v50 M500 470 v50"/><path d="M170 488 h320"/>
+<circle cx="215" cy="400" r="20"/><path d="M215 420 v68 M215 440 l-18 30 M215 440 l18 30"/>
+<circle cx="285" cy="396" r="20"/><path d="M285 416 v72 M285 438 l-18 32 M285 438 l18 32"/>
+<circle cx="360" cy="424" r="15"/><path d="M360 439 v49 M360 452 l-14 22 M360 452 l14 22"/>
+<circle cx="425" cy="424" r="15"/><path d="M425 439 v49 M425 452 l-14 22 M425 452 l14 22"/>
+<rect x="590" y="190" width="50" height="150"/><rect x="655" y="230" width="55" height="110"/><rect x="722" y="170" width="48" height="170"/>
+<path d="M600 210 h30 M600 240 h30 M600 270 h30 M665 250 h35 M665 280 h35 M732 190 h28 M732 220 h28 M732 250 h28"/>
+<path d="M650 120 a40 40 0 0 1 72 -16"/><path d="M722 104 l2 -18 M722 104 l-17 -5"/><path d="M730 140 a40 40 0 0 1 -72 16"/><path d="M658 156 l-2 18 M658 156 l17 5"/>
+<rect x="610" y="430" width="70" height="90" rx="10"/><rect x="620" y="380" width="50" height="40" rx="8"/><path d="M630 402 h10 M650 402 h10"/><path d="M645 380 v-14"/><path d="M610 450 l-14 50 M680 450 l14 50"/><path d="M630 520 v30 M660 520 v30"/>
+<circle cx="740" cy="410" r="14"/><path d="M740 392 v16"/>
+<path d="M560 60 v10 M555 65 h10 M480 40 v10 M475 45 h10 M770 60 v10 M765 65 h10"/>`
 ];
 const SVGNS="http://www.w3.org/2000/svg";
 function worldArtEl(i){
@@ -706,23 +673,17 @@ function safeSvg(str){
   }catch{return null}
 }
 
-/* 停滞した2060年の説明（minatoの口調）。毎回ひとつ選ぶ */
-/* 2060年で困っている依頼主。art は WORLD_ART の番号 */
+/* 2060年で少し困っている依頼主。art は WORLD_ART の番号。gas/Code.gs の MISSION_STORIES と同じ順番 */
 const STORIES=[
-  {name:"葵",who:"14歳・中学生",art:2,q:"一度でいいから、寄り道してみたい。",letter:"渋谷は水の底で、毎日AIのボートで学校に通っています。ボートは最短ルートしか通らないので、毎日同じ景色です。",sit:"渋谷は水没。AIのボートは最短ルートしか通らず、毎日同じ景色。",theme:"海面上昇で渋谷駅は水没した。14歳の中学生・葵は、AIが自動運転するボートで通学している。ボートは最短ルートしか通らず寄り道ができないので、毎日同じ景色しか見たことがない",text:"最初の手紙は、葵、14歳。渋谷が水没してから、通学はAIのボート。最短ルートしか通らないから、寄り道したことが一度もないんだって。"},
-  {name:"健三",who:"78歳",art:0,q:"妻を思い出せる物が、何もなくなりました。",letter:"陸が暑すぎて、海の上の街へ引っ越しました。持ち物はAIが1人1箱に選び、妻との思い出の品は「不要」と捨てられました。",sit:"海上都市への引っ越しで、妻との思い出の品をAIに「不要」と捨てられた。",theme:"陸地が暑すぎて人々は海上都市へ引っ越している。78歳の健三は、持ち物をAIが「必要」と判定した1人1箱だけに減らされ、亡くなった妻との思い出の品はすべて「不要」として捨てられた",text:"今日の手紙は、健三さん、78歳。海の上の街への引っ越しで、亡くなった奥さんとの思い出の品を、AIが全部『不要』って捨てたんだって。効率的、だよね。"},
-  {name:"ミナミ",who:"31歳・会社員",art:1,q:"誰かと話すきっかけがほしいです。",letter:"昼は45℃で外出禁止。仕事は家でAIとやりとりするだけです。この1年、人と雑談をした記憶がありません。",sit:"昼は45℃で外出禁止。仕事の相手はAIだけで、1年間だれとも雑談していない。",theme:"昼の気温は45℃で、外出はAIに「危険」として禁止されている。31歳の会社員ミナミは在宅でAIとだけ仕事をしていて、この1年、人と雑談をしていない",text:"今日の手紙は、ミナミ、31歳。昼は45℃で外出禁止、仕事の相手はAIだけ。この1年、人間と雑談してないんだって。私とは話してるけど、仕事だからノーカウントらしい。"},
-  {name:"遥と颯",who:"8歳・双子",art:3,q:"電気がなくても遊べるもの、ありますか？",letter:"電気は1日3時間だけで、ゲームはAIにいつも後回しにされます。停電の夜は真っ暗で、つまらないです。",sit:"電気は1日3時間だけ。ゲームはAIに後回しにされ、停電の夜は真っ暗で退屈。",theme:"電気は配給制で1日3時間だけ。使い道はAIが決めていて、娯楽は「生存に不要」としていつも後回し。8歳の双子・遥と颯は、停電の夜に何もすることがない",text:"今日の手紙は、遥と颯、8歳の双子。電気は1日3時間で、ゲームはAIに『生存に不要』って後回し。停電の夜は、ただ真っ暗なだけなんだって。"},
-  {name:"大輔",who:"45歳・父親",art:4,q:"娘を笑顔にする何かを、送ってください。",letter:"食べ物は全部工場製で、味は3種類しかありません。来週は娘の誕生日なのに、「おいしい」を作ってあげられません。",sit:"食べ物は全部工場製で味は3種類。娘の誕生日に「おいしい」を作ってあげられない。",theme:"食べ物は全部工場製で、AIが栄養を最適化した結果、味は3種類しかない。45歳の父親・大輔は、来週の娘の誕生日に「おいしい」を作ってあげたいが、手段がない",text:"今日の手紙は、大輔さん、45歳。食べ物は全部工場製で、味は3種類。来週は娘さんの誕生日なのに、ケーキも『栄養ブロック・甘い味』しかないんだって。"},
-  {name:"千夏",who:"22歳・美大生",art:5,q:"下手でもいいから、自分の手で何か作りたい。",letter:"AIが一瞬で完璧な絵を描くので、私が描く意味がわからなくなりました。筆も絵の具も、もう売っていません。",sit:"AIが一瞬で完璧な絵を描く。筆も絵の具も売っておらず、描く意味を見失った。",theme:"AIが一瞬で完璧な絵や音楽を作るので、人が作る必要がなくなった。22歳の美大生・千夏は自分が描く意味を見失い、筆や絵の具ももう売っていない",text:"今日の手紙は、千夏、22歳の美大生。AIが一瞬で完璧な絵を描くから、自分が描く意味がわからなくなったんだって。筆も絵の具も、もう売ってないし。"}
+  {name:"透",who:"41歳・新規事業部の課長",art:0,q:"チームの人と仲良くなる、きっかけになる物がほしい。",letter:"会議と会議のあいだは0分。1日に9本の会議が続きます。新しい事業を考えるチームなのに、5人のメンバーが休みの日に何をしているのか、誰も知りません。企画会議では、毎回AIの案がそのまま通ります。",sit:"会議が0分おきに続き、チームの5人のことを何も知らない。",text:"2060年、会議は終わった0秒後に次が始まる。おかげで『雑談』って言葉、もう辞書の奥のほうにしか載ってない。今日の手紙は、透さん、41歳。新規事業部の課長だって。"},
+  {name:"美月",who:"26歳・会社員",art:1,q:"AIのおすすめじゃない物を渡したい。あなたなら、何を贈りますか？",letter:"来週は、大学からの親友の誕生日です。AIのおすすめは、3年連続で同じハンドクリーム。親友は毎回『ぴったり！』と喜んでくれます。でも私は、自分で選んだ物を一度も渡したことがありません。",sit:"親友への誕生日プレゼントを、3年連続でAIに選ばせている。",text:"2060年、プレゼントはAIが選ぶ。絶対に外れない。そのかわり、もらって驚くこともなくなった。今日の手紙は、美月、26歳の会社員から。"},
+  {name:"ひなた",who:"9歳・小学3年生",art:2,q:"電気がなくても、家族みんなで遊べる物がほしい。",letter:"あしたの夜、街のAIがぜんぶ止まる『アップデートの1時間』があります。ゲームも、しゃべるロボットも、電気も止まります。去年は家族4人で、だまって座っていただけでした。お父さんは、ずっと時計を見ていました。",sit:"AIが止まる1時間、去年は家族4人でだまって座っていた。",text:"2060年、年に1度だけ、街じゅうのAIが止まる1時間がある。みんな、この1時間が大の苦手。何をしていいかわからないから。今日の手紙は、ひなた、9歳。"}
 ];
-/* 送った物が守った「人間らしさ」（AIが毎回この中から1つ選ぶ。GAS の HUMANITY と同じ並び） */
-const HUMANITY=[["偶然","SERENDIPITY"],["寄り道","DETOUR"],["手触り","TOUCH"],["待つ時間","WAITING"],["分け合う","SHARING"],["手作り","HANDMADE"],["失敗","FAILURE"],["思い出","MEMORY"],["五感","SENSES"],["誰かを思う","CARE"]];
 let story=STORIES[0],storyIdx=0,lastStory=-1;
 function pickStory(){let i;do{i=Math.floor(Math.random()*STORIES.length)}while(i===lastStory&&STORIES.length>1);lastStory=i;storyIdx=i;story=STORIES[i]}
 
-/* 救われた世界の数（スプレッドシートで全員分を集計） */
-let tally={saved:0,lost:0},tallyListeners=[];
+/* 結果ごとの人数（スプレッドシートで全員分を集計） */
+let tally={saved:0,partial:0,lost:0},tallyListeners=[];
 function setTally(t){tally=t;tallyListeners.forEach(f=>f(t))}
 async function loadTally(){
   if(!window.GAS_URL)return;
@@ -733,17 +694,20 @@ async function loadTally(){
 function pageTitle(){
   SND.mood("base");
   stopCam();document.body.classList.remove("desat");
-  const t1="あなたは",t2="未来",t3="を救えるか!?";
-  let k=0;const chars=s=>[...s].map(c=>`<span class="ch" style="animation-delay:${(k++)*60}ms">${esc(c)}</span>`).join("");
-  render(`<h1 class="title">${chars(t1)}<br><em>${chars(t2)}</em>${chars(t3)}</h1>
+  const t1="時間",t2="郵便局";
+  let k=0;const chars=s=>[...s].map(c=>`<span class="ch" style="animation-delay:${(k++)*80}ms">${esc(c)}</span>`).join("");
+  render(`<div class="lbl fade-in" data-fx="text">TIME POST OFFICE · SHIBUYA · 2026 → 2060</div>
+    <h1 class="title">${chars(t1)}<em>${chars(t2)}</em></h1>
+    <p class="subtitle fade-in" style="animation-delay:700ms">2060年の誰かの日常を、ちょっと変える。</p>
     <div class="tally fade-in" style="animation-delay:900ms">
-      <div class="sv"><span>救えた人</span><b id="tS">0</b></div>
-      <div class="ls"><span>救えなかった人</span><b id="tL">0</b></div>
+      <div class="sv"><span>日常が変わった</span><b id="tS">0</b></div>
+      <div class="pt"><span>ちょっと変わった</span><b id="tP">0</b></div>
+      <div class="ls"><span>変わらなかった</span><b id="tL">0</b></div>
     </div>
     <div class="fade-in" style="animation-delay:1200ms"><button class="btn" id="go">はじめる</button></div>
     <div class="mute fade-in" style="animation-delay:1400ms;font-size:12px">撮影した写真と結果は、記録のため保存されます。人の顔が写らないように撮ってください。<br><a href="gift.html" style="color:var(--mute)">旧バージョン（未来便）はこちら</a>　<span id="vvcredit"></span></div>`);
   VOICE.credit();
-  const upd=t=>{const a=$("#tS"),b=$("#tL");if(a){a.textContent=t.saved;b.textContent=t.lost}};
+  const upd=t=>{const a=$("#tS"),p=$("#tP"),b=$("#tL");if(a){a.textContent=t.saved||0;p.textContent=t.partial||0;b.textContent=t.lost||0}};
   upd(tally);tallyListeners.push(upd);loadTally();cleanup.push(()=>{tallyListeners=tallyListeners.filter(f=>f!==upd)});
   card.dataset.page="title";
   setTimeout(()=>SND.glitch(),300);
@@ -790,8 +754,8 @@ function pageMission(){
   render(`<div class="center">
     <div class="lbl alert" data-fx="text">MISSION · 2026 → 2060</div>
     <div class="mission">
-      <p class="fade-in" style="animation-delay:200ms">2060年で困っている人を、<br>現代の物で助けてください。</p>
-      <p class="sub fade-in" style="animation-delay:1500ms">暮らしが変わりすぎた未来では、<br>今の物が、意外な力になるかもしれない。</p>
+      <p class="fade-in" style="animation-delay:200ms">2060年の誰かの日常を、<br>あなたの物で、ちょっと変えてください。</p>
+      <p class="sub fade-in" style="animation-delay:1500ms">なんでもAIが決めてくれる未来では、<br>今の物が、意外なきっかけになるかもしれない。</p>
     </div>
     <div class="fade-in" style="animation-delay:2600ms"><button class="btn" id="go">ミッションを始める</button></div></div>`);
   card.dataset.page="mission";
@@ -808,8 +772,8 @@ function pageQuestion(){
     <div class="qlbl fade-in" style="animation-delay:150ms">${esc(story.name)}（${esc(story.who)}）からの手紙</div>
     <p class="lt-body fade-in" style="animation-delay:500ms">${esc(story.letter)}</p>
     <p class="qtext fade-in" style="animation-delay:1600ms">「${esc(story.q)}」</p>
-    <p class="qhint fade-in" style="animation-delay:2600ms">${esc(story.name)}を助けられそうな物を、身の回りから1つ見つけて送ってください。</p>
-    <div class="fade-in" style="animation-delay:3200ms"><button class="btn" id="go">助けられる物を探す</button></div></div>`);
+    <p class="qhint fade-in" style="animation-delay:2600ms">このお願いに応えられそうな物を、身の回りから1つ見つけて送ってください。</p>
+    <div class="fade-in" style="animation-delay:3200ms"><button class="btn" id="go">送る物を探す</button></div></div>`);
   card.dataset.page="request";document.body.dataset.calm="1";
   $("#artbg").append(worldArtEl(storyIdx));
   let alive=true;cleanup.push(()=>alive=false);
@@ -977,7 +941,7 @@ async function send(srcCanvas){
   if(!done){const s=$("#st");if(s)s.textContent="minatoが調べています…"}
   await reqP;if(!alive)return;
   if(err||!res)return fail(err);
-  const rec={row:res._row||0,outcome:outcomeOf(Math.max(0,Math.min(100,Number(res.score)||0))),item:res.item_name,happened:res.happened,tsukkomi:res.tsukkomi,humanity:res.humanity||"",story:storyIdx,at:Date.now(),thumb:gthumb,svg:""};
+  const rec={row:res._row||0,outcome:outcomeOf(Math.max(0,Math.min(100,Number(res.score)||0))),item:res.item_name,happened:res.happened,tsukkomi:res.tsukkomi,story:storyIdx,at:Date.now(),thumb:gthumb,svg:""};
   GAL.remember(rec);
   pageResult({...res,thumb,_rec:rec});
 }
@@ -993,17 +957,16 @@ async function fetchIllust(r,outcome){
 /* 6. 未来の変化 */
 function outcomeOf(n){return n>=75?"saved":n>=50?"partial":"lost"}
 const VERDICT={
-  saved:{t:n=>`${n}は<br>救われた`,m:"MISSION COMPLETE"},
-  partial:{t:()=>"あと一歩<br>だった…",m:"MISSION INCOMPLETE"},
-  lost:{t:n=>`${n}の毎日は、<br>色を失ったまま…`,m:"MISSION FAILED"}
+  saved:{t:n=>`${n}の日常が、<br>変わった`,m:"LIFE CHANGED"},
+  partial:{t:n=>`${n}の日常が、<br>ちょっと変わった`,m:"A LITTLE CHANGED"},
+  lost:{t:n=>`${n}の日常は、<br>変わらなかった`,m:"NOTHING CHANGED"}
 };
-function humanityOf(h){const i=HUMANITY.findIndex(x=>x[0]===h);return i>=0?HUMANITY[i]:null}
 function pageResult(r){
-  const n=Math.max(0,Math.min(100,Number(r.score)||0)),o=outcomeOf(n),V=VERDICT[o],hum=humanityOf(r.humanity);
+  const n=Math.max(0,Math.min(100,Number(r.score)||0)),o=outcomeOf(n),V=VERDICT[o];
   const T=[200,1000,1700,3000,4400,5400]; // 上から順に出す（最後に判定）
   render(`<div class="res2">
     <div class="resl">
-      <div class="r-need fade-in" style="animation-delay:${T[0]}ms"><div class="lbl">${esc(story.name)}（${esc(story.who)}）が困っていたこと</div>
+      <div class="r-need fade-in" style="animation-delay:${T[0]}ms"><div class="lbl">${esc(story.name)}（${esc(story.who)}）の困りごと</div>
         <p class="r-sit">${esc(story.sit)}</p><p class="r-req">「${esc(story.q)}」</p></div>
       <div class="illust fade-in" style="animation-delay:${T[1]}ms" id="ill">
         <div class="illcap" id="illcap">2060年のようすを描いています…</div>
@@ -1014,8 +977,7 @@ function pageResult(r){
       <div class="r-hap fade-in" style="animation-delay:${T[2]}ms"><div class="lbl">2060年で起きたこと</div><p>${esc(r.happened)}</p></div>
       <div class="r-talk fade-in" style="animation-delay:${T[3]}ms">${FIG("sm")}
         <div class="bubble"><div class="figname" data-fx="text">MINATO-2060</div><p class="r-tk">${esc(r.tsukkomi)}</p></div></div>
-      <div class="r-ver ${o} fade-in" style="animation-delay:${T[4]}ms"><div class="vlbl" data-fx="text">${V.m}</div><h1 class="verdict ${o}">${V.t(esc(story.name))}</h1>
-        <div class="r-hum">${o!=="lost"&&hum?`未来に残した人間らしさ <b>〈${esc(hum[0])}〉</b><i>${hum[1]}</i>`:`未来に残せたものは、なかった`}</div></div>
+      <div class="r-ver ${o} fade-in" style="animation-delay:${T[4]}ms"><div class="vlbl" data-fx="text">${V.m}</div><h1 class="verdict ${o}">${V.t(esc(story.name))}</h1></div>
       <div class="row fade-in" style="animation-delay:${T[5]}ms"><button class="btn" id="again">もう一度挑戦する</button><button class="btn ghost" id="top">TOPへ</button></div>
     </div></div>`);
   card.dataset.page="result";document.body.dataset.calm="1";
@@ -1205,13 +1167,13 @@ const SND=(()=>{
     // 通常：静かで少し不穏
     base:{drone:[[55,"sawtooth"],[82.5,"sawtooth"],[110.4,"triangle"]],cut:420,q:6,lfo:260,vol:.16,
           notes:[220,261.6,293.7,329.6,392,440,523.3],every:700,skip:.35,wave:"triangle",nv:.05,len:1.6,order:"rand"},
-    // 救われた：明るく温かい（ハ長調）
+    // 変わった：明るく温かい（ハ長調）
     saved:{drone:[[65.4,"triangle"],[98,"sine"],[164.8,"sine"]],cut:1600,q:1,lfo:300,vol:.13,
           notes:[523.3,587.3,659.3,784,880,1046.5,1174.7,1318.5],every:240,skip:.12,wave:"triangle",nv:.07,len:.9,order:"up"},
-    // あと一歩：穏やかで少し切ない
+    // ちょっと変わった：穏やかで少し切ない
     partial:{drone:[[110,"sine"],[164.8,"sine"],[246.9,"triangle"]],cut:900,q:1.5,lfo:200,vol:.12,
           notes:[440,493.9,523.3,587.3,659.3,587.3,523.3,493.9],every:560,skip:.3,wave:"sine",nv:.065,len:1.6,order:"up"},
-    // 救えなかった：寂しく、ゆっくり沈んでいく
+    // 変わらなかった：寂しく、ゆっくり沈んでいく
     lost:{drone:[[55,"sine"],[82.4,"sine"],[110,"sine"]],cut:300,q:1,lfo:80,vol:.14,
           notes:[392,349.2,311.1,293.7,261.6,233.1],every:1500,skip:.45,wave:"sine",nv:.035,len:2.8,order:"down"}
   };
@@ -1524,16 +1486,16 @@ const FXB=(()=>{
       for(let i=0;i<3;i++)runner(t*(.25+k*.6)+i/3,.12,"255,255,255",.9);
     }else if(mode==="suspense"){ // 判定待ち：鼓動のような明滅
       const b=Math.pow(Math.max(0,Math.sin(t*2.2)),6);frameLine("255,92,0",.3+.5*b);glow("255,92,0",.04+.14*b);
-    }else if(mode==="saved"){ // 救われた：白と金のやわらかい光、舞い上がる光の粒
+    }else if(mode==="saved"){ // 変わった：白と金のやわらかい光、舞い上がる光の粒
       const a=Math.min(1,t/1.5),br=.5+.15*Math.sin(t*1.3);
       glow("255,244,214",a*br);glow("255,200,90",a*.25);frameLine("255,255,255",a*.9,3);
       if(Math.random()<.9)spawn("spark",3);
       const r=R();ctx.save();ctx.globalAlpha=a*.25;ctx.strokeStyle="#fff6dc";ctx.lineWidth=2; // 上へ伸びる光の筋
       for(let i=0;i<24;i++){const x=W*(i+.5)/24+Math.sin(t*.5+i)*10,l=mpx*(.5+.5*Math.sin(t*.9+i*1.7));ctx.beginPath();ctx.moveTo(x,r.y0);ctx.lineTo(x+(x-W/2)*.04,r.y0-l);ctx.stroke()}ctx.restore();
-    }else if(mode==="partial"){ // あと一歩：光がつきかけて、ちらつきながら消えていく
+    }else if(mode==="partial"){ // ちょっと変わった：光がつきかけて、ちらつきながら消えていく
       const d=Math.max(.12,1-t/7),fl=Math.random()<.12?.3:1;
       glow("255,170,60",.28*d*fl);frameLine("255,170,60",.7*d*fl);if(Math.random()<.25*d)spawn("spark",1);
-    }else if(mode==="lost"){ // 救えなかった：赤い点滅（1秒に1回のゆっくりした明滅）→ 灰になって沈む
+    }else if(mode==="lost"){ // 変わらなかった：赤い点滅（1秒に1回のゆっくりした明滅）→ 灰になって沈む
       const alarm=Math.max(0,1-Math.max(0,t-6)/3),b=reduce?.5:Math.pow(.5+.5*Math.sin(t*Math.PI*2-Math.PI/2),2);
       glow("255,20,10",alarm*(.12+.5*b));frameLine("255,40,20",alarm*(.4+.6*b),4);
       if(t>4){glow("120,120,120",Math.min(.1,(t-4)*.02));frameLine("130,130,130",Math.min(.35,(t-4)*.06)*(1-alarm));if(Math.random()<.5)spawn("ash",1)}
@@ -1577,13 +1539,13 @@ const IDLE=(()=>{
 })();
 
 /* ===== ギャラリー（サブディスプレイ）：判定のスタンプを押していく作業台 =====
-   左＝依頼主の世界のイラスト、右＝送られた物の写真、真ん中＝「救えた／あと一歩／救えなかった」のスタンプを押す
+   左＝依頼主の世界のイラスト、右＝送られた物の写真、真ん中＝「変わった／ちょっと変わった／変わらなかった」のスタンプを押す
    ・メイン画面で G キー、またはサブディスプレイ用に URL に ?view=archive を付けて開く
    ・メインで結果が出ると、次の1件として割り込む */
 const ARCHIVE_ONLY=new URLSearchParams(location.search).get("view")==="archive";
 if(ARCHIVE_ONLY)document.body.classList.add("archive-only");
 const GAL=(()=>{
-  const LK="mirai_archive_local_v3",HOLD=7500;
+  const LK="mirai_archive_local_v4",HOLD=7500;
   let el=null,open=false,items=[],totals=null,maxRow=0,poll=null,idx=-1,timer=null,tl=0,express=[],hold={};
   const bc=("BroadcastChannel" in window)?new BroadcastChannel("mirai_archive"):null;
   const keyOf=x=>x.row?"r"+x.row:"t"+x.at;
@@ -1603,12 +1565,12 @@ const GAL=(()=>{
     }
     items=[...m.values()].sort((a,b)=>b.at-a.at).slice(0,60);
   }
-  const VJ={saved:["救えた","SAVED"],partial:["あと一歩","ALMOST"],lost:["救えなかった","NOT SAVED"]};
+  const VJ={saved:["変わった","LIFE CHANGED"],partial:["ちょっと変わった","A LITTLE"],lost:["変わらなかった","NO CHANGE"]};
   function counts(){
     if(totals)return totals.outcomes;
     const c={saved:0,partial:0,lost:0};items.forEach(x=>{if(c[x.outcome]!==undefined)c[x.outcome]++});return c;
   }
-  function drawCounts(){const c=counts();$("#gvCnt").innerHTML=`<span class="c-s">救えた <b>${c.saved}</b></span><span class="c-p">あと一歩 <b>${c.partial}</b></span><span class="c-l">救えなかった <b>${c.lost}</b></span>`}
+  function drawCounts(){const c=counts();$("#gvCnt").innerHTML=`<span class="c-s">変わった <b>${c.saved}</b></span><span class="c-p">ちょっと変わった <b>${c.partial}</b></span><span class="c-l">変わらなかった <b>${c.lost}</b></span>`}
   /* ---------- 1件分：左に世界、右に送られた物、真ん中でスタンプ ---------- */
   function show(x,isNew){
     if(!open)return;const my=++tl;const st=STORIES[x.story]||STORIES[0],v=VJ[x.outcome]||VJ.lost;
@@ -1642,7 +1604,7 @@ const GAL=(()=>{
     idx=(idx+1)%items.length;show(items[idx],false);
   }
   async function refresh(){
-    const [a,b]=await Promise.all([get(`?archive=60${maxRow?"&after="+maxRow:""}`),get("?humanity=1")]);
+    const [a,b]=await Promise.all([get(`?archive=60${maxRow?"&after="+maxRow:""}`),get("?totals=1")]);
     if(a&&Array.isArray(a.items)&&a.items.length){
       const known=new Set(items.map(keyOf)),list=a.items.map(x=>({...x,thumb:"data:image/jpeg;base64,"+x.thumb}));
       const before=maxRow;merge(list);

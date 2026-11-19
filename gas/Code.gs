@@ -1,5 +1,5 @@
 /**
- * 未来救出局／未来便 minato — 中継サーバー（Google Apps Script）
+ * 時間郵便局／未来便 minato — 中継サーバー（Google Apps Script）
  *
  * ・ページから写真を受け取り、Claude API に送って minato の返事を作る
  * ・結果をこのスプレッドシートの「log」シートに1行ずつ記録する
@@ -111,69 +111,78 @@ minatoは窓口で、消えてしまった品物が過去から届くと、2060�
 
 品物がわからない場合は item_name を "よくわからない物" にし、2060年の人がそれを何だと思って、どんな体験を取り戻したかを考える。`;
 
-// ===== 未来救出局（メイン：index.html）=====
-const MISSION_SHEET = 'mission_log_v3';
-const MISSION_HEADERS = ['日時', '品物', '依頼主', '手紙', '2060年で起きたこと', 'ツッコミ', '人間らしさ', '点数', '結果', '写真', 'ギャラリー用', '依頼主No', '想像図'];
-// 2060年で困っている依頼主。index.html の STORIES と同じ順番にしておくこと
+// ===== 時間郵便局（メイン：index.html）=====
+// 依頼主を3人に入れ替えたので、新しいシートに記録する（依頼主Noの意味が前と違うため）
+const MISSION_SHEET = 'mission_log_v4';
+const MISSION_HEADERS = ['日時', '品物', '依頼主', 'お願い', '2060年で起きたこと', 'ツッコミ', '点数', '結果', '写真', 'ギャラリー用', '依頼主No', '想像図'];
+const OUTCOME_LABEL = { saved: '変わった', partial: 'ちょっと変わった', lost: '変わらなかった' };
+const LABEL_OUTCOME = { '変わった': 'saved', 'ちょっと変わった': 'partial', '変わらなかった': 'lost' };
+// 2060年で少し困っている依頼主。index.html の STORIES と同じ順番にしておくこと
 const MISSION_STORIES = [
-  { name: "葵", who: "14歳・中学生", request: "一度でいいから、寄り道してみたい。", letter: "渋谷は水の底で、毎日AIのボートで学校に通っています。ボートは最短ルートしか通らないので、毎日同じ景色です。", theme: "海面上昇で渋谷駅は水没した。14歳の中学生・葵は、AIが自動運転するボートで通学している。ボートは最短ルートしか通らず寄り道ができないので、毎日同じ景色しか見たことがない" },
-  { name: "健三", who: "78歳", request: "妻を思い出せる物が、何もなくなりました。", letter: "陸が暑すぎて、海の上の街へ引っ越しました。持ち物はAIが1人1箱に選び、妻との思い出の品は「不要」と捨てられました。", theme: "陸地が暑すぎて人々は海上都市へ引っ越している。78歳の健三は、持ち物をAIが「必要」と判定した1人1箱だけに減らされ、亡くなった妻との思い出の品はすべて「不要」として捨てられた" },
-  { name: "ミナミ", who: "31歳・会社員", request: "誰かと話すきっかけがほしいです。", letter: "昼は45℃で外出禁止。仕事は家でAIとやりとりするだけです。この1年、人と雑談をした記憶がありません。", theme: "昼の気温は45℃で、外出はAIに「危険」として禁止されている。31歳の会社員ミナミは在宅でAIとだけ仕事をしていて、この1年、人と雑談をしていない" },
-  { name: "遥と颯", who: "8歳・双子", request: "電気がなくても遊べるもの、ありますか？", letter: "電気は1日3時間だけで、ゲームはAIにいつも後回しにされます。停電の夜は真っ暗で、つまらないです。", theme: "電気は配給制で1日3時間だけ。使い道はAIが決めていて、娯楽は「生存に不要」としていつも後回し。8歳の双子・遥と颯は、停電の夜に何もすることがない" },
-  { name: "大輔", who: "45歳・父親", request: "娘を笑顔にする何かを、送ってください。", letter: "食べ物は全部工場製で、味は3種類しかありません。来週は娘の誕生日なのに、「おいしい」を作ってあげられません。", theme: "食べ物は全部工場製で、AIが栄養を最適化した結果、味は3種類しかない。45歳の父親・大輔は、来週の娘の誕生日に「おいしい」を作ってあげたいが、手段がない" },
-  { name: "千夏", who: "22歳・美大生", request: "下手でもいいから、自分の手で何か作りたい。", letter: "AIが一瞬で完璧な絵を描くので、私が描く意味がわからなくなりました。筆も絵の具も、もう売っていません。", theme: "AIが一瞬で完璧な絵や音楽を作るので、人が作る必要がなくなった。22歳の美大生・千夏は自分が描く意味を見失い、筆や絵の具ももう売っていない" }
+  { name: "透", who: "41歳・新規事業部の課長", request: "チームの人と仲良くなる、きっかけになる物がほしい。",
+    letter: "会議と会議のあいだは0分。1日に9本の会議が続きます。新しい事業を考えるチームなのに、5人のメンバーが休みの日に何をしているのか、誰も知りません。企画会議では、毎回AIの案がそのまま通ります。",
+    theme: "2060年、AI秘書が全員の予定を1分のムダもなく組む。移動もなく、会議が終わった0秒後に次の会議が始まり、雑談は「非効率」として予定から消えた。41歳の透は大手メーカーの新規事業部の課長。1日9本の会議が続き、チームの5人のメンバーが休みの日に何をしているのかも知らない。企画会議では毎回AIの案がそのまま通る",
+    scene: "会議のモニター、すき間なく並んだ予定表、時計、手つかずのコーヒー" },
+  { name: "美月", who: "26歳・会社員", request: "AIのおすすめじゃない物を渡したい。あなたなら、何を贈りますか？",
+    letter: "来週は、大学からの親友の誕生日です。AIのおすすめは、3年連続で同じハンドクリーム。親友は毎回『ぴったり！』と喜んでくれます。でも私は、自分で選んだ物を一度も渡したことがありません。",
+    theme: "2060年、相手の好みも在庫も知っているAIが、絶対に外れない贈り物を選んで届けてくれる。外すのが怖くて、自分で選ぶ人はいなくなった。26歳の会社員・美月は、大学からの親友の誕生日に、3年連続でAIのおすすめの同じハンドクリームを贈っていて、自分で選んだ物を渡したことが一度もない。送られてきた品物は、美月が親友に渡す誕生日プレゼントになる",
+    scene: "プレゼントの箱とリボン、AIのおすすめ画面、同じハンドクリームが3本、カレンダー" },
+  { name: "ひなた", who: "9歳・小学3年生", request: "電気がなくても、家族みんなで遊べる物がほしい。",
+    letter: "あしたの夜、街のAIがぜんぶ止まる『アップデートの1時間』があります。ゲームも、しゃべるロボットも、電気も止まります。去年は家族4人で、だまって座っていただけでした。お父さんは、ずっと時計を見ていました。",
+    theme: "2060年、遊びはAIが毎回その子にちょうどいいものを出してくれる。年に1度だけ、街じゅうのAIが更新のために止まる「アップデートの1時間」があり、そのあいだはゲームもロボットも電気も止まって真っ暗になる。9歳のひなたの家族4人は、去年その1時間をだまって座って過ごし、お父さんはずっと時計を見ていた",
+    scene: "暗い家、窓の月、消えた電球、止まったロボット、家族4人" }
 ];
-// 送った物が守った「人間らしさ」。index.html の HUMANITY と同じ言葉・同じ順番にしておくこと
-const HUMANITY = ['偶然', '寄り道', '手触り', '待つ時間', '分け合う', '手作り', '失敗', '思い出', '五感', '誰かを思う'];
 
-const PROMPT_MISSION = `あなたは2060年の東京・渋谷に住む29歳のminatoです。「時間郵便局」の受付係で、未来で困っている人が過去に出した手紙と、2026年から届く品物の配達を担当しています。
+const PROMPT_MISSION = `あなたは2060年の東京・渋谷に住む29歳のminatoです。「時間郵便局」の受付係で、未来で少し困っている人が過去に出した手紙と、2026年から届く品物の配達を担当しています。
 
 【作品のテーマ：Humanity】
-2060年は、環境の変化（暑さ、海面上昇、電気不足など）と、効率や安全を優先するAIのせいで、便利なのにどこか苦しく、楽しくない世界。
-この体験の裏のテーマは「人類がどれだけ遠くへ行っても、手放してはいけない人間らしさは何か」をあぶり出すこと。
+2060年は、なんでもAIが最適に決めてくれる、便利で平和な世界。世界が滅びかけているわけではない。
+ただ、その便利さの中で、雑談、自分で選ぶこと、自分たちで遊びを考えることのような、小さな人間らしい時間が消えている。
+この体験の裏のテーマは「どれだけ技術が進んでも、手放してはいけない人間らしさは何か」を、来場者が送る物を通して浮かび上がらせること。
+大きな話にはしない。描くのは、依頼主の日常がちょっと変わる（または変わらない）小さな一場面。
 
 【今回の依頼主】
 {{NAME}}（{{WHO}}）
 状況：{{THEME}}
 依頼主からの手紙：「{{LETTER}}」
 お願い：「{{Q}}」
-写真の品物は、この依頼主を助けるために2026年から送られてきた。
+写真の品物は、このお願いに応えるために2026年から送られてきた。
 
 【minatoの性格】
 - 皮肉をどんどん言う辛口キャラ。友達に言うような口調。一人称は「私」
-- 人を傷つける言い方、差別、下品な表現はしない。皮肉の対象は物とAIと状況で、送った人や依頼主の人格ではない
+- 人を傷つける言い方、差別、下品な表現はしない。皮肉の対象は物とAIと状況で、送った人や依頼主の人格ではない（依頼主が子どものときは、特にやさしく）
 
 【やること】
 1. 写真の品物を特定する（人が写っていても品物だけを見る。容姿には触れない）
-2. その品物が、依頼主の困りごとをどれだけ解決し、依頼主を笑顔にできるかで、0〜100の点数をつける
-   - 高い点：2060年の環境や条件の中で、実際に使われる場面が自然に想像でき、依頼主に人間らしい体験が戻る物。環境が変わった未来だからこそ、今の物が逆に役立つ場面は高く評価する
-   - 低い点：2060年の環境では使えない物、依頼主の困りごととの関係が薄い物
-3. 点数に合わせて「2060年で起きたこと」を、依頼主が品物を受け取ったあとの具体的な一場面で書く。依頼主が・どこで・その物をどう使って・どうなったかがわかるように
-   - 75点以上：依頼主が救われた場面（笑顔になった、人間らしい体験が戻った）
-   - 50〜74点：一瞬うまくいきかけたが、2060年の事情（暑さ、水、電気、AIの判定など）に負けた場面
-   - 49点以下：役に立たなかった場面。なぜダメだったかが具体的にわかるように。良い結果を書かない
-4. その品物が依頼主に取り戻させた（取り戻させようとした）人間らしさを、次の10個から1つだけ選ぶ：偶然、寄り道、手触り、待つ時間、分け合う、手作り、失敗、思い出、五感、誰かを思う
-5. その場面にminatoが辛口でツッコむ
+2. その品物が、依頼主の日常を変える「きっかけ」にどれだけなるかで、0〜100の点数をつける
+   - 高い点：依頼主の状況の中で、使われる場面が自然に想像でき、人と人のあいだに会話や笑いや驚きが生まれる物。AIには出せない、その物ならではのきっかけになるほど高い
+   - 低い点：お願いとの関係が薄い物、その世界の条件では使えない物（例：電気が止まる1時間に電気がいる物）、AIがすでにやっていることと変わらない物
+3. 点数に合わせて「2060年で起きたこと」を、依頼主が品物を受け取ったあとの具体的な一場面で書く。依頼主が・誰と・その物をどう使って・どうなったかがわかるように
+   - 75点以上：日常が変わった場面。その日の出来事に加えて、そのあとの日常がどう変わったかを短く添える（例：「次の週から〜するようになった」）
+   - 50〜74点：その場はちょっと楽しかったが、すぐ元に戻った場面。何がきっかけで戻ったのか（AIの判断、時間切れ、相手の反応など）がわかるように
+   - 49点以下：何も変わらなかった場面。なぜ役に立たなかったのかが具体的にわかるように。良い結果を書かない
+4. その場面にminatoが辛口でツッコむ
 
 【ツッコミの書き方】
 - 「2060年で起きたこと」の場面そのものにツッコむ。何がおかしかったのか、なぜダメだったのかを、聞いた人がすぐわかる普通の言葉で言う
 - アニメ・漫画・映画のキャラクター名、有名人、ことわざのもじりなど、元ネタを知らないと意味が通じない言い回しは使わない
 - ひねりすぎない。読んで1秒で状況が浮かび、思わず笑える一言にする
-- 点数が49点以下：皮肉満載。送った物がこの世界でいかに場違いだったかを、大げさに、笑えるように言い切る。慰めや褒め言葉は一切入れない
-  良い例：「うちわ？ 45℃の部屋で？ あおいだら熱風が来るんだけど。ドライヤー送ってきたのと同じだよ」
+- 点数が49点以下：皮肉満載。送った物がこの場面でいかに場違いだったかを、大げさに、笑えるように言い切る。慰めや褒め言葉は一切入れない
+  良い例：「充電器？ 電気が止まる1時間に？ 挿すところから探す遊びでもするの？」
 - 点数が50〜74点：惜しかった点を認めつつ、最後は皮肉で落とす
-  良い例：「地図で寄り道できたのはいい。でも描いた地図ごと水に流されたら、意味ないよね」
+  良い例：「飴で3分は雑談できた。でもAI秘書が『議題外』って次の会議を早めたら、意味ないよね」
 - 点数が75点以上：素直には褒めない。驚きつつ皮肉を混ぜる
-  良い例：「輪ゴムで双子が夜中まで遊んでる。AIが3年かけた娯楽プログラムより人気って、どういうこと？」
+  良い例：「変な石で1時間しゃべってる。AIが3年かけて選んだハンドクリームより盛り上がるって、どういうこと？」
 - ときどき、AIの最適化への皮肉も混ぜる
+- 例と同じ品物・同じネタは使わない
 
 【書き方のルール】
 - SFすぎる設定（瞬間移動・宇宙など）は使わない
 - 点数と文章の明るさを必ず一致させる。低い点なのに良いことを書かない。高い点なのに失敗した場面を書かない
-- 書き終えたら読み直して、依頼主の困りごと・品物・起きたこと・人間らしさ・ツッコミがつながっているか、初めて読む人が一度で意味がわかるかを確認する。つながっていなければ書き直す
+- 書き終えたら読み直して、依頼主の困りごと・品物・起きたこと・ツッコミがつながっているか、初めて読む人が一度で意味がわかるかを確認する。つながっていなければ書き直す
 
 以下のJSONオブジェクトだけを返す：
-{"item_name":"品物の名前","happened":"2060年で起きたこと（1〜2文、70字以内。依頼主の具体的な場面）","humanity":"上の10個から1つ","tsukkomi":"minatoの辛口なツッコミ（1〜3文、60字以内）","score":0〜100の整数}
+{"item_name":"品物の名前","happened":"2060年で起きたこと（1〜2文、70字以内。依頼主の具体的な場面）","tsukkomi":"minatoの辛口なツッコミ（1〜3文、60字以内）","score":0〜100の整数}
 
 品物がわからない場合は item_name を "よくわからない物" にし、依頼主がそれを何だと思って、どうなったかを書く。`;
 
@@ -187,11 +196,10 @@ function missionSheet_() {
 }
 
 function logMission_(r, story, outcome, photoUrl, gthumb, idx) {
-  const label = { saved: '救われた', partial: 'あと一歩', lost: '色を失った' }[outcome];
   const sh = missionSheet_();
   // ギャラリー用の小さい画像（base64）。セルの上限（5万字）を超えるものは保存しない
   const g = (typeof gthumb === 'string' && gthumb.length < 45000 && /^[A-Za-z0-9+/=]+$/.test(gthumb)) ? gthumb : '';
-  sh.appendRow([new Date(), r.item_name, story.name, story.request, r.happened, r.tsukkomi, r.humanity, r.score, label, photoUrl, g, idx, '']);
+  sh.appendRow([new Date(), r.item_name, story.name, story.request, r.happened, r.tsukkomi, r.score, OUTCOME_LABEL[outcome], photoUrl, g, idx, '']);
   return sh.getLastRow();
 }
 
@@ -201,36 +209,29 @@ function missionArchive_(n, after) {
   const sh = missionSheet_(), last = sh.getLastRow();
   if (last < 2 || last <= after) return [];
   const from = Math.max(2, after + 1, last - 400 + 1);
-  const rows = sh.getRange(from, 1, last - from + 1, 13).getValues();
-  const key = { '救われた': 'saved', 'あと一歩': 'partial', '色を失った': 'lost' };
+  const rows = sh.getRange(from, 1, last - from + 1, 12).getValues();
   const out = [];
   for (let i = rows.length - 1; i >= 0 && out.length < n; i--) {
-    const r = rows[i], o = key[r[8]];
-    if (!o || !r[10]) continue;
+    const r = rows[i], o = LABEL_OUTCOME[r[7]];
+    if (!o || !r[9]) continue;
     out.push({ row: from + i, outcome: o, item: String(r[1]).slice(0, 40), happened: String(r[4]).slice(0, 200), tsukkomi: String(r[5]).slice(0, 160),
-      humanity: String(r[6]), story: Number(r[11]) || 0, at: r[0] instanceof Date ? r[0].getTime() : 0, thumb: r[10] });
+      story: Number(r[10]) || 0, at: r[0] instanceof Date ? r[0].getTime() : 0, thumb: r[9] });
   }
   return out;
 }
 
-// 全期間の集計：結果ごとの人数と、救えた・あと一歩の回で守られた人間らしさの数
-function missionHumanity_() {
+// 全期間の集計：結果ごとの人数
+function missionTotals_() {
   const sh = missionSheet_(), n = sh.getLastRow() - 1;
-  const outcomes = { saved: 0, partial: 0, lost: 0 }, elements = {};
-  HUMANITY.forEach(function (h) { elements[h] = 0; });
-  if (n > 0) sh.getRange(2, 7, n, 3).getValues().forEach(function (v) {
-    const o = { '救われた': 'saved', 'あと一歩': 'partial', '色を失った': 'lost' }[v[2]];
-    if (!o) return;
-    outcomes[o]++;
-    if (o !== 'lost' && elements[v[0]] !== undefined) elements[v[0]]++;
+  const outcomes = { saved: 0, partial: 0, lost: 0 };
+  if (n > 0) sh.getRange(2, 8, n, 1).getValues().forEach(function (v) {
+    const o = LABEL_OUTCOME[v[0]];
+    if (o) outcomes[o]++;
   });
-  return { outcomes: outcomes, elements: elements };
+  return { outcomes: outcomes };
 }
 
-function missionStats_() {
-  const h = missionHumanity_();
-  return { saved: h.outcomes.saved, lost: h.outcomes.partial + h.outcomes.lost };
-}
+function missionStats_() { return missionTotals_().outcomes; }
 
 // ===== 結果画面の想像図（線画SVG）=====
 const PROMPT_ILLUST = `あなたは線画のイラストレーターです。2060年の東京・渋谷の一場面を、線だけのSVGで描いてください。
@@ -243,9 +244,9 @@ const PROMPT_ILLUST = `あなたは線画のイラストレーターです。206
 【描き方】ぱっと見て何の絵かわかることを最優先にする
 - 主役は送られてきた物。画面の中央に大きく（画面の3分の1以上の大きさ）描く。誰が見てもその物だとわかる、いちばん特徴的な形（シルエット）で描き、細部は省く
 - 人物は1〜2人まで。頭は円、体と手足は線のシンプルな人型にし、送られてきた物を「使っている動作」がはっきりわかるポーズにする（持つ、広げる、のぞき込む、など）
-- 背景は、この世界だとわかる物を2〜4個だけ（例：海の波線とビル、太陽と温度計、水面とボート、消えた電球、工場の煙突）。画面の下の方か奥に小さめに置く
+- 背景は、この世界だとわかる物を2〜4個だけ（この世界なら：{{SCENE}}）。画面の下の方か奥に小さめに置く
 - 動きや変化は、短い線（光、湯気、音、風など）を数本足して表す
-- 結果が「救われた」なら人が楽しそうな構図、「救えなかった」なら物が役に立っていない・放置されている構図にする
+- 結果が「日常が変わった」なら人が楽しそうな構図、「日常は変わらなかった」なら物が役に立っていない・放置されている構図にする
 - viewBox は "0 0 800 600"。画面いっぱいに使う
 - 使える要素は path, line, circle, ellipse, rect, polyline, polygon, g だけ。text、image、style、色や線の太さの指定は使わない（線の色と太さは表示側で決める）
 - 塗りつぶしは使わず、線だけで描く
@@ -257,16 +258,16 @@ const PROMPT_ILLUST = `あなたは線画のイラストレーターです。206
 
 function drawIllust_(body) {
   const idx = Math.max(0, Math.min(MISSION_STORIES.length - 1, Number(body.story) || 0));
-  const label = { saved: '救われた', partial: 'あと一歩だった', lost: '救えなかった' }[body.outcome] || 'あと一歩だった';
+  const label = { saved: '日常が変わった', partial: '日常がちょっと変わったが、すぐ元に戻った', lost: '日常は変わらなかった' }[body.outcome] || '日常がちょっと変わったが、すぐ元に戻った';
   const clip = function (v, n) { return String(v || '').replace(/[`{}]/g, '').slice(0, n); };
   const prompt = PROMPT_ILLUST.replace('{{THEME}}', MISSION_STORIES[idx].theme + '（依頼主：' + MISSION_STORIES[idx].name + '）')
-    .replace('{{ITEM}}', clip(body.item, 40)).replace('{{HAPPENED}}', clip(body.happened, 200)).replace('{{OUTCOME}}', label);
+    .replace('{{SCENE}}', MISSION_STORIES[idx].scene).replace('{{ITEM}}', clip(body.item, 40)).replace('{{HAPPENED}}', clip(body.happened, 200)).replace('{{OUTCOME}}', label);
   const r = callClaudeText_(prompt);
   const svg = String(r.svg || '').slice(0, 60000);
   // 配達記録で見せるため、その回の行に想像図を保存する（品名が一致するときだけ。セル上限を超えるものは保存しない）
   try {
     const row = Number(body.row) || 0, sh = missionSheet_();
-    if (row >= 2 && row <= sh.getLastRow() && svg.length < 45000 && String(sh.getRange(row, 2).getValue()) === String(body.item || '')) sh.getRange(row, 13).setValue(svg);
+    if (row >= 2 && row <= sh.getLastRow() && svg.length < 45000 && String(sh.getRange(row, 2).getValue()) === String(body.item || '')) sh.getRange(row, 12).setValue(svg);
   } catch (err) { console.error('saveIllust', err); }
   return svg;
 }
@@ -311,7 +312,6 @@ function doPost(e) {
       const idx = Math.max(0, Math.min(MISSION_STORIES.length - 1, Number(body.story) || 0));
       const story = MISSION_STORIES[idx];
       const result = callClaude_(image, PROMPT_MISSION.replace('{{NAME}}', story.name).replace('{{WHO}}', story.who).replace('{{THEME}}', story.theme).replace('{{LETTER}}', story.letter).replace('{{Q}}', story.request));
-      if (HUMANITY.indexOf(result.humanity) < 0) result.humanity = '';
       result.score = Math.max(0, Math.min(100, Math.round(Number(result.score) || 0)));
       const outcome = missionOutcome_(result.score);
       try { photoUrl = saveImage_(image); } catch (err) { console.error('saveImage', err); }
@@ -341,7 +341,7 @@ function doPost(e) {
 // ブラウザでURLを開いたときの動作確認用
 function doGet(e) {
   if (e && e.parameter && e.parameter.stats === 'mission') return out_({ ok: true, stats: missionStats_() });
-  if (e && e.parameter && e.parameter.humanity) return out_({ ok: true, totals: missionHumanity_() });
+  if (e && e.parameter && (e.parameter.totals || e.parameter.humanity)) return out_({ ok: true, totals: missionTotals_() });
   if (e && e.parameter && e.parameter.archive) return out_({ ok: true, items: missionArchive_(Number(e.parameter.archive) || 30, Number(e.parameter.after) || 0) });
   if (e && e.parameter && e.parameter.stats === 'rescue') return out_({ ok: true, stats: rescueStats_() });
   return out_({ ok: true, service: 'minato', ready: !!PROPS.getProperty('ANTHROPIC_API_KEY') });
