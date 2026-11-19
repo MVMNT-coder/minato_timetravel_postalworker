@@ -526,7 +526,7 @@ function doPost(e) {
       const prompt = buildMissionPrompt_(idx, recentMission_(idx, 3));
       let result = null;
       for (let t = 0; t < 2 && !result; t++) {
-        try { result = normalizeMission_(callClaude_(image, prompt, 0.8)); }
+        try { result = normalizeMission_(callClaude_(image, prompt)); }
         catch (err) { if (t === 1 || String(err.message || err).indexOf('rate') >= 0) throw err; console.warn('retry mission', err); }
       }
       if (!result) throw new Error('AIの返事が不完全でした');
@@ -564,13 +564,12 @@ function doGet(e) {
   return out_({ ok: true, service: 'minato', ready: !!PROPS.getProperty('ANTHROPIC_API_KEY') });
 }
 
-function callClaude_(imageBase64, promptText, temperature) {
+function callClaude_(imageBase64, promptText) {
   const key = (PROPS.getProperty('ANTHROPIC_API_KEY') || '').trim();
   if (!key) throw new Error('ANTHROPIC_API_KEY が未設定です');
   const payload = {
     model: PROPS.getProperty('MODEL') || 'claude-sonnet-5-5',
     max_tokens: 8000,
-    temperature: temperature === undefined ? 1 : temperature,
     messages: [{
       role: 'user',
       content: [
