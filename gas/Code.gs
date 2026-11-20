@@ -114,7 +114,7 @@ minatoは窓口で、消えてしまった品物が過去から届くと、2060�
 // ===== 時間郵便局（メイン：index.html）=====
 // 依頼主を3人に入れ替えたので、新しいシートに記録する（依頼主Noの意味が前と違うため）
 const MISSION_SHEET = 'mission_log_v4';
-const MISSION_HEADERS = ['日時', '品物', '依頼主', 'お願い', '21XX年で起きたこと', 'ツッコミ', '点数', '結果', '写真', 'ギャラリー用', '依頼主No', '想像図', '判定メモ'];
+const MISSION_HEADERS = ['日時', '品物', '依頼主', 'お願い', '21XX年で起きたこと', 'ツッコミ', '点数', '結果', '写真', 'ギャラリー用', '依頼主No', '想像図', '判定メモ', '想像図（小）'];
 const OUTCOME_LABEL = { saved: '変わった', partial: 'ちょっと変わった', lost: '変わらなかった' };
 const LABEL_OUTCOME = { '変わった': 'saved', 'ちょっと変わった': 'partial', '変わらなかった': 'lost' };
 // 21XX年で少し困っている依頼主。index.html の STORIES と同じ順番にしておくこと
@@ -525,6 +525,22 @@ function drawIllust_(body) {
   return out;
 }
 
+// ギャラリー用：ページで縮小した想像図（JPEG）を、その回の行の14列目に残す（品名が一致するときだけ）
+function saveIllThumb_(body) {
+  const row = Number(body.row) || 0, data = body.data;
+  if (typeof data !== 'string' || data.length > 45000 || !/^[A-Za-z0-9+/=]+$/.test(data)) return false;
+  const sh = missionSheet_();
+  if (row < 2 || row > sh.getLastRow() || String(sh.getRange(row, 2).getValue()) !== String(body.item || '')) return false;
+  sh.getRange(row, 14).setValue(data);
+  if (!sh.getRange(1, 14).getValue()) sh.getRange(1, 14).setValue('想像図（小）');
+  return true;
+}
+function illThumbOf_(row) {
+  const sh = missionSheet_();
+  if (row < 2 || row > sh.getLastRow() || sh.getLastColumn() < 14) return '';
+  return String(sh.getRange(row, 14).getValue() || '');
+}
+
 // Gemini で画像を1枚作る。写真（base64のJPEG）を渡すと、その品物を参考にして描く
 function callGeminiImage_(promptText, photoBase64, model) {
   const key = (PROPS.getProperty('GEMINI_API_KEY') || '').trim();
@@ -590,6 +606,7 @@ function doPost(e) {
     const body = JSON.parse(e.postData.contents || '{}');
     if (body.mode === 'illust') return out_(Object.assign({ ok: true }, drawIllust_(body)));
     if (body.mode === 'gemini_test') return out_(Object.assign({ ok: true }, testGemini_(body.model)));
+    if (body.mode === 'ill_thumb') return out_({ ok: saveIllThumb_(body) });
     const image = body.image;
     if (typeof image !== 'string' || image.length < 1000 || image.length > 4000000) {
       return out_({ ok: false, error: 'bad_image' });
@@ -633,6 +650,8 @@ function doPost(e) {
 // ブラウザでURLを開いたときの動作確認用
 function doGet(e) {
   if (e && e.parameter && e.parameter.stats === 'mission') return out_({ ok: true, stats: missionStats_() });
+  // ギャラリー：あとから届いた想像図（小さいJPEG）
+  if (e && e.parameter && e.parameter.ill) return out_({ ok: true, ill: illThumbOf_(Number(e.parameter.ill) || 0) });
   // スタッフ用パネル：どのAIのキーが設定されているか（キーそのものは返さない）
   if (e && e.parameter && e.parameter.config) return out_({ ok: true, claude: !!PROPS.getProperty('ANTHROPIC_API_KEY'), gemini: !!PROPS.getProperty('GEMINI_API_KEY'), geminiModels: GEMINI_IMAGE_MODELS, geminiDefault: PROPS.getProperty('GEMINI_IMAGE_MODEL') || GEMINI_IMAGE_DEFAULT });
   if (e && e.parameter && (e.parameter.totals || e.parameter.humanity)) return out_({ ok: true, totals: missionTotals_() });
