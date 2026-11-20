@@ -431,6 +431,8 @@ body.fxmode #stage{display:block;position:fixed;inset:0;z-index:1;transform:scal
 .tx-min .bubble{animation:fin .35s ease both}
 .tx-min .r-tk{font-size:clamp(18px,calc(var(--u)*1.9),40px)}
 .illust{position:relative;aspect-ratio:4/3;max-height:46vh;border:1px solid rgba(255,92,0,.45);background:#000;overflow:hidden}
+.illust img.gen{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:genIn 1.6s ease both}
+@keyframes genIn{from{opacity:0;filter:blur(8px) brightness(2)}to{opacity:1;filter:none}}
 .illcap{position:absolute;left:0;top:0;z-index:1;background:#000;color:var(--or);font-family:var(--f-mono);font-size:clamp(10px,calc(var(--u)*.62),14px);letter-spacing:.08em;padding:.3em .7em}
 .illust .r-sent{position:absolute;left:0;bottom:0;z-index:1;background:rgba(0,0,0,.82);border:0;border-top:1px solid var(--line);border-right:1px solid var(--line);padding:calc(var(--u)*.5) calc(var(--u)*.8) calc(var(--u)*.5) calc(var(--u)*.5);grid-template-columns:clamp(40px,calc(var(--u)*3.6),76px) auto}
 .illust .r-sent b{font-size:clamp(13px,calc(var(--u)*1),22px)}
@@ -1032,7 +1034,7 @@ async function send(srcCanvas){
       if(d.stats)setTally(d.stats);
       res=d.result;res._row=Number(d.row)||0;
       // 判定が届いたらすぐに想像図を頼んでおく（結果画面が出るまでの待ち時間に描かせる）
-      res._illP=fetchIllust(res,outcomeOf(Math.max(0,Math.min(100,Number(res.score)||0)))).catch(()=>null);
+      res._illP=fetchIllust(res,outcomeOf(Math.max(0,Math.min(100,Number(res.score)||0))),thumb).catch(()=>null);
     }catch(e){err=e&&e.code?e:{code:"network",detail:String(e&&e.message||e)}}
     done=true;
   })();
@@ -1055,12 +1057,24 @@ async function send(srcCanvas){
   pageResult({...res,thumb,_rec:rec});
 }
 
-/* 結果画面の想像図：その世界で品物がどう使われたかを、AIに線画で描かせる */
-async function fetchIllust(r,outcome){
-  if(!window.GAS_URL)return null;
-  const res=await fetch(window.GAS_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({mode:"illust",row:r._row||0,story:storyIdx,item:r.item_name,happened:r.happened,outcome})});
+/* 結果画面の想像図：その世界で品物がどう使われたかを、AIに描かせる
+   描くAIはスタッフ用パネルで切り替える（claude＝線画のSVG／gemini＝画像。送った物の写真も参考に渡す／off＝描かない） */
+const ILL={
+  MODELS:[["gemini-nano-banana-2.1","Nano Banana 2.1（おすすめ）"],["gemini-3.1-flash-image","Nano Banana 2"],["gemini-3.1-flash-lite-image","Nano Banana 2 Lite（速い・安い）"],["gemini-3-pro-image","Nano Banana Pro（高品質・遅い）"]],
+  engine:()=>{const v=lsGet("mirai_illust_engine","claude");return ["claude","gemini","off"].includes(v)?v:"claude"},
+  model:()=>lsGet("mirai_gemini_model","gemini-nano-banana-2.1"),
+  set:(k,v)=>lsSet(k==="engine"?"mirai_illust_engine":"mirai_gemini_model",v)
+};
+async function fetchIllust(r,outcome,thumb){
+  const eng=ILL.engine();
+  if(!window.GAS_URL||eng==="off")return null;
+  const body={mode:"illust",engine:eng,row:r._row||0,story:storyIdx,item:r.item_name,happened:r.happened,outcome};
+  if(eng==="gemini"){body.model=ILL.model();if(thumb)body.image=String(thumb).split(",")[1]}
+  const res=await fetch(window.GAS_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body),signal:AbortSignal.timeout(90000)});
   const d=await res.json();
-  return d.ok&&d.svg?safeSvg(d.svg):null;
+  if(!d.ok){console.warn("想像図を描けませんでした",d.detail||d.error);return null}
+  if(d.image&&/^data:image\/(png|jpeg|webp);base64,/.test(d.image)){const im=new Image();im.className="gen";im.alt="";im.src=d.image;await im.decode().catch(()=>{});return im}
+  return d.svg?safeSvg(d.svg):null;
 }
 
 /* 6. 未来の変化 */
@@ -1094,9 +1108,10 @@ function pageResult(r){
   let alive=true;cleanup.push(()=>alive=false);
   // 想像図：届くまでは世界の線画を薄く出しておき、届いたら1本ずつ描いていく
   const ill=$("#ill"),ph=worldArtEl(storyIdx);ph.classList.add("dim");ill.prepend(ph);
-  (r._illP||fetchIllust(r,o)).then(svg=>{
+  (r._illP||fetchIllust(r,o,r.thumb)).then(art=>{
     if(!alive)return;const cap=$("#illcap");
-    if(svg){ph.remove();ill.prepend(svg);drawIn(svg,45,700);cap.textContent="21XX年のようす（AIが描いた想像図）";if(r._rec)GAL.attachSvg(r._rec,svg.outerHTML)}
+    if(art&&art.tagName==="IMG"){ph.remove();ill.prepend(art);cap.textContent="21XX年のようす（AIが描いた想像図）"}
+    else if(art){ph.remove();ill.prepend(art);drawIn(art,45,700);cap.textContent="21XX年のようす（AIが描いた想像図）";if(r._rec)GAL.attachSvg(r._rec,art.outerHTML)}
     else{ph.classList.remove("dim");cap.textContent="21XX年の世界"}
   }).catch(()=>{if(!alive)return;ph.classList.remove("dim");$("#illcap").textContent="21XX年の世界"});
   setTimeout(()=>{if(alive)VOICE.say(r.tsukkomi)},T[3]+200);
@@ -1773,6 +1788,10 @@ function staffOpen(){return !!$("#staff")&&!$("#staff").hidden}
       <div class="sp-row"><select id="spVvSpk"></select><button id="spVvTest">声をテスト</button>
         <label>声の音量 <input type="range" id="spVvVol" min="0" max="1" step="0.05"></label></div>
       <div class="sp-st">VOICEVOXを起動し、設定の「CORS Policy Mode」を all にしてください。起動していないときは、ブラウザ内蔵の声で代用します。</div></section>
+    <section><h3>想像図（結果画面のイラスト）</h3>
+      <div class="sp-row"><label>描くAI <select id="spIll"><option value="claude">Claude（線画）</option><option value="gemini">Gemini（画像）</option><option value="off">描かない</option></select></label>
+        <label>Geminiのモデル <select id="spGm"></select></label><button id="spGmTest">Geminiでテスト</button></div>
+      <div class="sp-st" id="spIllSt">確認中…</div><img id="spGmImg" alt="" hidden style="max-width:240px;margin-top:8px;border:1px solid var(--line)"></section>
     <section><h3>展示モード</h3><div class="sp-st">今：<b>${EXHIBIT?"ON":"OFF"}</b>（URLに ?exhibit=1 / ?exhibit=0 で切替）</div></section>
     <section><h3>演出ありモード（外周の演出）</h3><div class="sp-st">今：<b>${FXMODE?"ON":"OFF"}</b>（URLに ?fx=1 / ?fx=0 でも切替）</div>
       <div class="sp-row"><button id="spFx">${FXMODE?"OFFにする":"ONにする"}</button>
@@ -1792,7 +1811,7 @@ function staffOpen(){return !!$("#staff")&&!$("#staff").hidden}
     $("#spCamSt").textContent=`使用中：${camLabel()}　／　見つかったカメラ：${cams.length}台`;
   }
   async function open(){
-    el.hidden=false;keysUI();fillVoice();
+    el.hidden=false;keysUI();fillVoice();fillIll?.();
     try{await getCam();$("#spV").srcObject=stream}catch(e){$("#spCamSt").textContent="カメラを起動できません："+(e?.name||e?.code||e)}
     fillCams();
   }
@@ -1823,6 +1842,26 @@ function staffOpen(){return !!$("#staff")&&!$("#staff").hidden}
   $("#spReset").onclick=()=>{close();document.body.classList.remove("desat");pageTitle()};
   $("#spReload").onclick=()=>location.reload();
   $("#spGal").onclick=()=>{close();GAL.show()};
+  // 想像図のAI
+  $("#spGm").innerHTML=ILL.MODELS.map(([v,n])=>`<option value="${v}">${esc(n)}</option>`).join("");
+  $("#spIll").value=ILL.engine();$("#spGm").value=ILL.model();
+  const illUI=()=>{$("#spGm").disabled=$("#spGmTest").disabled=ILL.engine()!=="gemini"};illUI();
+  $("#spIll").onchange=e=>{ILL.set("engine",e.target.value);illUI();fillIll()};
+  $("#spGm").onchange=e=>ILL.set("model",e.target.value);
+  async function fillIll(){
+    const st=$("#spIllSt");if(!window.GAS_URL){st.textContent="config.js の GAS_URL が未設定です";return}
+    try{const d=await(await fetch(window.GAS_URL+"?config=1",{signal:AbortSignal.timeout(10000)})).json();
+      const k=x=>x?"設定済み":"未設定";
+      st.textContent=`APIキー：Claude ${k(d.claude)}／Gemini ${k(d.gemini)}`+(ILL.engine()==="gemini"&&!d.gemini?"。GeminiのキーをGASのスクリプト プロパティ「GEMINI_API_KEY」に追加してください（未設定のあいだは、結果画面に世界の線画を出します）":"");
+    }catch{st.textContent="GASに接続できません（キーの確認ができません）"}
+  }
+  $("#spGmTest").onclick=async()=>{
+    const st=$("#spIllSt"),im=$("#spGmImg");st.textContent="Geminiで描いています…（10〜30秒）";im.hidden=true;
+    try{const r=await fetch(window.GAS_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({mode:"gemini_test",model:ILL.model()}),signal:AbortSignal.timeout(90000)});
+      const d=await r.json();if(!d.ok)throw new Error(d.detail||d.error);
+      im.src=d.image;im.hidden=false;st.textContent=`OK（${d.model}）`;
+    }catch(e){st.textContent="失敗："+String(e.message||e).slice(0,200)}
+  };
   $("#spRes").value=String(IDLE.resultSec());$("#spRes").onchange=e=>IDLE.setResultSec(Number(e.target.value));
   $("#spFx").onclick=()=>{lsSet("mirai_fx",FXMODE?"0":"1");if(!FXMODE)lsSet("mirai_exhibit","1");location.href=location.pathname};
   $("#spFxM").value=String(FXB.margin());

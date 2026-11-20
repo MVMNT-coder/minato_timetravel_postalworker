@@ -468,20 +468,94 @@ const PROMPT_ILLUST = `あなたは線画のイラストレーターです。21X
 以下のJSONオブジェクトだけを返す：
 {"svg":"<svg viewBox=\\"0 0 800 600\\">…</svg>"}`;
 
+// 想像図：Claude（線画のSVG）か Gemini（画像）で描く。どちらを使うかは、ページのスタッフ用パネルで選ぶ
+const GEMINI_IMAGE_MODELS = ['gemini-nano-banana-2.1', 'gemini-3.1-flash-image', 'gemini-3.1-flash-lite-image', 'gemini-3-pro-image'];
+const GEMINI_IMAGE_DEFAULT = 'gemini-nano-banana-2.1';
+
+const PROMPT_GEMINI = `21XX年の東京・渋谷の一場面を、1枚のイラストにしてください。
+
+【絵のスタイル】
+- 真っ黒な背景に、蛍光オレンジ（#FF5C00）の細い線だけで描いた線画。線はネオンのようにほんのり光る
+- 塗りつぶし、グラデーション、写真のような質感は使わない。色はオレンジだけ（白い線をごく少し使ってもよい）
+- 人物はシンプルな線の人形。顔は丸と簡単な表情だけ
+- 文字、数字、ロゴは一切入れない（吹き出しの中にも入れない）
+- 横長の画面。主役が真ん中に大きく入るように
+
+【場面】
+世界：{{THEME}}
+この世界の手がかり：{{SCENE}}
+起きたこと：{{HAPPENED}}
+結果：{{OUTCOME}}
+
+【描くこと】
+- {{ITEMLINE}}
+- 「起きたこと」の人物の動きと表情を描く
+- 結果が「日常が変わった」なら人が楽しそうな構図、「日常は変わらなかった」なら品物が役に立たず、人がしらけている構図にする
+- 背景には、この世界だとわかる物を2〜4個だけ、小さめに描く`;
+
 function drawIllust_(body) {
   const idx = Math.max(0, Math.min(MISSION_STORIES.length - 1, Number(body.story) || 0));
+  const st = MISSION_STORIES[idx];
   const label = { saved: '日常が変わった', partial: '日常がちょっと変わったが、すぐ元に戻った', lost: '日常は変わらなかった' }[body.outcome] || '日常がちょっと変わったが、すぐ元に戻った';
   const clip = function (v, n) { return String(v || '').replace(/[`{}]/g, '').slice(0, n); };
-  const prompt = PROMPT_ILLUST.replace('{{THEME}}', MISSION_STORIES[idx].theme + '（依頼主：' + MISSION_STORIES[idx].name + '）')
-    .replace('{{SCENE}}', MISSION_STORIES[idx].scene).replace('{{ITEM}}', clip(body.item, 40)).replace('{{HAPPENED}}', clip(body.happened, 200)).replace('{{OUTCOME}}', label);
-  const r = callClaudeText_(prompt);
-  const svg = String(r.svg || '').slice(0, 60000);
-  // 配達記録で見せるため、その回の行に想像図を保存する（品名が一致するときだけ。セル上限を超えるものは保存しない）
+  const theme = st.theme + '（依頼主：' + st.name + '）';
+  let saveValue = '', out;
+  if (body.engine === 'gemini') {
+    const photo = (typeof body.image === 'string' && body.image.length < 400000 && /^[A-Za-z0-9+/=]+$/.test(body.image)) ? body.image : '';
+    const item = clip(body.item, 40);
+    const itemLine = photo ? '添付写真の品物（' + item + '）を、写真と同じ形のまま、場面の中で使われている姿で描く。品物が一目でわかるように少し大きめに'
+      : '品物（' + item + '）を、場面の中で使われている姿で描く。品物が一目でわかるように少し大きめに';
+    const prompt = PROMPT_GEMINI.replace('{{THEME}}', theme).replace('{{SCENE}}', st.scene).replace('{{HAPPENED}}', clip(body.happened, 200)).replace('{{OUTCOME}}', label).replace('{{ITEMLINE}}', itemLine);
+    const img = callGeminiImage_(prompt, photo, body.model);
+    out = { image: 'data:' + img.mime + ';base64,' + img.data, engine: 'gemini', model: img.model };
+    try { saveValue = saveImage_(img.data, img.mime); } catch (err) { console.error('saveGeminiImage', err); }
+  } else {
+    const prompt = PROMPT_ILLUST.replace('{{THEME}}', theme)
+      .replace('{{SCENE}}', st.scene).replace('{{ITEM}}', clip(body.item, 40)).replace('{{HAPPENED}}', clip(body.happened, 200)).replace('{{OUTCOME}}', label);
+    const r = callClaudeText_(prompt);
+    const svg = String(r.svg || '').slice(0, 60000);
+    out = { svg: svg, engine: 'claude' };
+    if (svg.length < 45000) saveValue = svg;
+  }
+  // その回の行に想像図を残す（SVGはそのまま、Geminiの画像はドライブのURL。品名が一致するときだけ）
   try {
     const row = Number(body.row) || 0, sh = missionSheet_();
-    if (row >= 2 && row <= sh.getLastRow() && svg.length < 45000 && String(sh.getRange(row, 2).getValue()) === String(body.item || '')) sh.getRange(row, 12).setValue(svg);
+    if (saveValue && row >= 2 && row <= sh.getLastRow() && String(sh.getRange(row, 2).getValue()) === String(body.item || '')) sh.getRange(row, 12).setValue(saveValue);
   } catch (err) { console.error('saveIllust', err); }
-  return svg;
+  return out;
+}
+
+// Gemini で画像を1枚作る。写真（base64のJPEG）を渡すと、その品物を参考にして描く
+function callGeminiImage_(promptText, photoBase64, model) {
+  const key = (PROPS.getProperty('GEMINI_API_KEY') || '').trim();
+  if (!key) throw new Error('GEMINI_API_KEY が未設定です（GASのスクリプト プロパティに追加してください）');
+  const m = GEMINI_IMAGE_MODELS.indexOf(model) >= 0 ? model : (PROPS.getProperty('GEMINI_IMAGE_MODEL') || GEMINI_IMAGE_DEFAULT);
+  const parts = [{ text: promptText }];
+  if (photoBase64) parts.push({ inline_data: { mime_type: 'image/jpeg', data: photoBase64 } });
+  const res = UrlFetchApp.fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(m) + ':generateContent', {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { 'x-goog-api-key': key },
+    payload: JSON.stringify({ contents: [{ role: 'user', parts: parts }], generationConfig: { responseModalities: ['IMAGE'], imageConfig: { aspectRatio: '4:3', imageSize: '1K' } } }),
+    muteHttpExceptions: true
+  });
+  const code = res.getResponseCode();
+  if (code === 429) throw new Error('rate limited by API');
+  if (code !== 200) throw new Error('Gemini API error ' + code + ': ' + res.getContentText().slice(0, 300));
+  const data = JSON.parse(res.getContentText());
+  const cand = (data.candidates || [])[0] || {};
+  const ps = (cand.content && cand.content.parts) || [];
+  for (let i = 0; i < ps.length; i++) {
+    const d = ps[i].inlineData || ps[i].inline_data;
+    if (d && d.data) return { mime: d.mimeType || d.mime_type || 'image/png', data: d.data, model: m };
+  }
+  throw new Error('Geminiが画像を返しませんでした（' + (cand.finishReason || (data.promptFeedback && data.promptFeedback.blockReason) || 'unknown') + '）');
+}
+
+// スタッフ用パネルの「Geminiでテスト」から呼ぶ：キーが使えるかを、ごく小さい画像で確かめる
+function testGemini_(model) {
+  const img = callGeminiImage_('真っ黒な背景に、蛍光オレンジ（#FF5C00）の線だけで描いた、手紙の封筒のシンプルな線画。文字は入れない。', '', model);
+  return { image: 'data:' + img.mime + ';base64,' + img.data, model: img.model };
 }
 
 // 画像なしで Claude を呼ぶ（想像図用）
@@ -514,7 +588,8 @@ function doPost(e) {
   try {
     if (!rateOk_()) return out_({ ok: false, error: 'rate_limited' });
     const body = JSON.parse(e.postData.contents || '{}');
-    if (body.mode === 'illust') return out_({ ok: true, svg: drawIllust_(body) });
+    if (body.mode === 'illust') return out_(Object.assign({ ok: true }, drawIllust_(body)));
+    if (body.mode === 'gemini_test') return out_(Object.assign({ ok: true }, testGemini_(body.model)));
     const image = body.image;
     if (typeof image !== 'string' || image.length < 1000 || image.length > 4000000) {
       return out_({ ok: false, error: 'bad_image' });
@@ -558,6 +633,8 @@ function doPost(e) {
 // ブラウザでURLを開いたときの動作確認用
 function doGet(e) {
   if (e && e.parameter && e.parameter.stats === 'mission') return out_({ ok: true, stats: missionStats_() });
+  // スタッフ用パネル：どのAIのキーが設定されているか（キーそのものは返さない）
+  if (e && e.parameter && e.parameter.config) return out_({ ok: true, claude: !!PROPS.getProperty('ANTHROPIC_API_KEY'), gemini: !!PROPS.getProperty('GEMINI_API_KEY'), geminiModels: GEMINI_IMAGE_MODELS, geminiDefault: PROPS.getProperty('GEMINI_IMAGE_MODEL') || GEMINI_IMAGE_DEFAULT });
   if (e && e.parameter && (e.parameter.totals || e.parameter.humanity)) return out_({ ok: true, totals: missionTotals_() });
   if (e && e.parameter && e.parameter.archive) return out_({ ok: true, items: missionArchive_(Number(e.parameter.archive) || 30, Number(e.parameter.after) || 0) });
   if (e && e.parameter && e.parameter.stats === 'rescue') return out_({ ok: true, stats: rescueStats_() });
@@ -611,7 +688,7 @@ function rateOk_() {
   }
 }
 
-function saveImage_(imageBase64) {
+function saveImage_(imageBase64, mime) {
   if (PROPS.getProperty('SAVE_IMAGES') === 'false') return '';
   let folderId = PROPS.getProperty('IMAGE_FOLDER_ID');
   let folder;
@@ -621,8 +698,9 @@ function saveImage_(imageBase64) {
     folder = DriveApp.createFolder('minato_images');
     PROPS.setProperty('IMAGE_FOLDER_ID', folder.getId());
   }
-  const name = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyyMMdd_HHmmss') + '_' + Utilities.getUuid().slice(0, 6) + '.jpg';
-  const file = folder.createFile(Utilities.newBlob(Utilities.base64Decode(imageBase64), 'image/jpeg', name));
+  const type = mime || 'image/jpeg', ext = type === 'image/png' ? '.png' : type === 'image/webp' ? '.webp' : '.jpg';
+  const name = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyyMMdd_HHmmss') + '_' + Utilities.getUuid().slice(0, 6) + ext;
+  const file = folder.createFile(Utilities.newBlob(Utilities.base64Decode(imageBase64), type, name));
   return file.getUrl();
 }
 
