@@ -558,15 +558,22 @@ img{max-width:100%}
 @keyframes snapFlash{from{opacity:.95}to{opacity:0}}
 .cam.done{opacity:0}
 .cam.lost .cam-art{animation:none;opacity:.85}.cam.lost .cam-noise{opacity:.06}
-.instant{position:absolute;left:56%;top:42%;width:66%;z-index:1;background:#f3ead7;padding:2.4% 2.4% 0;box-shadow:0 calc(var(--u)*.8) calc(var(--u)*2.4) rgba(0,0,0,.7);transform:translate(-50%,-50%) rotate(-1.5deg);animation:instIn 1s cubic-bezier(.2,1.2,.4,1) both}
-@keyframes instIn{from{opacity:0;transform:translate(-50%,-20%) scale(.85) rotate(4deg)}to{opacity:1;transform:translate(-50%,-50%) rotate(-1.5deg)}}
-.in-ph{position:relative;aspect-ratio:4/3;background:#000;overflow:hidden}
-.in-ph img,.in-ph svg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.in-ph img.dev{animation:develop 3.2s ease-out both}
-@keyframes develop{0%{filter:blur(14px) brightness(2.6) sepia(1);opacity:.2}35%{filter:blur(6px) brightness(1.6) sepia(.6);opacity:.8}100%{filter:none;opacity:1}}
-.in-cap{margin:0;padding:.45em .2em .55em;font-family:"Klee One",var(--f-body);font-weight:600;font-size:clamp(12px,calc(var(--u)*1.05),22px);color:#3b2b1c}
-.in-ai{position:absolute;right:3.5%;bottom:.55em;font-family:var(--f-mono);font-size:clamp(9px,calc(var(--u)*.6),13px);letter-spacing:.08em;color:#a08460}
 .illust .r-sent{z-index:2}
+.ill-out{position:absolute;inset:0;background:#000;animation:fadeIn .8s ease both}
+.ill-out img,.ill-out svg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.illust .illcap{z-index:2}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+/* 自動で次へ：ボタンの下に、進むまでの残り時間のバー */
+.btn.auto{position:relative;overflow:hidden}
+body.exhibit .push.auto{overflow:hidden}
+.btn.auto::after,body.exhibit .push.auto::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:currentColor;opacity:.7;transform-origin:left;animation:autoBar var(--auto,3s) linear forwards}
+@keyframes autoBar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+/* 便せん：差出人の声が流れているあいだの波形 */
+.lp-fig{display:flex;align-items:center;justify-content:center;min-width:clamp(44px,calc(var(--u)*4.2),90px)}
+.lp-wave{display:flex;gap:4px;align-items:center;height:calc(var(--u)*3)}
+.lp-wave i{width:5px;height:30%;background:var(--or);border-radius:3px;animation:wave 1s ease-in-out infinite}
+.lp-wave i:nth-child(2){animation-delay:.15s}.lp-wave i:nth-child(3){animation-delay:.3s}.lp-wave i:nth-child(4){animation-delay:.45s}.lp-wave i:nth-child(5){animation-delay:.6s}
+@keyframes wave{50%{height:100%}}
 .gd-cap small{margin-left:.8em;font-family:var(--f-mono);font-size:.62em;letter-spacing:.1em;color:var(--mute)}
 .gd-art img.gd-ill{width:100%;height:100%;object-fit:cover;display:block;animation:genIn 1.6s ease both}
 :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -633,8 +640,20 @@ function camLabel(){return stream?.getVideoTracks()[0]?.label||"未接続"}
 
 /* ===== 物理ボタン：画面ごとに「押したら何をするか」を登録する ===== */
 let pushAct=null,lastPush=0;
-function setPush(label,fn){pushAct=fn;const el=$("#push");if(!el)return;if(!label){el.hidden=true;return}el.hidden=false;$("#pushL").textContent=label}
+function setPush(label,fn){pushAct=fn;const el=$("#push");if(!el)return;el.classList.remove("auto");if(!label){el.hidden=true;return}el.hidden=false;$("#pushL").textContent=label}
 function clearPush(){setPush(null,null)}
+/* 自動で次へ：ms 後に fn を呼ぶ。ボタン（物理ボタンも）を押せばすぐ進む。
+   ボタンを押す必要があるのは「START」と「撮影」だけにして、ほかの画面はこれで進める */
+function autoNext(ms,fn,btn){
+  let done=false;const go=()=>{if(done)return;done=true;clearTimeout(t);fn()};
+  const t=setTimeout(go,ms);cleanup.push(()=>{done=true;clearTimeout(t)});
+  setPush("NEXT",go);
+  [btn,$("#push")].forEach(el=>{if(!el)return;el.classList?.remove("hidden-until");el.style.setProperty("--auto",ms+"ms");el.classList.remove("auto");void el.offsetWidth;el.classList.add("auto")});
+  if(btn)btn.onclick=go;
+  return go;
+}
+// 声が出ないときに、読み終わるまで待つ目安（ゲームに慣れていない人が読める速さ）
+const readMs=t=>String(t).length*190+2000;
 function pushCodes(){try{const c=JSON.parse(lsGet("mirai_push_codes","null"));if(Array.isArray(c)&&c.length)return c}catch{}return["Enter","NumpadEnter","Space"]}
 function firePush(){
   const now=performance.now();if(now-lastPush<800)return; // 連打・二重入力を防ぐ
@@ -841,10 +860,11 @@ function sayPage({page,art,cap,lines,next,onArt}){
   $("#art").prepend(art);drawIn(art,90,1100);onArt?.();
   const line=$("#line");let alive=true,skip=false,done=false;cleanup.push(()=>alive=false);
   const last=lines[lines.length-1];
-  const finish=()=>{if(done)return;done=true;$("#next").classList.remove("hidden-until");setPush("CONTINUE",next)};
-  let saidLast=false;
-  // 1回目のボタン：最後のセリフを全部出す（まだ読んでいなければ、最後のセリフを読み上げる）
-  setPush("CONTINUE",()=>{skip=true;line.classList.remove("swap");line.innerHTML=esc(last)+'<span class="cur"></span>';if(!saidLast)VOICE.say(last);finish()});
+  const finish=()=>{if(done)return;done=true;autoNext(1500,next,$("#next"))};
+  let saidLast=false,vNow=Promise.resolve();
+  // 話している途中でボタンを押すと、最後のセリフを全部出す（まだ読んでいなければ読み上げる）。読み終わったら自動で次へ
+  setPush("CONTINUE",async()=>{if(skip)return;skip=true;line.classList.remove("swap");line.innerHTML=esc(last)+'<span class="cur"></span>';
+    const v=saidLast?vNow:VOICE.say(last);saidLast=true;await Promise.race([v,sleep(readMs(last))]);if(alive)finish()});
   (async()=>{
     await sleep(500);if(!alive||skip)return;
     // セリフごとに、音声ができるのを待ってから、文字と声を同時に始める。声が終わるまで次へ進まない
@@ -852,13 +872,12 @@ function sayPage({page,art,cap,lines,next,onArt}){
       if(k){await sleep(500);if(!alive||skip)return;line.classList.add("swap");await sleep(350);if(!alive||skip)return;line.classList.remove("swap")}
       await Promise.race([VOICE.prepare(lines[k]),sleep(2500)]);if(!alive||skip)return;
       if(k===lines.length-1)saidLast=true;
-      const vP=VOICE.say(lines[k]);
-      await Promise.all([typeOut(line,lines[k],()=>alive,()=>skip),Promise.race([vP,sleep(lines[k].length*220+2500)])]);
+      const vP=vNow=VOICE.say(lines[k]);
+      await Promise.all([typeOut(line,lines[k],()=>alive,()=>skip),Promise.race([vP,sleep(readMs(lines[k]))])]);
       if(!alive||skip)return;
     }
     finish();
   })();
-  $("#next").onclick=next;
 }
 function pageIntro(){
   pickStory();
@@ -868,7 +887,7 @@ function pageIntro(){
 
 /* 3. 手紙が届く：依頼主の世界の線画に、封筒が飛んでくる（minatoはまだ開けていないので、封筒でわかることだけ言う） */
 function pageArrive(){
-  VOICE.prepare(story.letter);VOICE.prepare(story.react);VOICE.prepare(REQ_HEAD+story.q);
+  VOICE.prepare(story.letter,{story:storyIdx});VOICE.prepare(story.react);VOICE.prepare(REQ_HEAD+story.q,{story:storyIdx});
   sayPage({page:"arrive",art:worldArtEl(storyIdx),cap:`21XX · ${esc(story.name)}（${esc(story.who)}）の世界`,lines:[story.arrive],next:pageLetter,
     onArt(){$("#art").insertAdjacentHTML("beforeend",`<div class="env-fly">${ENV_SVG}<span class="env-from">${esc(story.name)}より</span></div>`);setTimeout(()=>SND.tick(),1900)}});
 }
@@ -887,27 +906,26 @@ function pageLetter(){
       <p class="pp-body">${sent.map((s,i)=>`<span class="pp-s" style="animation-delay:${T0+i*GAP}ms">${esc(s)}</span>`).join("")}</p>
       <p class="pp-page">1 / 2</p>
     </article>
-    <div class="lp-reader">${FIG("sm")}<div class="lp-say"><div class="lbl" id="lpLbl" data-fx="text">MINATO が読んでいます</div><p class="lp-tk" id="lpTk"></p></div></div>
+    <div class="lp-reader"><div class="lp-fig" id="lpFig"><span class="lp-wave"><i></i><i></i><i></i><i></i><i></i></span></div><div class="lp-say"><div class="lbl" id="lpLbl" data-fx="text">♪ ${esc(story.name)}の声</div><p class="lp-tk" id="lpTk"></p></div></div>
     <div class="lp-btn"><button class="btn hidden-until" id="next">次の便せん</button></div></div>`);
   card.dataset.page="letter";document.body.dataset.calm="1";
-  unmountFig=minatoFigure($("#fig"),{talk:true});
   let alive=true,stage=0;cleanup.push(()=>alive=false);
-  // 読み終わり：minatoのひとことを出して、次へ進めるようにする
-  const react=()=>{
+  // 読み終わり：minatoが出てきてひとこと。言い終わったら自動で次の便せんへ
+  const react=async()=>{
     if(!alive||stage>=2)return;stage=2;
     $$(".pp-s").forEach(s=>s.style.animationDelay="0ms");
+    $("#lpFig").innerHTML=FIG("sm");unmountFig=minatoFigure($("#fig"),{talk:true});
     $("#lpLbl").textContent="MINATO";$("#lpTk").textContent=story.react;$(".lp-reader").classList.add("talk");
-    SND.glitch();VOICE.say(story.react);
-    $("#next").classList.remove("hidden-until");setPush("CONTINUE",pageRequest);
+    SND.glitch();setPush("CONTINUE",pageRequest);
+    await Promise.race([VOICE.say(story.react),sleep(readMs(story.react))]);
+    if(alive)autoNext(2200,pageRequest,$("#next"));
   };
   (async()=>{
     await sleep(T0-200);if(!alive||stage)return;stage=1;SND.tick();
-    const est=story.letter.length*190+2500; // 声が出ないときの保険
-    await Promise.all([Promise.race([VOICE.say(story.letter),sleep(est)]),sleep(sent.length*GAP+600)]);
+    await Promise.all([Promise.race([VOICE.say(story.letter,{story:storyIdx}),sleep(readMs(story.letter))]),sleep(sent.length*GAP+600)]);
     if(!alive)return;await sleep(500);react();
   })();
-  setPush("CONTINUE",react); // 1回目：全文とひとことを出す。2回目：次の便せんへ
-  $("#next").onclick=pageRequest;
+  setPush("CONTINUE",react); // 読んでいる途中で押すと、全文とminatoのひとことをすぐ出す
 }
 
 /* 5. お願い：2枚目の便せん（めくって出てくる） */
@@ -924,9 +942,13 @@ function pageRequest(){
     <div class="fade-in" style="animation-delay:2600ms"><button class="btn" id="go">送る物を探す</button></div></div>`);
   card.dataset.page="request";document.body.dataset.calm="1";
   let alive=true;cleanup.push(()=>alive=false);
-  setTimeout(()=>{if(alive){SND.tick();VOICE.say(REQ_HEAD+story.q)}},700);
   $("#go").onclick=pageCamera;
   setPush("CONTINUE",pageCamera);
+  // お願いを読み上げたあと、ヒントを読む時間をとってから自動でカメラへ
+  (async()=>{await sleep(700);if(!alive)return;SND.tick();
+    await Promise.all([Promise.race([VOICE.say(REQ_HEAD+story.q,{story:storyIdx}),sleep(readMs(REQ_HEAD+story.q))]),sleep(2600)]);
+    if(alive)autoNext(4000,pageCamera,$("#go"));
+  })();
 }
 
 /* 4. カメラ */
@@ -1184,9 +1206,9 @@ function pageResult(r){
     if(!alive||shown)return;shown=true;clearInterval(hold);IDLE.touch();
     const cam=$("#cam");SND.shutter();cam.classList.add("snap");
     setTimeout(()=>{if(!alive)return;
-      ill.insertAdjacentHTML("afterbegin",`<div class="instant"><div class="in-ph" id="inPh"></div><p class="in-cap">21XX年 · ${esc(story.name)}のまわり</p><span class="in-ai">AIが描いた想像図</span></div>`);
+      ill.insertAdjacentHTML("afterbegin",`<div class="ill-out" id="inPh"></div><div class="illcap">21XX年のようす（AIが描いた想像図）</div>`);
       $("#inPh").append(art);
-      if(art.tagName==="IMG")art.classList.add("dev");else drawIn(art,45,700);
+      if(art.tagName!=="IMG")drawIn(art,45,700);
       cam.classList.add("done");setTimeout(()=>cam.remove(),900);
     },260);
   };
@@ -1502,25 +1524,31 @@ const SND=(()=>{
    VOICEVOX が起動していないときは、ブラウザ内蔵の読み上げで代用する */
 const VOICE=(()=>{
   let base=lsGet("mirai_vv_url","http://127.0.0.1:50021"),spk=Number(lsGet("mirai_vv_speaker","6")),vol=Number(lsGet("mirai_voice_vol","1"));
-  let ok=null,cur=null,token=0,spkName="";const cache=new Map();
+  let ok=null,cur=null,token=0,spkName="",names={};const cache=new Map();
+  // 差出人の声（世界ごと）。既定：透＝玄野武宏、美月＝冥鳴ひまり、ひなた＝ずんだもん。スタッフ用パネルで変えられる
+  const SPK_DEF=[11,14,3],PITCH=[.78,1.15,1.45]; // PITCH はブラウザ内蔵の声で代用するときの高さ
+  const storySpk=i=>Number(lsGet("mirai_vv_speaker_s"+i,String(SPK_DEF[i]??spk)));
   async function check(){
     try{const r=await fetch(base+"/version",{signal:AbortSignal.timeout(1500)});ok=r.ok}catch{ok=false}
-    if(ok)speakers().then(list=>{const s=list.find(x=>x.id===spk);spkName=s?s.name:"";credit()}).catch(()=>{});
+    if(ok)speakers().then(list=>{names={};list.forEach(x=>names[x.id]=x);const s=names[spk];spkName=s?s.name:"";credit()}).catch(()=>{});
     return ok;
   }
   async function speakers(){
     const r=await fetch(base+"/speakers",{signal:AbortSignal.timeout(3000)});const j=await r.json();
     return j.flatMap(c=>c.styles.map(s=>({id:s.id,name:`${c.name}（${s.name}）`,chara:c.name})));
   }
-  function credit(){const el=$("#vvcredit");if(el)el.textContent=ok&&spkName?`音声：VOICEVOX:${spkName.replace(/（.*/,"")}`:""}
+  // クレジット：minatoと3人の差出人で使っているキャラクターを全部出す
+  function credit(){const el=$("#vvcredit");if(!el)return;
+    const ch=[...new Set([spk,...SPK_DEF.map((_,i)=>storySpk(i))].map(id=>names[id]?.chara).filter(Boolean))];
+    el.textContent=ok&&ch.length?`音声：VOICEVOX:${ch.join("、VOICEVOX:")}`:""}
   const READ=[[/minato/gi,"ミナト"],[/美月/g,"みづき"],[/透(?!明)/g,"とおる"]];
   function clean(t){let r=String(t);READ.forEach(([a,b])=>r=r.replace(a,b));return r.replace(/[「」『』]/g,"").replace(/…+/g,"、").replace(/！？|!\?/g,"？")}
-  function synth(text){
-    const key=spk+"|"+text;if(cache.has(key))return cache.get(key);
+  function synth(text,id=spk){
+    const key=id+"|"+text;if(cache.has(key))return cache.get(key);
     const p=(async()=>{
-      const q=await fetch(`${base}/audio_query?speaker=${spk}&text=${encodeURIComponent(clean(text))}`,{method:"POST"});if(!q.ok)throw new Error("audio_query "+q.status);
+      const q=await fetch(`${base}/audio_query?speaker=${id}&text=${encodeURIComponent(clean(text))}`,{method:"POST"});if(!q.ok)throw new Error("audio_query "+q.status);
       const qj=await q.json();qj.speedScale=1.1;qj.intonationScale=1.2;qj.prePhonemeLength=.05;qj.postPhonemeLength=.1;
-      const r=await fetch(`${base}/synthesis?speaker=${spk}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(qj)});if(!r.ok)throw new Error("synthesis "+r.status);
+      const r=await fetch(`${base}/synthesis?speaker=${id}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(qj)});if(!r.ok)throw new Error("synthesis "+r.status);
       return URL.createObjectURL(await r.blob());
     })();
     cache.set(key,p);p.catch(()=>cache.delete(key));
@@ -1530,37 +1558,40 @@ const VOICE=(()=>{
   // 話し終わりを知らせる（say は話し終わると解決する Promise を返す。止めたときも解決する）
   let endFn=null;
   function endNow(){const f=endFn;endFn=null;if(f)f()}
-  function browserSay(text,my){
+  function browserSay(text,my,pitch=1.05){
     if(!("speechSynthesis" in window))return endNow();
-    const u=new SpeechSynthesisUtterance(clean(text));u.lang="ja-JP";u.rate=1.08;u.pitch=1.05;u.volume=Math.min(1,vol);
+    const u=new SpeechSynthesisUtterance(clean(text));u.lang="ja-JP";u.rate=1.08;u.pitch=pitch;u.volume=Math.min(1,vol);
     const v=speechSynthesis.getVoices().find(v=>v.lang&&v.lang.startsWith("ja"));if(v)u.voice=v;
     u.onstart=()=>SND.duck(.35);u.onend=u.onerror=()=>{if(my===token){SND.duck(1);endNow()}};
     speechSynthesis.speak(u);
   }
   function stop(){token++;if(cur){cur.pause();cur=null}try{speechSynthesis.cancel()}catch{}SND.duck(1);endNow()}
-  function say(text){
+  // opt.story に世界の番号を渡すと、その世界の差出人の声で話す（渡さなければ minato の声）
+  const who=opt=>opt&&opt.story!=null?{id:storySpk(opt.story),pitch:PITCH[opt.story]??1}:{id:spk,pitch:1.05};
+  function say(text,opt){
     stop(); // 前の声を止めてから話す（二重に再生しない）
-    const p=new Promise(r=>endFn=r);run(text);return p;
+    const p=new Promise(r=>endFn=r);run(text,who(opt));return p;
   }
-  async function run(text){
+  async function run(text,w){
     if(!text||!SND.isOn())return endNow();
     const my=token;
     if(ok===null)await check();
     if(my!==token)return;
-    if(!ok)return browserSay(text,my);
+    if(!ok)return browserSay(text,my,w.pitch);
     try{
-      const url=await synth(text);if(my!==token)return;
+      const url=await synth(text,w.id);if(my!==token)return;
       const a=new Audio(url);a.volume=Math.max(0,Math.min(1,vol));cur=a;
       a.onplay=()=>SND.duck(.35);a.onended=a.onerror=()=>{if(my===token){cur=null;SND.duck(1);endNow()}};
       await a.play();
-    }catch(e){if(my===token)browserSay(text,my)}
+    }catch(e){if(my===token)browserSay(text,my,w.pitch)}
   }
   check();
   return{
     say,stop,
     // 先に音声を作っておき、話し始めの待ちをなくす（作り終わると解決する Promise を返す）
-    prepare(text){return ok&&text?synth(text).then(()=>{},()=>{}):Promise.resolve()},
+    prepare(text,opt){return ok&&text?synth(text,who(opt).id).then(()=>{},()=>{}):Promise.resolve()},
     status:async()=>{await check();return{ok,base,spk,spkName}},
+    storySpk,setStorySpeaker(i,id){lsSet("mirai_vv_speaker_s"+i,String(Number(id)));credit()},
     speakers,
     setSpeaker(id){spk=Number(id);lsSet("mirai_vv_speaker",String(spk));cache.clear();check()},
     setVol(v){vol=v;lsSet("mirai_voice_vol",String(v));if(cur)cur.volume=Math.max(0,Math.min(1,v))},
@@ -1920,6 +1951,8 @@ function staffOpen(){return !!$("#staff")&&!$("#staff").hidden}
     <section><h3>minatoの声（VOICEVOX）</h3><div class="sp-st" id="spVvSt">確認中…</div>
       <div class="sp-row"><select id="spVvSpk"></select><button id="spVvTest">声をテスト</button>
         <label>声の音量 <input type="range" id="spVvVol" min="0" max="1" step="0.05"></label></div>
+      <div class="sp-st">手紙の差出人の声（世界ごと）</div>
+      ${STORIES.map((st,i)=>`<div class="sp-row"><label>${esc(st.name)}（${esc(st.who)}） <select id="spVvS${i}"></select></label><button data-vt="${i}">テスト</button></div>`).join("")}
       <div class="sp-st">VOICEVOXを起動し、設定の「CORS Policy Mode」を all にしてください。起動していないときは、ブラウザ内蔵の声で代用します。</div></section>
     <section><h3>想像図（結果画面のイラスト）</h3>
       <div class="sp-row"><label>描くAI <select id="spIll"><option value="claude">Claude（線画）</option><option value="gemini">Gemini（画像）</option><option value="off">描かない</option></select></label>
@@ -1964,11 +1997,16 @@ function staffOpen(){return !!$("#staff")&&!$("#staff").hidden}
   async function fillVoice(){
     const st=await VOICE.status();
     $("#spVvSt").textContent=st.ok?`接続OK（${st.base}）　今の声：${st.spkName||"ID "+st.spk}`:`VOICEVOXに接続できません（${st.base}）。ブラウザ内蔵の声で代用中`;
-    if(st.ok){try{const list=await VOICE.speakers();$("#spVvSpk").innerHTML=list.map(x=>`<option value="${x.id}"${x.id===st.spk?" selected":""}>${esc(x.name)}</option>`).join("")}catch{}}
-    else $("#spVvSpk").innerHTML="<option>（未接続）</option>";
+    if(st.ok){try{const list=await VOICE.speakers(),opts=sel=>list.map(x=>`<option value="${x.id}"${x.id===sel?" selected":""}>${esc(x.name)}</option>`).join("");
+      $("#spVvSpk").innerHTML=opts(st.spk);STORIES.forEach((_,i)=>$("#spVvS"+i).innerHTML=opts(VOICE.storySpk(i)))}catch{}}
+    else{$("#spVvSpk").innerHTML="<option>（未接続）</option>";STORIES.forEach((_,i)=>$("#spVvS"+i).innerHTML="<option>（未接続）</option>")}
   }
   $("#spVvSpk").onchange=e=>{VOICE.setSpeaker(e.target.value);setTimeout(fillVoice,600)};
   $("#spVvTest").onclick=()=>{SND.unlock();VOICE.say(UNBOX_LINE)};
+  STORIES.forEach((st,i)=>{
+    $("#spVvS"+i).onchange=e=>VOICE.setStorySpeaker(i,e.target.value);
+    $(`[data-vt="${i}"]`).onclick=()=>{SND.unlock();VOICE.say((st.letter.match(/[^。]+。/)||[st.letter])[0],{story:i})};
+  });
   $("#spVvVol").value=String(VOICE.vol());$("#spVvVol").oninput=e=>VOICE.setVol(Number(e.target.value));
   $("#spVol").value=String(SND.vol());$("#spVol").oninput=e=>SND.setVol(Number(e.target.value));
   $("#spSnd").onclick=()=>{SND.unlock();SND.win(true);$("#spSndSt").textContent="音が鳴らない場合：右上のSOUND表示がONか、PCの出力先スピーカーと音量を確認してください。"};
