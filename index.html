@@ -567,6 +567,7 @@ img{max-width:100%}
 .in-cap{margin:0;padding:.45em .2em .55em;font-family:"Klee One",var(--f-body);font-weight:600;font-size:clamp(12px,calc(var(--u)*1.05),22px);color:#3b2b1c}
 .in-ai{position:absolute;right:3.5%;bottom:.55em;font-family:var(--f-mono);font-size:clamp(9px,calc(var(--u)*.6),13px);letter-spacing:.08em;color:#a08460}
 .illust .r-sent{z-index:2}
+.gd-cap small{margin-left:.8em;font-family:var(--f-mono);font-size:.62em;letter-spacing:.1em;color:var(--mute)}
 .gd-art img.gd-ill{width:100%;height:100%;object-fit:cover;display:block;animation:genIn 1.6s ease both}
 :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 </style>
@@ -1083,10 +1084,10 @@ async function send(srcCanvas){
   if(!done){const s=$("#st");if(s)s.textContent="minatoが調べています…"}
   await reqP;if(!alive)return;
   if(err||!res)return fail(err);
-  const rec={row:res._row||0,outcome:outcomeOf(Math.max(0,Math.min(100,Number(res.score)||0))),item:res.item_name,happened:res.happened,tsukkomi:res.tsukkomi,story:storyIdx,at:Date.now(),thumb:gthumb,svg:""};
+  const rec={wait:ILL.engine()!=="off",row:res._row||0,outcome:outcomeOf(Math.max(0,Math.min(100,Number(res.score)||0))),item:res.item_name,happened:res.happened,tsukkomi:res.tsukkomi,story:storyIdx,at:Date.now(),thumb:gthumb,svg:""};
   GAL.remember(rec);
   // 想像図は届きしだいギャラリーへ（結果画面を離れたあとでも）
-  res._illP?.then(a=>{if(a)shareIll(rec,a)}).catch(()=>{});
+  res._illP?.then(a=>{if(a)shareIll(rec,a);else GAL.illFail(rec)}).catch(()=>GAL.illFail(rec));
   pageResult({...res,thumb,_rec:rec});
 }
 
@@ -1213,7 +1214,8 @@ async function illThumb(art){
 }
 async function shareIll(rec,art){
   try{
-    const ill=await illThumb(art);GAL.attachIll(rec,ill);
+    let ill;try{ill=await illThumb(art)}catch(e){GAL.illFail(rec);throw e}
+    GAL.attachIll(rec,ill);
     if(rec.row&&window.GAS_URL)fetch(window.GAS_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({mode:"ill_thumb",row:rec.row,item:rec.item,data:ill.split(",")[1]})}).catch(()=>{});
   }catch(e){console.warn("shareIll",e)}
 }
@@ -1773,7 +1775,7 @@ const ARCHIVE_ONLY=new URLSearchParams(location.search).get("view")==="archive";
 if(ARCHIVE_ONLY)document.body.classList.add("archive-only");
 const GAL=(()=>{
   const LK="mirai_archive_local_v4",HOLD=7500;
-  let el=null,open=false,items=[],totals=null,maxRow=0,poll=null,idx=-1,timer=null,tl=0,express=[],hold={};
+  let el=null,open=false,items=[],totals=null,maxRow=0,poll=null,ipoll=null,idx=-1,timer=null,tl=0,express=[],hold={};
   const bc=("BroadcastChannel" in window)?new BroadcastChannel("mirai_archive"):null;
   const keyOf=x=>x.row?"r"+x.row:"t"+x.at;
   function local(){try{return JSON.parse(lsGet(LK,"[]"))||[]}catch{return[]}}
@@ -1783,8 +1785,20 @@ const GAL=(()=>{
   function attachSvg(){}
   // メイン側：想像図が届いたら控えに足して、ギャラリーに知らせる
   function attachIll(rec,ill){const a=local();const x=a.find(y=>keyOf(y)===keyOf(rec));if(x){x.ill=ill;saveLocal(a)}bc?.postMessage({type:"ill",key:keyOf(rec),ill})}
+  // メイン側：想像図が描けなかったときも知らせる（ギャラリーが待つのをやめる）
+  function illFail(rec){bc?.postMessage({type:"illfail",key:keyOf(rec)})}
   let curKey="";
-  function swapIll(x){const a=$("#gdArt");if(a&&curKey===keyOf(x)&&x.ill)a.innerHTML=`<img class="gd-ill" src="${x.ill}" alt="">`}
+  const capOf=(x,st)=>x.ill?`<b>${esc(st.name)}</b>のその後<small>AIが描いた想像図</small>`:`<b>${esc(st.name)}</b>（${esc(st.who)}）の手紙`;
+  function swapIll(x){const a=$("#gdArt");if(a&&curKey===keyOf(x)&&x.ill){a.innerHTML=`<img class="gd-ill" src="${x.ill}" alt="">`;$(".gd-l .gd-cap").innerHTML=capOf(x,STORIES[x.story]||STORIES[0])}}
+  // 新着は、その回の想像図が届くまで待ってから出す（届かなければ最大 WAIT_ILL ミリ秒で、世界の線画のまま出す）
+  const WAIT_ILL=60000;
+  function release(k){if(!express.includes(k))return;hold[k]=0;if(open){clearTimeout(timer);next()}}
+  async function pollIll(){
+    for(const k of express){const x=items.find(y=>keyOf(y)===k);
+      if(!x||x.ill||!x.row||!(hold[k]>Date.now()))continue;
+      if(x._illTry&&Date.now()-x._illTry<6000)continue;x._illTry=Date.now();
+      const d=await get(`?ill=${x.row}`);if(d&&d.ill&&!x.ill){x.ill="data:image/jpeg;base64,"+d.ill;release(k);return}}
+  }
   async function get(q){if(!window.GAS_URL)return null;try{const r=await fetch(window.GAS_URL+q,{signal:AbortSignal.timeout(12000)});const d=await r.json();return d.ok?d:null}catch{return null}}
   function merge(list){
     const m=new Map(items.map(x=>[keyOf(x),x]));
@@ -1806,7 +1820,7 @@ const GAL=(()=>{
   function show(x,isNew){
     if(!open)return;const my=++tl;const st=STORIES[x.story]||STORIES[0],v=VJ[x.outcome]||VJ.lost;
     $("#gvDesk").innerHTML=`
-      <div class="gd-l"><div class="gd-cap"><b>${esc(st.name)}</b>（${esc(st.who)}）の手紙</div><div class="gd-art" id="gdArt"></div><p class="gd-req">「${esc(st.q)}」</p></div>
+      <div class="gd-l"><div class="gd-cap">${capOf(x,st)}</div><div class="gd-art" id="gdArt"></div><p class="gd-req">「${esc(st.q)}」</p></div>
       <div class="gd-c"><div class="gd-pad"><div class="ink ${x.outcome}" style="--r:${-14+Math.random()*10}deg"><b>${v[0]}</b><span>${v[1]}</span></div>
         <div class="tool ${x.outcome}"><i class="knob"></i><i class="neck"></i><i class="base"></i></div></div>
         ${isNew?'<div class="gd-new">NEW DELIVERY</div>':""}</div>
@@ -1836,7 +1850,9 @@ const GAL=(()=>{
     const ready=express.filter(k=>!(hold[k]>Date.now()));
     if(ready.length){const k=ready[0];express=express.filter(y=>y!==k);const x=items.find(y=>keyOf(y)===k);if(x)return show(x,true)}
     if(!items.length){$("#gvDesk").innerHTML=`<div class="arc-empty">まだ配達がありません。<br>最初の挑戦を待っています。</div>`;clearTimeout(timer);timer=setTimeout(next,8000);return}
-    idx=(idx+1)%items.length;show(items[idx],false);
+    // 想像図を待っている新着は、届いてから「NEW DELIVERY」として出すので、ふだんの順番では飛ばす
+    for(let i=0;i<items.length;i++){idx=(idx+1)%items.length;if(!express.includes(keyOf(items[idx])))return show(items[idx],false)}
+    $("#gvDesk").innerHTML=`<div class="arc-empty">21XX年から、写真が届くのを待っています…</div>`;clearTimeout(timer);timer=setTimeout(next,3000);
   }
   async function refresh(){
     const [a,b]=await Promise.all([get(`?archive=60${maxRow?"&after="+maxRow:""}`),get("?totals=1")]);
@@ -1844,19 +1860,22 @@ const GAL=(()=>{
       const known=new Set(items.map(keyOf)),list=a.items.map(x=>({...x,thumb:"data:image/jpeg;base64,"+x.thumb}));
       const before=maxRow;merge(list);
       // 別のPCから届いた新着は、次の1件として割り込ませる
-      if(before)list.filter(x=>!known.has(keyOf(x))&&!items.some(y=>!y.row&&y.item===x.item&&Math.abs(y.at-x.at)<180000&&y!==x)).forEach(x=>{if(!express.includes(keyOf(x)))express.push(keyOf(x))});
+      // 想像図が届くまで待つ（シートから取りにいく）
+      if(before)list.filter(x=>!known.has(keyOf(x))&&!items.some(y=>!y.row&&y.item===x.item&&Math.abs(y.at-x.at)<180000&&y!==x)).forEach(x=>{const k=keyOf(x);if(!express.includes(k)){express.push(k);if(Date.now()-x.at<120000)hold[k]=Date.now()+WAIT_ILL-10000}});
     }
     if(b&&b.totals)totals=b.totals;
     if(open)drawCounts();
   }
   function onMsg(e){
     const d=e.data||{};
-    if(open&&d.type==="ill"&&d.ill){const x=items.find(y=>keyOf(y)===d.key);if(x){x.ill=d.ill;swapIll(x)}return}
+    if(open&&d.type==="ill"&&d.ill){const x=items.find(y=>keyOf(y)===d.key);if(x){x.ill=d.ill;if(express.includes(d.key))release(d.key);else swapIll(x)}return}
+    if(open&&d.type==="illfail"){release(d.key);return}
     if(!open||d.type!=="new"||!d.rec)return;
-    merge([d.rec]);const k=keyOf(d.rec);if(!express.includes(k))express.unshift(k);hold[k]=Date.now()+5800;
+    merge([d.rec]);const k=keyOf(d.rec);if(!express.includes(k))express.unshift(k);hold[k]=Date.now()+(d.rec.wait?WAIT_ILL:5800);
     if(totals)totals.outcomes[d.rec.outcome]=(totals.outcomes[d.rec.outcome]||0)+1;
-    // 結果画面の判定が出るころに割り込む
-    setTimeout(()=>{if(!open)return;drawCounts();if(express.includes(k)){clearTimeout(timer);next()}},6000);
+    // 想像図を描かない設定なら、結果画面の判定が出るころに割り込む（描く設定なら、届いたときに release で割り込む）
+    setTimeout(()=>{if(!open)return;drawCounts();if(!d.rec.wait&&express.includes(k)){clearTimeout(timer);next()}},6000);
+    if(d.rec.wait)setTimeout(()=>{if(open&&express.includes(k)&&!(hold[k]>Date.now())){clearTimeout(timer);next()}},WAIT_ILL+200);
   }
   async function showView(){
     if(open)return;open=true;VOICE.stop?.();
@@ -1867,15 +1886,15 @@ const GAL=(()=>{
     merge(local());drawCounts();
     await refresh();if(!open)return;
     idx=-1;next();
-    poll=setInterval(refresh,15000);bc&&(bc.onmessage=onMsg);
+    poll=setInterval(()=>{refresh();pollIll()},15000);ipoll=setInterval(pollIll,6000);bc&&(bc.onmessage=onMsg);
   }
-  function close(){if(!open)return;open=false;clearTimeout(timer);clearInterval(poll);if(bc)bc.onmessage=null;express=[];el?.remove();el=null}
+  function close(){if(!open)return;open=false;clearTimeout(timer);clearInterval(poll);clearInterval(ipoll);if(bc)bc.onmessage=null;express=[];el?.remove();el=null}
   document.addEventListener("keydown",e=>{
     if(ARCHIVE_ONLY||staffOpen()||e.ctrlKey||e.metaKey||e.altKey)return;
     if(e.code==="KeyG"&&!e.repeat){e.preventDefault();open?close():showView()}
     else if(e.code==="Escape"&&open){close()}
   });
-  return{remember,attachSvg,attachIll,show:showView,close,isOpen:()=>open,keyOf};
+  return{remember,attachSvg,attachIll,illFail,show:showView,close,isOpen:()=>open,keyOf};
 })();
 
 /* ===== スタッフ用パネル（Ctrl+Shift+S で開閉） ===== */
