@@ -779,6 +779,7 @@ async function loadTally(){
 
 /* 1. タイトル */
 function pageTitle(){
+  setTimeout(()=>INTRO.forEach(l=>VOICE.prepare(l)),3000); // 自己紹介の声を先に作っておく
   SND.mood("base");
   stopCam();document.body.classList.remove("desat");
   const t1="時間",t2="郵便局";
@@ -841,13 +842,19 @@ function sayPage({page,art,cap,lines,next,onArt}){
   const line=$("#line");let alive=true,skip=false,done=false;cleanup.push(()=>alive=false);
   const last=lines[lines.length-1];
   const finish=()=>{if(done)return;done=true;$("#next").classList.remove("hidden-until");setPush("CONTINUE",next)};
-  setPush("CONTINUE",()=>{skip=true;line.classList.remove("swap");line.innerHTML=esc(last)+'<span class="cur"></span>';finish()});
+  let saidLast=false;
+  // 1回目のボタン：最後のセリフを全部出す（まだ読んでいなければ、最後のセリフを読み上げる）
+  setPush("CONTINUE",()=>{skip=true;line.classList.remove("swap");line.innerHTML=esc(last)+'<span class="cur"></span>';if(!saidLast)VOICE.say(last);finish()});
   (async()=>{
-    await sleep(700);if(!alive||skip)return;
-    VOICE.say(lines.join(""));
+    await sleep(500);if(!alive||skip)return;
+    // セリフごとに、音声ができるのを待ってから、文字と声を同時に始める。声が終わるまで次へ進まない
     for(let k=0;k<lines.length;k++){
-      if(k){await sleep(900);if(!alive||skip)return;line.classList.add("swap");await sleep(350);if(!alive||skip)return;line.classList.remove("swap")}
-      await typeOut(line,lines[k],()=>alive,()=>skip);if(!alive||skip)return;
+      if(k){await sleep(500);if(!alive||skip)return;line.classList.add("swap");await sleep(350);if(!alive||skip)return;line.classList.remove("swap")}
+      await Promise.race([VOICE.prepare(lines[k]),sleep(2500)]);if(!alive||skip)return;
+      if(k===lines.length-1)saidLast=true;
+      const vP=VOICE.say(lines[k]);
+      await Promise.all([typeOut(line,lines[k],()=>alive,()=>skip),Promise.race([vP,sleep(lines[k].length*220+2500)])]);
+      if(!alive||skip)return;
     }
     finish();
   })();
@@ -855,7 +862,7 @@ function sayPage({page,art,cap,lines,next,onArt}){
 }
 function pageIntro(){
   pickStory();
-  VOICE.prepare(INTRO.join(""));VOICE.prepare(story.arrive);
+  INTRO.forEach(l=>VOICE.prepare(l));VOICE.prepare(story.arrive);
   sayPage({page:"intro",art:svgEl(POST_ART),cap:"LIVE · 21XX · 時間郵便局 渋谷窓口",lines:INTRO,next:pageArrive});
 }
 
@@ -1551,7 +1558,8 @@ const VOICE=(()=>{
   check();
   return{
     say,stop,
-    prepare(text){if(ok)synth(text).catch(()=>{})}, // 先に音声を作っておき、話し始めの待ちをなくす
+    // 先に音声を作っておき、話し始めの待ちをなくす（作り終わると解決する Promise を返す）
+    prepare(text){return ok&&text?synth(text).then(()=>{},()=>{}):Promise.resolve()},
     status:async()=>{await check();return{ok,base,spk,spkName}},
     speakers,
     setSpeaker(id){spk=Number(id);lsSet("mirai_vv_speaker",String(spk));cache.clear();check()},
