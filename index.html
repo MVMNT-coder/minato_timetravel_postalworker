@@ -1400,7 +1400,7 @@ const SND=(()=>{
     // BGM用の柔らかい残響（ノイズから作った約4秒の響き）
     const rev=ac.createConvolver(),rw=ac.createGain(),len=ac.sampleRate*4,ir=ac.createBuffer(2,len,ac.sampleRate);
     for(let c=0;c<2;c++){const d=ir.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3)}
-    rev.buffer=ir;rw.gain.value=.55;rev.connect(rw);rw.connect(master);
+    rev.buffer=ir;rw.gain.value=.3;rev.connect(rw);rw.connect(master);
     bgmBus=ac.createGain();bgmBus.gain.value=0;bgmBus.connect(master);bgmBus.connect(rev);
     sfxBus=ac.createGain();sfxBus.gain.value=.9;sfxBus.connect(master);sfxBus.connect(dl);
   }
@@ -1418,39 +1418,32 @@ const SND=(()=>{
     n.connect(fl);fl.connect(g);g.connect(sfxBus);n.start(t);n.stop(t+dur+.05);
   }
   /* BGM：曲にしない、ニュートラルなアンビエント
-     ・メロディも展開もない。和音の各音が別々の遅い周期で息をするように揺れ、ときどき柔らかい鈴の音が鳴るだけ
-     ・雰囲気（mood）ごとに和音と明るさ、鈴の頻度を変え、3秒かけて溶けるように切り替える */
+     ・メロディも展開もない。和音を一定の音量でフラットに鳴らし、ときどき柔らかい鈴の音が鳴るだけ（音量や音程を揺らす効果は使わない）
+     ・結果ごとに、和音・音の高さ・明るさ・鈴の数をはっきり変え、3秒かけて切り替える */
   const MOODS={
     // 通常：明るくも暗くもない、開いた和音（D sus2 add6）
-    base:{chord:[146.8,220,329.6,493.9],cut:1150,vol:.085,spark:[587.3,659.3,880,987.8,1318.5],every:[5,10],sv:.02,air:.010},
-    // 変わった：少し明るく温かい（D maj9）
-    saved:{chord:[146.8,220,277.2,329.6,370],cut:1900,vol:.08,spark:[740,880,987.8,1108.7,1318.5,1480],every:[2.5,5],sv:.024,air:.010},
-    // ちょっと変わった：やわらかく、ほんの少し切ない（Bm7 add11）
-    partial:{chord:[123.5,185,220,293.7,329.6],cut:1050,vol:.08,spark:[587.3,659.3,740,880],every:[4,8],sv:.019,air:.009},
-    // 変わらなかった：静かで少しさみしい。怖くはしない（Em9）
-    lost:{chord:[164.8,246.9,293.7,370],cut:720,vol:.075,spark:[493.9,587.3,659.3],every:[7,13],sv:.015,air:.007}
+    base:{chord:[146.8,220,329.6,493.9],cut:1200,vol:.144,spark:[587.3,659.3,880,987.8],every:[6,11],sv:.029,air:.008},
+    // 変わった：高く明るい長調（D maj9）。きらきらした鈴がたくさん鳴る
+    saved:{chord:[146.8,293.7,440,554.4,659.3,740],cut:3200,vol:.153,spark:[880,987.8,1108.7,1318.5,1480,1760,1975.5],every:[.8,2],sv:.032,air:.006,hi:[1760,2217.5]},
+    // ちょっと変わった：中くらいの高さの、やわらかい和音（Bm7 add11）。鈴はときどき
+    partial:{chord:[123.5,185,293.7,370,440],cut:1300,vol:.135,spark:[587.3,740,880],every:[3.5,7],sv:.026,air:.007},
+    // 変わらなかった：低く、こもった短調（E minor）。鈴はほとんど鳴らない
+    lost:{chord:[82.4,123.5,164.8,196],cut:420,vol:.153,spark:[329.6,392,493.9],every:[12,20],sv:.019,air:.004}
   };
   let mood="base",pad=null,sparkT=null;
   function buildPad(m){
     const M=MOODS[m],t=ac.currentTime,stops=[];
-    const out=ac.createGain();out.gain.setValueAtTime(0,t);out.gain.linearRampToValueAtTime(M.vol,t+3.5);
-    const fl=ac.createBiquadFilter();fl.type="lowpass";fl.frequency.value=M.cut;fl.Q.value=.3;fl.connect(out);out.connect(bgmBus);
-    // テープのようなごくわずかな音程の揺れ（全部の音に共通）
-    const wob=ac.createOscillator(),wg=ac.createGain();wob.frequency.value=.18;wg.gain.value=3;wob.connect(wg);stops.push(wob);
-    M.chord.forEach((f,i)=>{
-      const vg=ac.createGain();vg.gain.value=.55;vg.connect(fl);
-      // 音ごとに別々の遅い周期（9〜21秒）で、ふくらんだりしぼんだりする
-      const lfo=ac.createOscillator(),lg=ac.createGain();lfo.frequency.value=1/(9+Math.random()*12);lg.gain.value=.4;lfo.connect(lg);lg.connect(vg.gain);stops.push(lfo);
-      [[-5,"sine",1],[5,"sine",1],[0,"triangle",.18]].forEach(([dt,type,lv])=>{
-        const o=ac.createOscillator(),og=ac.createGain();o.type=type;o.frequency.value=type==="triangle"?f*2:f;o.detune.value=dt;
-        wg.connect(o.detune);og.gain.value=lv/(i?1.6:1.2);o.connect(og);og.connect(vg);stops.push(o);
-      });
-    });
+    const out=ac.createGain();out.gain.setValueAtTime(0,t);out.gain.linearRampToValueAtTime(M.vol,t+3);
+    const fl=ac.createBiquadFilter();fl.type="lowpass";fl.frequency.value=M.cut;fl.Q.value=.2;fl.connect(out);out.connect(bgmBus);
+    const add=(f,lv,type="sine")=>{const o=ac.createOscillator(),og=ac.createGain();o.type=type;o.frequency.value=f;og.gain.value=lv;o.connect(og);og.connect(fl);stops.push(o)};
+    // 1音につき、正弦波1つ＋1オクターブ上の三角波を少し（うなりが出ないよう、ずらした音は重ねない）
+    M.chord.forEach((f,i)=>{add(f,i?.32:.42);add(f*2,.05,"triangle")});
+    (M.hi||[]).forEach(f=>add(f,.05)); // 「変わった」だけ、高いところに薄い光
     // 部屋の空気のような、ごく小さなノイズ
     const n=ac.createBufferSource(),nf=ac.createBiquadFilter(),nh=ac.createBiquadFilter(),ng=ac.createGain();
     n.buffer=noiseBuf(4);n.loop=true;nf.type="lowpass";nf.frequency.value=1400;nh.type="highpass";nh.frequency.value=180;ng.gain.value=M.air/M.vol;
     n.connect(nf);nf.connect(nh);nh.connect(ng);ng.connect(out);stops.push(n);
-    stops.forEach(x=>x.start(t+Math.random()*.5));
+    stops.forEach(x=>x.start(t));
     return{out,stops};
   }
   // ときどき鳴る柔らかい鈴の音（ゆっくり立ち上がって、長く消える。リズムにならないよう間隔はランダム）
@@ -1460,8 +1453,8 @@ const SND=(()=>{
       if(ac&&on){const f=M.spark[Math.floor(Math.random()*M.spark.length)],t=ac.currentTime,o=ac.createOscillator(),o2=ac.createOscillator(),g=ac.createGain();
         o.type="sine";o.frequency.value=f;o2.type="sine";o2.frequency.value=f*2.01;
         const g2=ac.createGain();g2.gain.value=.15;o2.connect(g2);g2.connect(g);o.connect(g);g.connect(bgmBus);
-        g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(M.sv,t+.5);g.gain.exponentialRampToValueAtTime(.0001,t+6);
-        o.start(t);o2.start(t);o.stop(t+6.2);o2.stop(t+6.2)}
+        g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(M.sv,t+.3);g.gain.exponentialRampToValueAtTime(.0001,t+4);
+        o.start(t);o2.start(t);o.stop(t+4.2);o2.stop(t+4.2)}
       spark();
     },(M.every[0]+Math.random()*(M.every[1]-M.every[0]))*1000);
   }
