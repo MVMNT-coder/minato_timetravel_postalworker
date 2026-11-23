@@ -1385,7 +1385,7 @@ function glitch(cv,src){
 
 /* サウンド（Web Audioで合成。音声ファイルなし） */
 const SND=(()=>{
-  let ac=null,master=null,bgmBus=null,sfxBus=null,on=false,bgmNodes=null,arpTimer=null;
+  let ac=null,master=null,bgmBus=null,sfxBus=null,on=false,bgmNodes=null;
   on=true;try{on=localStorage.getItem("mirai_rescue_sound")!=="off"}catch{}
   const btn=$("#snd");
   function ui(){btn.textContent=on?"SOUND ON":"SOUND OFF";btn.setAttribute("aria-pressed",on)}
@@ -1397,7 +1397,11 @@ const SND=(()=>{
     const dl=ac.createDelay(1),fb=ac.createGain(),wet=ac.createGain();
     dl.delayTime.value=.33;fb.gain.value=.38;wet.gain.value=.35;
     dl.connect(fb);fb.connect(dl);dl.connect(wet);wet.connect(master);
-    bgmBus=ac.createGain();bgmBus.gain.value=0;bgmBus.connect(master);bgmBus.connect(dl);
+    // BGM用の柔らかい残響（ノイズから作った約4秒の響き）
+    const rev=ac.createConvolver(),rw=ac.createGain(),len=ac.sampleRate*4,ir=ac.createBuffer(2,len,ac.sampleRate);
+    for(let c=0;c<2;c++){const d=ir.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3)}
+    rev.buffer=ir;rw.gain.value=.55;rev.connect(rw);rw.connect(master);
+    bgmBus=ac.createGain();bgmBus.gain.value=0;bgmBus.connect(master);bgmBus.connect(rev);
     sfxBus=ac.createGain();sfxBus.gain.value=.9;sfxBus.connect(master);sfxBus.connect(dl);
   }
   function noiseBuf(sec){const b=ac.createBuffer(1,ac.sampleRate*sec,ac.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;return b}
@@ -1413,48 +1417,65 @@ const SND=(()=>{
     g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
     n.connect(fl);fl.connect(g);g.connect(sfxBus);n.start(t);n.stop(t+dur+.05);
   }
-  /* BGM：雰囲気（mood）ごとにドローン＋アルペジオを切り替える */
+  /* BGM：曲にしない、ニュートラルなアンビエント
+     ・メロディも展開もない。和音の各音が別々の遅い周期で息をするように揺れ、ときどき柔らかい鈴の音が鳴るだけ
+     ・雰囲気（mood）ごとに和音と明るさ、鈴の頻度を変え、3秒かけて溶けるように切り替える */
   const MOODS={
-    // 通常：静かで少し不穏
-    base:{drone:[[55,"sawtooth"],[82.5,"sawtooth"],[110.4,"triangle"]],cut:420,q:6,lfo:260,vol:.16,
-          notes:[220,261.6,293.7,329.6,392,440,523.3],every:700,skip:.35,wave:"triangle",nv:.05,len:1.6,order:"rand"},
-    // 変わった：明るく温かい（ハ長調）
-    saved:{drone:[[65.4,"triangle"],[98,"sine"],[164.8,"sine"]],cut:1600,q:1,lfo:300,vol:.13,
-          notes:[523.3,587.3,659.3,784,880,1046.5,1174.7,1318.5],every:240,skip:.12,wave:"triangle",nv:.07,len:.9,order:"up"},
-    // ちょっと変わった：穏やかで少し切ない
-    partial:{drone:[[110,"sine"],[164.8,"sine"],[246.9,"triangle"]],cut:900,q:1.5,lfo:200,vol:.12,
-          notes:[440,493.9,523.3,587.3,659.3,587.3,523.3,493.9],every:560,skip:.3,wave:"sine",nv:.065,len:1.6,order:"up"},
-    // 変わらなかった：寂しく、ゆっくり沈んでいく
-    lost:{drone:[[55,"sine"],[82.4,"sine"],[110,"sine"]],cut:300,q:1,lfo:80,vol:.14,
-          notes:[392,349.2,311.1,293.7,261.6,233.1],every:1500,skip:.45,wave:"sine",nv:.035,len:2.8,order:"down"}
+    // 通常：明るくも暗くもない、開いた和音（D sus2 add6）
+    base:{chord:[146.8,220,329.6,493.9],cut:1150,vol:.085,spark:[587.3,659.3,880,987.8,1318.5],every:[5,10],sv:.02,air:.010},
+    // 変わった：少し明るく温かい（D maj9）
+    saved:{chord:[146.8,220,277.2,329.6,370],cut:1900,vol:.08,spark:[740,880,987.8,1108.7,1318.5,1480],every:[2.5,5],sv:.024,air:.010},
+    // ちょっと変わった：やわらかく、ほんの少し切ない（Bm7 add11）
+    partial:{chord:[123.5,185,220,293.7,329.6],cut:1050,vol:.08,spark:[587.3,659.3,740,880],every:[4,8],sv:.019,air:.009},
+    // 変わらなかった：静かで少しさみしい。怖くはしない（Em9）
+    lost:{chord:[164.8,246.9,293.7,370],cut:720,vol:.075,spark:[493.9,587.3,659.3],every:[7,13],sv:.015,air:.007}
   };
-  let mood="base",drone=null;
-  function buildDrone(m){
-    const M=MOODS[m],t=ac.currentTime;
-    const fl=ac.createBiquadFilter();fl.type="lowpass";fl.frequency.value=M.cut;fl.Q.value=M.q;
-    const lfo=ac.createOscillator(),lg=ac.createGain();lfo.frequency.value=.07;lg.gain.value=M.lfo;lfo.connect(lg);lg.connect(fl.frequency);lfo.start();
-    const g=ac.createGain();g.gain.setValueAtTime(0,t);g.gain.setTargetAtTime(M.vol,t,1.2);fl.connect(g);g.connect(bgmBus);
-    const oscs=M.drone.map(([f,type],i)=>{const o=ac.createOscillator();o.type=type;o.frequency.value=f;o.detune.value=(i-1)*6;o.connect(fl);o.start();return o});
-    return {g,oscs:[...oscs,lfo]};
+  let mood="base",pad=null,sparkT=null;
+  function buildPad(m){
+    const M=MOODS[m],t=ac.currentTime,stops=[];
+    const out=ac.createGain();out.gain.setValueAtTime(0,t);out.gain.linearRampToValueAtTime(M.vol,t+3.5);
+    const fl=ac.createBiquadFilter();fl.type="lowpass";fl.frequency.value=M.cut;fl.Q.value=.3;fl.connect(out);out.connect(bgmBus);
+    // テープのようなごくわずかな音程の揺れ（全部の音に共通）
+    const wob=ac.createOscillator(),wg=ac.createGain();wob.frequency.value=.18;wg.gain.value=3;wob.connect(wg);stops.push(wob);
+    M.chord.forEach((f,i)=>{
+      const vg=ac.createGain();vg.gain.value=.55;vg.connect(fl);
+      // 音ごとに別々の遅い周期（9〜21秒）で、ふくらんだりしぼんだりする
+      const lfo=ac.createOscillator(),lg=ac.createGain();lfo.frequency.value=1/(9+Math.random()*12);lg.gain.value=.4;lfo.connect(lg);lg.connect(vg.gain);stops.push(lfo);
+      [[-5,"sine",1],[5,"sine",1],[0,"triangle",.18]].forEach(([dt,type,lv])=>{
+        const o=ac.createOscillator(),og=ac.createGain();o.type=type;o.frequency.value=type==="triangle"?f*2:f;o.detune.value=dt;
+        wg.connect(o.detune);og.gain.value=lv/(i?1.6:1.2);o.connect(og);og.connect(vg);stops.push(o);
+      });
+    });
+    // 部屋の空気のような、ごく小さなノイズ
+    const n=ac.createBufferSource(),nf=ac.createBiquadFilter(),nh=ac.createBiquadFilter(),ng=ac.createGain();
+    n.buffer=noiseBuf(4);n.loop=true;nf.type="lowpass";nf.frequency.value=1400;nh.type="highpass";nh.frequency.value=180;ng.gain.value=M.air/M.vol;
+    n.connect(nf);nf.connect(nh);nh.connect(ng);ng.connect(out);stops.push(n);
+    stops.forEach(x=>x.start(t+Math.random()*.5));
+    return{out,stops};
   }
-  function startArp(m){
-    clearInterval(arpTimer);const M=MOODS[m];let k=0;
-    arpTimer=setInterval(()=>{if(!on||Math.random()<M.skip)return;
-      const N=M.notes,i=M.order==="up"?k%N.length:M.order==="down"?k%N.length:(k*3+Math.floor(Math.random()*3))%N.length;
-      const f=N[i]*(M.order==="rand"&&Math.random()<.2?2:1);k++;
-      tone(f,M.len,{type:M.wave,vol:M.nv,bus:bgmBus})},M.every);
+  // ときどき鳴る柔らかい鈴の音（ゆっくり立ち上がって、長く消える。リズムにならないよう間隔はランダム）
+  function spark(){
+    clearTimeout(sparkT);const M=MOODS[mood];
+    sparkT=setTimeout(()=>{
+      if(ac&&on){const f=M.spark[Math.floor(Math.random()*M.spark.length)],t=ac.currentTime,o=ac.createOscillator(),o2=ac.createOscillator(),g=ac.createGain();
+        o.type="sine";o.frequency.value=f;o2.type="sine";o2.frequency.value=f*2.01;
+        const g2=ac.createGain();g2.gain.value=.15;o2.connect(g2);g2.connect(g);o.connect(g);g.connect(bgmBus);
+        g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(M.sv,t+.5);g.gain.exponentialRampToValueAtTime(.0001,t+6);
+        o.start(t);o2.start(t);o.stop(t+6.2);o2.stop(t+6.2)}
+      spark();
+    },(M.every[0]+Math.random()*(M.every[1]-M.every[0]))*1000);
   }
   function setMood(m){
     if(!MOODS[m])m="base";
     if(!ac){mood=m;return}
-    if(drone&&m===mood)return;
+    if(pad&&m===mood)return;
     mood=m;
-    if(drone){const old=drone,t=ac.currentTime;old.g.gain.cancelScheduledValues(t);old.g.gain.setValueAtTime(old.g.gain.value,t);old.g.gain.linearRampToValueAtTime(0,t+1.2);old.oscs.forEach(o=>o.stop(t+1.4))}
-    drone=buildDrone(m);startArp(m);
+    if(pad){const old=pad,t=ac.currentTime;old.out.gain.cancelScheduledValues(t);old.out.gain.setValueAtTime(old.out.gain.value,t);old.out.gain.linearRampToValueAtTime(0,t+3);old.stops.forEach(o=>{try{o.stop(t+3.2)}catch{}})}
+    pad=buildPad(m);spark();
   }
   function bgmStart(){
     if(!ac||bgmNodes)return;
-    bgmNodes=true;drone=null;setMood(mood);
+    bgmNodes=true;pad=null;setMood(mood);
     bgmBus.gain.cancelScheduledValues(ac.currentTime);bgmBus.gain.setTargetAtTime(1,ac.currentTime,1.2);
   }
   function bgmDuck(v,tc=.3){if(ac)bgmBus.gain.setTargetAtTime(on?v:0,ac.currentTime,tc)}
