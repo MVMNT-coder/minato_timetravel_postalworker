@@ -1383,6 +1383,81 @@ function glitch(cv,src){
 })();
 
 
+/*JAM-START*/
+/* BGM：即興演奏のような電子音（音声ファイルなし。Web Audioで合成）
+   ・木や金属をたたいたような短い電子音（FM合成）、やわらかいキック、小さなクリックの3つ
+   ・16分音符のマスに、確率で音を置いていく。前の小節を6〜7割くり返し、残りを毎回少し変えるので、即興のように少しずつ変わり続ける
+   ・音の高さは音階の上を1〜2歩ずつ歩く。ときどき休む小節を入れて息をさせる
+   ・結果ごとに、テンポ・音の高さ・音階・音数・明るさをはっきり変える（小節の頭で切り替わる） */
+function makeJam(ac,out,noiseBuf){
+  const MOODS={
+    // 通常：中くらいの高さ。明るくも暗くもない音階（D・E・G・A・C）
+    base:{bpm:108,root:146.83,oct:[1,2],scale:[0,2,5,7,10],dens:.8,kick:1,tick:.8,keep:.65,rest:.12,ratio:[2,3.5,1.41],idx:[2,5],dec:[.12,.42],glide:.12,lp:5200,vol:.28},
+    // 変わった：速く、高く、明るい長調の音階。音数が多く、上向きにすべる
+    saved:{bpm:118,root:146.83,oct:[2,4],scale:[0,2,4,7,9],dens:1.15,kick:1,tick:1,keep:.55,rest:.04,ratio:[2,3,4],idx:[1.5,3.5],dec:[.09,.3],glide:.25,up:1,lp:8000,vol:.26},
+    // ちょっと変わった：少しゆっくり。中くらいの高さで、音数は控えめ
+    partial:{bpm:100,root:146.83,oct:[1,2],scale:[0,2,4,7,10],dens:.7,kick:.8,tick:.5,keep:.7,rest:.12,ratio:[2,1.41],idx:[1.5,3],dec:[.15,.5],glide:.08,lp:3400,vol:.27},
+    // 変わらなかった：ゆっくり、低く、短調の音階。音はまばら。怖くはしない
+    lost:{bpm:84,root:73.42,oct:[1,2],scale:[0,3,5,7,10],dens:.3,kick:.6,tick:.2,keep:.75,rest:.35,ratio:[1.41,2],idx:[1,2.2],dec:[.25,.7],glide:.04,dn:1,lp:1700,vol:.3}
+  };
+  const MASK={
+    kick:[1,0,0,.12, 0,0,.25,0, .55,0,0,.18, 0,.22,0,0],
+    blip:[.55,.05,.2,.5, .05,.3,.05,.55, .35,.05,.35,.5, .05,.45,.2,.3],
+    tick:[0,0,.55,0, .25,0,.55,0, 0,0,.55,0, .25,0,.55,.2]
+  };
+  const lp=ac.createBiquadFilter();lp.type="lowpass";lp.frequency.value=5200;lp.Q.value=.4;
+  const bus=ac.createGain();bus.gain.value=MOODS.base.vol;bus.connect(lp);lp.connect(out);
+  const R=(a,b)=>a+Math.random()*(b-a),pick=a=>a[Math.floor(Math.random()*a.length)];
+  function noteFreq(M,deg){const n=M.scale.length,o=Math.floor(deg/n),s=((deg%n)+n)%n;return M.root*M.oct[0]*Math.pow(2,o+M.scale[s]/12)}
+  function kick(t,v){const o=ac.createOscillator(),g=ac.createGain();o.frequency.setValueAtTime(115,t);o.frequency.exponentialRampToValueAtTime(42,t+.13);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.003);g.gain.exponentialRampToValueAtTime(.0001,t+.38);o.connect(g);g.connect(bus);o.start(t);o.stop(t+.42)}
+  function tick(t,v){const n=ac.createBufferSource(),f=ac.createBiquadFilter(),g=ac.createGain();n.buffer=noiseBuf(.05);f.type="bandpass";f.frequency.value=R(2600,3800);f.Q.value=2;
+    g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+.03);n.connect(f);f.connect(g);g.connect(bus);n.start(t);n.stop(t+.05)}
+  function blip(t,f,p){
+    const c=ac.createOscillator(),mo=ac.createOscillator(),mg=ac.createGain(),g=ac.createGain(),pn=ac.createStereoPanner?ac.createStereoPanner():null;
+    c.frequency.setValueAtTime(f,t);mo.frequency.setValueAtTime(f*p.ratio,t);
+    if(p.to){c.frequency.exponentialRampToValueAtTime(p.to,t+.07);mo.frequency.exponentialRampToValueAtTime(p.to*p.ratio,t+.07)}
+    mg.gain.setValueAtTime(f*p.idx,t);mg.gain.exponentialRampToValueAtTime(Math.max(1,f*.05),t+p.dec*.6);mo.connect(mg);mg.connect(c.frequency);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(p.v,t+.004);g.gain.exponentialRampToValueAtTime(.0001,t+p.dec);c.connect(g);
+    if(pn){pn.pan.value=p.pan;g.connect(pn);pn.connect(bus)}else g.connect(bus);
+    c.start(t);mo.start(t);c.stop(t+p.dec+.05);mo.stop(t+p.dec+.05);
+  }
+  function state(){return{prev:{kick:{},blip:{},tick:{}},deg:3,patch:null,bar:0,mood:""}}
+  // 1小節分の音を、t0 から予約する。小節の長さ（秒）を返す
+  function scheduleBar(m,t0,st){
+    const M=MOODS[m]||MOODS.base,step=60/M.bpm/4,sw=step*.1;
+    if(st.mood!==m){st.mood=m;st.patch=null;st.prev={kick:{},blip:{},tick:{}};st.deg=Math.floor(M.scale.length*1.5);
+      bus.gain.setTargetAtTime(M.vol,t0,.3);lp.frequency.setTargetAtTime(M.lp,t0,.3)}
+    if(!st.patch||st.bar%4===0&&Math.random()<.5)st.patch={ratio:pick(M.ratio),idx:R(M.idx[0],M.idx[1])};
+    const resting=Math.random()<M.rest,top=M.scale.length*2+1,next={kick:{},blip:{},tick:{}};
+    for(let s=0;s<16;s++){
+      const t=t0+s*step+(s%2?sw:0);
+      // キック
+      let k=st.prev.kick[s];if(!(k&&Math.random()<M.keep))k=Math.random()<MASK.kick[s]*M.kick?R(.35,.5)*(s===0?1:.75):0;
+      if(k){kick(t,k);next.kick[s]=k}
+      // クリック
+      let c=st.prev.tick[s];if(!(c&&Math.random()<M.keep))c=Math.random()<MASK.tick[s]*M.tick?R(.03,.06):0;
+      if(c){tick(t,c);next.tick[s]=c}
+      // 電子音：前の小節をくり返すか、音階の上を歩いて新しく置く
+      let b=st.prev.blip[s];
+      if(!(b&&Math.random()<M.keep)){
+        b=null;
+        if(Math.random()<MASK.blip[s]*M.dens*(resting?.25:1)){
+          const dir=M.up?(Math.random()<.65?1:-1):M.dn?(Math.random()<.65?-1:1):(Math.random()<.5?1:-1);
+          st.deg=Math.max(0,Math.min(top,st.deg+dir*(Math.random()<.7?1:2)));
+          const f=noteFreq(M,st.deg);
+          b={f,to:Math.random()<M.glide?f*Math.pow(2,(M.up?2:M.dn?-2:pick([-2,2]))/12):0,v:R(.6,1)*(s%4===0?1:.75),dec:R(M.dec[0],M.dec[1]),pan:R(-.45,.45)};
+        }
+      }
+      if(b){blip(t,b.f,{...b,ratio:st.patch.ratio,idx:st.patch.idx});next.blip[s]=b}
+    }
+    st.prev=next;st.bar++;
+    return 16*step;
+  }
+  return{scheduleBar,state};
+}
+/*JAM-END*/
+
 /* サウンド（Web Audioで合成。音声ファイルなし） */
 const SND=(()=>{
   let ac=null,master=null,bgmBus=null,sfxBus=null,on=false,bgmNodes=null;
@@ -1397,10 +1472,10 @@ const SND=(()=>{
     const dl=ac.createDelay(1),fb=ac.createGain(),wet=ac.createGain();
     dl.delayTime.value=.33;fb.gain.value=.38;wet.gain.value=.35;
     dl.connect(fb);fb.connect(dl);dl.connect(wet);wet.connect(master);
-    // BGM用の柔らかい残響（ノイズから作った約4秒の響き）
-    const rev=ac.createConvolver(),rw=ac.createGain(),len=ac.sampleRate*4,ir=ac.createBuffer(2,len,ac.sampleRate);
+    // BGM用の残響（ノイズから作った響き）
+    const rev=ac.createConvolver(),rw=ac.createGain(),len=ac.sampleRate*1.6,ir=ac.createBuffer(2,len,ac.sampleRate);
     for(let c=0;c<2;c++){const d=ir.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3)}
-    rev.buffer=ir;rw.gain.value=.3;rev.connect(rw);rw.connect(master);
+    rev.buffer=ir;rw.gain.value=.22;rev.connect(rw);rw.connect(master);
     bgmBus=ac.createGain();bgmBus.gain.value=0;bgmBus.connect(master);bgmBus.connect(rev);
     sfxBus=ac.createGain();sfxBus.gain.value=.9;sfxBus.connect(master);sfxBus.connect(dl);
   }
@@ -1417,58 +1492,17 @@ const SND=(()=>{
     g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
     n.connect(fl);fl.connect(g);g.connect(sfxBus);n.start(t);n.stop(t+dur+.05);
   }
-  /* BGM：曲にしない、ニュートラルなアンビエント
-     ・メロディも展開もない。和音を一定の音量でフラットに鳴らし、ときどき柔らかい鈴の音が鳴るだけ（音量や音程を揺らす効果は使わない）
-     ・結果ごとに、和音・音の高さ・明るさ・鈴の数をはっきり変え、3秒かけて切り替える */
-  const MOODS={
-    // 通常：明るくも暗くもない、開いた和音（D sus2 add6）
-    base:{chord:[146.8,220,329.6,493.9],cut:1200,vol:.144,spark:[587.3,659.3,880,987.8],every:[6,11],sv:.029,air:.008},
-    // 変わった：高く明るい長調（D maj9）。きらきらした鈴がたくさん鳴る
-    saved:{chord:[146.8,293.7,440,554.4,659.3,740],cut:3200,vol:.153,spark:[880,987.8,1108.7,1318.5,1480,1760,1975.5],every:[.8,2],sv:.032,air:.006,hi:[1760,2217.5]},
-    // ちょっと変わった：中くらいの高さの、やわらかい和音（Bm7 add11）。鈴はときどき
-    partial:{chord:[123.5,185,293.7,370,440],cut:1300,vol:.135,spark:[587.3,740,880],every:[3.5,7],sv:.026,air:.007},
-    // 変わらなかった：低く、こもった短調（E minor）。鈴はほとんど鳴らない
-    lost:{chord:[82.4,123.5,164.8,196],cut:420,vol:.153,spark:[329.6,392,493.9],every:[12,20],sv:.019,air:.004}
-  };
-  let mood="base",pad=null,sparkT=null;
-  function buildPad(m){
-    const M=MOODS[m],t=ac.currentTime,stops=[];
-    const out=ac.createGain();out.gain.setValueAtTime(0,t);out.gain.linearRampToValueAtTime(M.vol,t+3);
-    const fl=ac.createBiquadFilter();fl.type="lowpass";fl.frequency.value=M.cut;fl.Q.value=.2;fl.connect(out);out.connect(bgmBus);
-    const add=(f,lv,type="sine")=>{const o=ac.createOscillator(),og=ac.createGain();o.type=type;o.frequency.value=f;og.gain.value=lv;o.connect(og);og.connect(fl);stops.push(o)};
-    // 1音につき、正弦波1つ＋1オクターブ上の三角波を少し（うなりが出ないよう、ずらした音は重ねない）
-    M.chord.forEach((f,i)=>{add(f,i?.32:.42);add(f*2,.05,"triangle")});
-    (M.hi||[]).forEach(f=>add(f,.05)); // 「変わった」だけ、高いところに薄い光
-    // 部屋の空気のような、ごく小さなノイズ
-    const n=ac.createBufferSource(),nf=ac.createBiquadFilter(),nh=ac.createBiquadFilter(),ng=ac.createGain();
-    n.buffer=noiseBuf(4);n.loop=true;nf.type="lowpass";nf.frequency.value=1400;nh.type="highpass";nh.frequency.value=180;ng.gain.value=M.air/M.vol;
-    n.connect(nf);nf.connect(nh);nh.connect(ng);ng.connect(out);stops.push(n);
-    stops.forEach(x=>x.start(t));
-    return{out,stops};
-  }
-  // ときどき鳴る柔らかい鈴の音（ゆっくり立ち上がって、長く消える。リズムにならないよう間隔はランダム）
-  function spark(){
-    clearTimeout(sparkT);const M=MOODS[mood];
-    sparkT=setTimeout(()=>{
-      if(ac&&on){const f=M.spark[Math.floor(Math.random()*M.spark.length)],t=ac.currentTime,o=ac.createOscillator(),o2=ac.createOscillator(),g=ac.createGain();
-        o.type="sine";o.frequency.value=f;o2.type="sine";o2.frequency.value=f*2.01;
-        const g2=ac.createGain();g2.gain.value=.15;o2.connect(g2);g2.connect(g);o.connect(g);g.connect(bgmBus);
-        g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(M.sv,t+.3);g.gain.exponentialRampToValueAtTime(.0001,t+4);
-        o.start(t);o2.start(t);o.stop(t+4.2);o2.stop(t+4.2)}
-      spark();
-    },(M.every[0]+Math.random()*(M.every[1]-M.every[0]))*1000);
-  }
-  function setMood(m){
-    if(!MOODS[m])m="base";
-    if(!ac){mood=m;return}
-    if(pad&&m===mood)return;
-    mood=m;
-    if(pad){const old=pad,t=ac.currentTime;old.out.gain.cancelScheduledValues(t);old.out.gain.setValueAtTime(old.out.gain.value,t);old.out.gain.linearRampToValueAtTime(0,t+3);old.stops.forEach(o=>{try{o.stop(t+3.2)}catch{}})}
-    pad=buildPad(m);spark();
-  }
+  /* BGM：即興演奏のような電子音（makeJam）を、小節ごとに少し先まで予約していく */
+  let mood="base",jam=null,jst=null,nextBar=0,jamTimer=null;
+  function setMood(m){mood=["base","saved","partial","lost"].includes(m)?m:"base"} // 次の小節の頭から切り替わる
   function bgmStart(){
     if(!ac||bgmNodes)return;
-    bgmNodes=true;pad=null;setMood(mood);
+    bgmNodes=true;jam=makeJam(ac,bgmBus,noiseBuf);jst=jam.state();nextBar=ac.currentTime+.15;
+    jamTimer=setInterval(()=>{
+      if(!on||!ac||ac.state!=="running")return;
+      const now=ac.currentTime;if(nextBar<now)nextBar=now+.05; // タブが裏にあって遅れたら、今から再開
+      while(nextBar<now+.3)nextBar+=jam.scheduleBar(mood,nextBar,jst);
+    },100);
     bgmBus.gain.cancelScheduledValues(ac.currentTime);bgmBus.gain.setTargetAtTime(1,ac.currentTime,1.2);
   }
   function bgmDuck(v,tc=.3){if(ac)bgmBus.gain.setTargetAtTime(on?v:0,ac.currentTime,tc)}
