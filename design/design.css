@@ -6,6 +6,7 @@
 .sec-h{margin:0;font-size:var(--fs-body);font-weight:700}
 .sec-note{color:var(--c-mute);max-width:44em;margin-bottom:var(--s-3)}
 .sheet-sec>.sec-note,.sheet-sec>.grid-demo{grid-column:2}
+.flow li:has(i:only-of-type) i{}
 .swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:var(--s-3)}
 .swatches figure{margin:0}.swatches i{display:block;aspect-ratio:4/3}
 .swatches figcaption{display:flex;flex-direction:column;margin-top:.6em;font-size:var(--fs-cap)}
@@ -24,3 +25,8 @@
 .type-row .t-h1,.type-row .t-num{white-space:nowrap}
 .field-pair .t-lead{font-size:var(--fs-body)}
 .part .cta{white-space:nowrap}
+.flow{margin:0;padding:0;list-style:none;counter-reset:f;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:var(--s-2)}
+.flow li{counter-increment:f;display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto 1fr auto;column-gap:var(--s-2);padding:var(--s-2) var(--s-3);border:var(--line);min-height:140px}
+.flow li::before{content:counter(f,decimal-leading-zero);grid-row:1/-1;font-family:var(--f-display);color:var(--c-mute);font-size:var(--fs-cap)}
+.flow b{font-size:var(--fs-body)}.flow span{font-size:var(--fs-cap);color:var(--c-mute);line-height:1.6;margin-top:.3em}
+.flow i{font-style:normal;font-size:var(--fs-cap);justify-self:start;margin-top:.6em;padding:0 .5em;border:var(--line)}

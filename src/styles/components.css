@@ -4,7 +4,7 @@
 
 /* ---- 上の帯：ブランド・状態・時刻 ---- */
 .bar{display:flex;align-items:center;justify-content:space-between;gap:var(--s-3);padding:var(--s-3) 0;border-bottom:var(--line);font-size:var(--fs-cap)}
-.bar-brand{font-family:var(--f-latin);font-weight:700;font-variation-settings:"wdth" 108;font-size:calc(var(--fs-cap)*1.25);letter-spacing:.01em}
+.bar-brand{font-family:var(--f-display);font-size:calc(var(--fs-cap)*1.2);letter-spacing:.08em}
 .bar-meta{display:flex;align-items:center;gap:var(--s-4);color:var(--c-mute)}
 .bar-meta .t-data{color:var(--c-text)}
 
@@ -15,11 +15,11 @@
 
 /* ---- 郵便番号枠：数字を1文字ずつ四角に入れる。宛先・件数・配達番号に使う ---- */
 .boxes{display:inline-flex;gap:calc(var(--u)*.35)}
-.boxes>b{display:grid;place-items:center;width:1.18em;height:1.36em;border:var(--line-signal);font-family:var(--f-latin);font-weight:700;
-  font-variation-settings:"wdth" 104;font-variant-numeric:tabular-nums;line-height:1;color:var(--c-text)}
+.boxes>b{display:grid;place-items:center;width:1.18em;height:1.36em;border:var(--line-signal);font-family:var(--f-display);font-weight:700;
+  font-variant-numeric:tabular-nums;line-height:1;color:var(--c-text)}
 .boxes--year{font-size:calc(var(--fs-num)*.74)}
-.boxes--year>b{border-width:calc(var(--u)*.22);width:1.06em;height:1.22em;font-weight:800;font-variation-settings:"wdth" 112;letter-spacing:-.02em}
-.boxes--year>b.is-open{color:var(--c-signal)}          /* 未確定の桁（X） */
+.boxes--year>b{border-width:calc(var(--u)*.22);width:1.06em;height:1.22em;font-weight:800}
+.boxes--year>b.is-hot{color:var(--c-signal)}           /* 届いた瞬間に光る桁 */
 .boxes--sm{font-size:var(--fs-lead)}
 .boxes>b.is-empty{color:transparent;border-color:var(--c-line-strong)}
 

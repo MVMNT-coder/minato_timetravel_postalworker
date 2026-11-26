@@ -20,10 +20,12 @@
   --c-hand:#3A2A1B;         /* 便せんの文字 */
 
   /* ---- 書体 ----
-     英数字：Archivo（幅を変えられる。大きな数字は少し広げる）
+     印象的な英数字（年号・TIME POST OFFICE・判定の英語）：Nidus Sans（大文字だけの角ばった書体。1ウェイト）
+     そのほかの英数字：Archivo（幅を変えられる）
      日本語：Zen Kaku Gothic New
      動いている数値（時刻・受信率・件数）：IBM Plex Mono
      手紙：Klee One */
+  --f-display:"Nidus Sans","Archivo",sans-serif;
   --f-latin:"Archivo","Helvetica Neue",Arial,sans-serif;
   --f-ja:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;
   --f-data:"IBM Plex Mono",ui-monospace,Menlo,monospace;

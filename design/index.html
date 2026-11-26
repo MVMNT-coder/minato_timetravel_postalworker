@@ -14,33 +14,44 @@
 </head>
 <body>
 
-<!-- ============ タイトル画面（新デザインの基準） ============ -->
+<!-- ============ タイトル画面（待機中）：1画面に1つのことだけ ============ -->
 <main class="stage opening" id="opening" aria-label="タイトル画面">
-  <header class="bar" data-in style="--d:0ms">
-    <span class="bar-brand">Time Post Office</span>
+  <header class="bar">
+    <span class="bar-brand">TIME POST OFFICE</span>
     <div class="bar-meta"><span class="status">受付中</span><span>渋谷窓口</span><span class="t-data" id="clock">--:--:--</span></div>
   </header>
 
-  <section class="route" aria-label="2026年から21XX年へ配達します">
-    <div class="route-end" data-in style="--d:150ms"><span class="t-cap">差出し</span><span class="t-num">2026</span></div>
-    <div class="route-line" id="routeLine" style="--draw:0"><i class="packet" id="packet"></i></div>
-    <div class="route-end route-to"><span class="t-cap" data-in style="--d:900ms">宛先</span>
-      <span class="boxes boxes--year" id="year"><b style="--d:950ms">2</b><b style="--d:1030ms">1</b><b class="is-open" style="--d:1110ms">X</b><b class="is-open" style="--d:1190ms">X</b></span></div>
-  </section>
+  <div class="op-frames" aria-live="polite">
+    <section class="op-frame op-title" data-frame>
+      <p class="op-en t-display" data-in>TIME POST OFFICE</p>
+      <h1 class="t-h1" data-in style="--d:180ms">時間郵便局</h1>
+    </section>
 
-  <section class="hero">
-    <h1 class="t-h1"><span class="mask"><span style="--d:1300ms">時間郵便局</span></span></h1>
-    <p class="t-lead" data-in style="--d:1600ms">21XX年の誰かの日常を、ちょっと変える。</p>
-  </section>
+    <section class="op-frame" data-frame data-route>
+      <div class="route" aria-label="2026年から2126年へ配達します">
+        <div class="route-end" data-in><span class="t-cap">差出し</span><span class="t-num">2026</span></div>
+        <div class="route-line"><i class="packet" id="packet"></i></div>
+        <div class="route-end route-to"><span class="t-cap" data-in style="--d:500ms">宛先</span>
+          <span class="boxes boxes--year" id="year"><b style="--d:600ms">2</b><b style="--d:680ms">1</b><b style="--d:760ms">2</b><b style="--d:840ms">6</b></span></div>
+      </div>
+      <p class="t-lead route-note" data-in style="--d:900ms">ちょうど100年後の渋谷へ、物を届けます。</p>
+    </section>
 
-  <footer class="opening-foot" data-in style="--d:1900ms">
+    <section class="op-frame" data-frame>
+      <p class="op-copy" data-in>2126年の誰かの日常を、<br>ちょっと変える。</p>
+    </section>
+
+    <section class="op-frame" data-frame>
+      <div class="op-count" data-in>
+        <span class="boxes" aria-label="25"><b>0</b><b>2</b><b>5</b></span>
+        <p class="t-lead">通の配達が、<br>これまでに届きました。</p>
+      </div>
+    </section>
+  </div>
+
+  <footer class="op-foot">
     <button class="cta" type="button"><span class="cta-key" aria-hidden="true"></span>ボタンを押して、はじめる</button>
-    <dl class="tally" aria-label="これまでの配達の結果">
-      <div><dt>日常が変わった</dt><dd class="boxes boxes--sm"><b>0</b><b>1</b><b>2</b></dd></div>
-      <div><dt>ちょっと変わった</dt><dd class="boxes boxes--sm"><b>0</b><b>0</b><b>8</b></dd></div>
-      <div><dt>変わらなかった</dt><dd class="boxes boxes--sm"><b>0</b><b>0</b><b>5</b></dd></div>
-    </dl>
-    <p class="t-cap opening-note">撮影した写真と結果は、記録のため保存されます。人の顔が写らないように撮ってください。</p>
+    <ol class="op-steps" aria-hidden="true"><li></li><li></li><li></li><li></li></ol>
   </footer>
 </main>
 
@@ -50,6 +61,34 @@
     <h2 class="t-h2">デザインのルール</h2>
     <p class="t-body">大胆な文字組みと余白を土台に、時刻・受信率・件数など「いま動いている情報」だけをシステムの表示として細部に入れます。オレンジは日本の郵便番号枠の色として扱い、押せる物・受信中・宛先にだけ使います。</p>
   </header>
+
+  <section class="sheet-sec">
+    <h3 class="sec-h">体験の流れ</h3>
+    <div>
+      <p class="t-body sec-note">1画面に1つのことだけを出します。ボタンを押すのは「はじめる」と「撮影」の2回だけで、ほかは声が終わると自動で進みます。</p>
+      <ol class="flow">
+        <li><b>待機</b><span>名前 → 2026→2126 → ひとこと → 配達数 をくり返す</span><i>ボタン</i></li>
+        <li><b>minato</b><span>「2126年の時間郵便局で働いてる、minato。」</span><i>自動</i></li>
+        <li><b>minato</b><span>「ここには、100年後の人から、過去あての手紙が届く。」</span><i>自動</i></li>
+        <li><b>minato</b><span>「それを2026年のあなたに届けるのが、私の仕事。」</span><i>自動</i></li>
+        <li><b>受信</b><span>封筒が届く。伝票に差出人（名前・年齢）だけ</span><i>自動</i></li>
+        <li><b>手紙 1</b><span>便せんに1〜2文ずつ。差出人の声で読む</span><i>自動</i></li>
+        <li><b>手紙 2</b><span>手紙の続き</span><i>自動</i></li>
+        <li><b>minato</b><span>読んだあとのひとこと</span><i>自動</i></li>
+        <li><b>お願い</b><span>お願いを1文だけ、大きく</span><i>自動</i></li>
+        <li><b>やること</b><span>「身の回りから、物を1つ探してください。」</span><i>自動</i></li>
+        <li><b>撮影</b><span>カメラが主役。枠の中に物を置く</span><i>ボタン</i></li>
+        <li><b>受付</b><span>撮った写真と「この物を2126年へ送ります」</span><i>自動</i></li>
+        <li><b>転送</b><span>2026→2126 の年数が進み、受信率が上がる</span><i>自動</i></li>
+        <li><b>到着</b><span>minato「おお！何これ、どう使うんだ？」</span><i>自動</i></li>
+        <li><b>起きたこと</b><span>2126年で起きたことを1つだけ</span><i>自動</i></li>
+        <li><b>minato</b><span>ツッコミ</span><i>自動</i></li>
+        <li><b>判定</b><span>「変わった」などを大きく。配達番号を郵便番号枠で</span><i>自動</i></li>
+        <li><b>写真</b><span>2126年から届いた想像図を、画面いっぱいに</span><i>自動</i></li>
+        <li><b>おわり</b><span>「配達完了」→ 待機へ戻る</span><i>自動</i></li>
+      </ol>
+    </div>
+  </section>
 
   <section class="sheet-sec">
     <h3 class="sec-h">色</h3>
@@ -67,7 +106,8 @@
   <section class="sheet-sec">
     <h3 class="sec-h">文字</h3>
     <div class="type-rows">
-      <div class="type-row"><span class="t-cap">年号・大きな数字　Archivo 800（幅112）</span><span class="t-num">21XX</span></div>
+      <div class="type-row"><span class="t-cap">年号・大きな数字　Nidus Sans</span><span class="t-num">2126</span></div>
+      <div class="type-row"><span class="t-cap">印象的な英語（名前・判定）　Nidus Sans</span><span class="t-display" style="font-size:var(--fs-h2)">TIME POST OFFICE　DELIVERED</span></div>
       <div class="type-row"><span class="t-cap">大見出し　Zen Kaku Gothic New 900</span><span class="t-h1">時間郵便局</span></div>
       <div class="type-row"><span class="t-cap">中見出し・判定　700</span><span class="t-h2">美月の日常が、ちょっと変わった</span></div>
       <div class="type-row"><span class="t-cap">リード・セリフ　500</span><span class="t-lead">ここには、未来で困ってる人から、過去あての手紙が届く。</span></div>
@@ -89,7 +129,7 @@
       <div class="part"><span class="t-cap">押す場所（展示では物理ボタン）</span><button class="cta" type="button"><span class="cta-key" aria-hidden="true"></span>ボタンを押して、はじめる</button></div>
       <div class="part"><span class="t-cap">自動で次へ進むとき（下の線が残り時間）</span><button class="btn-quiet" type="button" data-auto style="--auto:4s">次の便せん</button></div>
       <div class="part"><span class="t-cap">郵便番号枠：宛先・件数・配達番号</span><span class="boxes boxes--sm"><b>0</b><b>0</b><b>0</b><b>0</b><b>4</b><b>2</b></span></div>
-      <div class="part"><span class="t-cap">状態</span><span class="status">21XX年と通信中</span></div>
+      <div class="part"><span class="t-cap">状態</span><span class="status">2126年と通信中</span></div>
       <div class="part part--wide"><span class="t-cap">項目：枠の線の上にラベルを置く（郵便の伝票の形）</span>
         <div class="field-pair"><div class="field"><span class="field-label">差出人</span><p class="t-lead">美月（26歳・会社員）</p></div><div class="field"><span class="field-label">お願い</span><p class="t-lead">AIのおすすめじゃない物を渡したい。</p></div></div></div>
       <div class="part part--wide"><span class="t-cap">便せん：ここだけアナログ。罫線と手書きの文字</span>
@@ -103,7 +143,7 @@
       <li><b class="t-data">160ms</b>押したときの反応。ボタンが2px沈む</li>
       <li><b class="t-data">480ms</b>文字や部品が出る。下から1.2%浮き上がる</li>
       <li><b class="t-data">1100ms</b>線が引かれる・場面が切り替わる</li>
-      <li>動きは「配達が進んだ」ことを伝えるときにだけ使う。タイトル画面では、7秒ごとに荷物がルートを渡り、宛先の枠が光る</li>
+      <li>動きは「配達が進んだ」ことを伝えるときにだけ使う。待機中は、ルートのカードが出るたびに荷物が2026から2126へ渡り、宛先の枠が光る</li>
       <li>展示はスクロールしないので、スクロールやマウスに連動する動きは使わない</li>
     </ul>
   </section>

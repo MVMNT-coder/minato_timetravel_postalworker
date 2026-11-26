@@ -1,6 +1,8 @@
 /* =========================================================
    土台：リセット、文字の型、16:9の舞台とグリッド
    ========================================================= */
+/* Nidus Sans（1ウェイトなので、どの太さで指定しても太字の合成をさせない） */
+@font-face{font-family:"Nidus Sans";src:url("../../assets/fonts/nidus-sans.woff2") format("woff2"),url("../../assets/fonts/nidus-sans.woff") format("woff");font-weight:100 900;font-display:swap}
 *,*::before,*::after{box-sizing:border-box}
 html,body{margin:0;height:100%}
 body{background:var(--c-ink);color:var(--c-text);font-family:var(--f-ja);font-size:var(--fs-body);line-height:1.7;
@@ -9,7 +11,8 @@ button{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--c-signal);outline-offset:4px}
 
 /* ---- 文字の型 ---- */
-.t-num{font-family:var(--f-latin);font-weight:800;font-variation-settings:"wdth" 112;font-size:var(--fs-num);line-height:.86;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.t-num{font-family:var(--f-display);font-weight:800;font-size:var(--fs-num);line-height:.86;letter-spacing:0;font-variant-numeric:tabular-nums}
+.t-display{font-family:var(--f-display);font-weight:800;letter-spacing:.06em;line-height:1}
 .t-h1{font-family:var(--f-ja);font-weight:900;font-size:var(--fs-h1);line-height:1.04;letter-spacing:.01em;margin:0}
 .t-h2{font-family:var(--f-ja);font-weight:700;font-size:var(--fs-h2);line-height:1.3;margin:0}
 .t-lead{font-family:var(--f-ja);font-weight:500;font-size:var(--fs-lead);line-height:1.6;margin:0}
