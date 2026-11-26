@@ -25,8 +25,9 @@
      手紙：差出人ごとに1つ（data-hand で切り替える） */
   --f-display:"Nidus Sans","Zen Kaku Gothic New",sans-serif;
   --f-ja:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;
-  --f-hand-thin:"Letter Darts","Zen Kaku Gothic New",sans-serif;   /* 大人の手紙：細い手書き（ダーツフォント） */
-  --f-hand-bold:"Letter Hitori","Zen Kaku Gothic New",sans-serif;  /* 子どもの手紙：太い手書き（ひとりゴシック） */
+  --f-hand-thin:"Letter Darts","Zen Kaku Gothic New",sans-serif;   /* 透：細い手書き（ダーツフォント） */
+  --f-hand-soft:"Letter Hui","Zen Kaku Gothic New",sans-serif;     /* 美月：やわらかい手書き（ふい字） */
+  --f-hand-bold:"Letter Hitori","Zen Kaku Gothic New",sans-serif;  /* ひなた：太い手書き（ひとりゴシック） */
 
   /* ---- 大きさの単位 ----
      --u は16:9の画面の幅の1/100。展示（1920×1080）では約19px。

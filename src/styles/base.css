@@ -5,6 +5,7 @@
 @font-face{font-family:"Nidus Sans";src:url("../../assets/fonts/nidus-sans.woff2") format("woff2"),url("../../assets/fonts/nidus-sans.woff") format("woff");font-weight:100 900;font-display:swap}
 /* 手紙の書体（手紙に出てくる文字だけに絞ったファイル） */
 @font-face{font-family:"Letter Darts";src:url("../../assets/fonts/letter-darts.woff") format("woff");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Letter Hui";src:url("../../assets/fonts/letter-hui.woff") format("woff");font-weight:100 900;font-display:swap}
 @font-face{font-family:"Letter Hitori";src:url("../../assets/fonts/letter-hitori.woff") format("woff");font-weight:100 900;font-display:swap}
 *,*::before,*::after{box-sizing:border-box}
 html,body{margin:0;height:100%}

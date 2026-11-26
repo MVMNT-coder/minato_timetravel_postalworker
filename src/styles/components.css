@@ -54,5 +54,6 @@
   padding:var(--s-5) var(--s-5) var(--s-4);background-image:repeating-linear-gradient(transparent 0 calc(var(--lh) - 1px),var(--c-paper-line) calc(var(--lh) - 1px) var(--lh));
   background-origin:content-box;box-shadow:0 calc(var(--u)*1.2) calc(var(--u)*3.4) rgba(0,0,0,.55)}
 .paper p{margin:0}
-.paper[data-hand="bold"]{font-family:var(--f-hand-bold)}   /* 子どもの手紙 */
+.paper[data-hand="soft"]{font-family:var(--f-hand-soft)}   /* 美月 */
+.paper[data-hand="bold"]{font-family:var(--f-hand-bold)}   /* ひなた */
 .paper-to{font-size:.8em;color:#8A6A45}
