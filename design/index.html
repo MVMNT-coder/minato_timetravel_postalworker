@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>時間郵便局 デザインシステム</title>
+<title>時空郵便局 デザインシステム</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500&family=Klee+One:wght@600&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../src/styles/tokens.css">
 <link rel="stylesheet" href="../src/styles/base.css">
 <link rel="stylesheet" href="../src/styles/components.css">
@@ -17,24 +17,24 @@
 <!-- ============ タイトル画面（待機中）：1画面に1つのことだけ ============ -->
 <main class="stage opening" id="opening" aria-label="タイトル画面">
   <header class="bar">
-    <span class="bar-brand">TIME POST OFFICE</span>
-    <div class="bar-meta"><span class="status">受付中</span><span>渋谷窓口</span><span class="t-data" id="clock">--:--:--</span></div>
+    <span class="bar-brand">SPACETIME POST OFFICE</span>
+    <div class="bar-meta"><span class="status">受付中</span><span>渋谷窓口</span><span class="t-data digits" id="clock"></span></div>
   </header>
 
   <div class="op-frames" aria-live="polite">
     <section class="op-frame op-title" data-frame>
-      <p class="op-en t-display" data-in>TIME POST OFFICE</p>
-      <h1 class="t-h1" data-in style="--d:180ms">時間郵便局</h1>
+      <p class="op-en t-display" data-in>SPACETIME POST OFFICE</p>
+      <h1 class="t-h1" data-in style="--d:180ms">時空郵便局</h1>
     </section>
 
     <section class="op-frame" data-frame data-route>
-      <div class="route" aria-label="2026年から2126年へ配達します">
+      <div class="route" aria-label="2026年と2126年を郵便でつないでいます">
         <div class="route-end" data-in><span class="t-cap">差出し</span><span class="t-num">2026</span></div>
-        <div class="route-line"><i class="packet" id="packet"></i></div>
+        <div class="route-line"><i class="packet packet--letter" id="pkLetter"></i><i class="packet packet--object" id="pkObject"></i></div>
         <div class="route-end route-to"><span class="t-cap" data-in style="--d:500ms">宛先</span>
           <span class="boxes boxes--year" id="year"><b style="--d:600ms">2</b><b style="--d:680ms">1</b><b style="--d:760ms">2</b><b style="--d:840ms">6</b></span></div>
       </div>
-      <p class="t-lead route-note" data-in style="--d:900ms">ちょうど100年後の渋谷へ、物を届けます。</p>
+      <p class="t-lead route-note" data-in style="--d:900ms">2026年と、ちょうど100年後の2126年を、郵便でつないでいます。</p>
     </section>
 
     <section class="op-frame" data-frame>
@@ -68,7 +68,7 @@
       <p class="t-body sec-note">1画面に1つのことだけを出します。ボタンを押すのは「はじめる」と「撮影」の2回だけで、ほかは声が終わると自動で進みます。</p>
       <ol class="flow">
         <li><b>待機</b><span>名前 → 2026→2126 → ひとこと → 配達数 をくり返す</span><i>ボタン</i></li>
-        <li><b>minato</b><span>「2126年の時間郵便局で働いてる、minato。」</span><i>自動</i></li>
+        <li><b>minato</b><span>「2126年の時空郵便局で働いてる、minato。」</span><i>自動</i></li>
         <li><b>minato</b><span>「ここには、100年後の人から、過去あての手紙が届く。」</span><i>自動</i></li>
         <li><b>minato</b><span>「それを2026年のあなたに届けるのが、私の仕事。」</span><i>自動</i></li>
         <li><b>受信</b><span>封筒が届く。伝票に差出人（名前・年齢）だけ</span><i>自動</i></li>
@@ -106,15 +106,28 @@
   <section class="sheet-sec">
     <h3 class="sec-h">文字</h3>
     <div class="type-rows">
-      <div class="type-row"><span class="t-cap">年号・大きな数字　Nidus Sans</span><span class="t-num">2126</span></div>
-      <div class="type-row"><span class="t-cap">印象的な英語（名前・判定）　Nidus Sans</span><span class="t-display" style="font-size:var(--fs-h2)">TIME POST OFFICE　DELIVERED</span></div>
-      <div class="type-row"><span class="t-cap">大見出し　Zen Kaku Gothic New 900</span><span class="t-h1">時間郵便局</span></div>
-      <div class="type-row"><span class="t-cap">中見出し・判定　700</span><span class="t-h2">美月の日常が、ちょっと変わった</span></div>
-      <div class="type-row"><span class="t-cap">リード・セリフ　500</span><span class="t-lead">ここには、未来で困ってる人から、過去あての手紙が届く。</span></div>
-      <div class="type-row"><span class="t-cap">本文　400</span><span class="t-body">このお願いに応えられそうな物を、身の回りから1つ見つけて送ってください。</span></div>
-      <div class="type-row"><span class="t-cap">動いている数値　IBM Plex Mono</span><span class="t-data" style="font-size:var(--fs-lead)">受信 63%　14:32:07　配達番号 000042</span></div>
-      <div class="type-row"><span class="t-cap">手紙　Klee One</span><span class="t-hand" style="font-size:var(--fs-lead);color:var(--c-paper)">来週は、親友の誕生日です。</span></div>
+      <p class="t-body sec-note">画面で使う書体は2つだけです。英数字はすべてNidus Sans、日本語はすべてZen Kaku Gothic New。手紙だけは、差出人が書いたように見せるため、差出人ごとの手書きの書体を使います。</p>
+      <div class="type-row"><span class="t-cap">英数字（年号・時刻・件数・英語の見出し）　Nidus Sans</span><span class="t-num">2126</span><span class="t-display" style="font-size:var(--fs-h2)">SPACETIME POST OFFICE</span><span class="t-data digits" style="font-size:var(--fs-lead)" data-digits="63%　14:32:07　No. 000042"></span></div>
+      <div class="type-row"><span class="t-cap">日本語　Zen Kaku Gothic New（900・700・500・400）</span><span class="t-h1">時空郵便局</span><span class="t-h2">美月の日常が、ちょっと変わった</span><span class="t-lead">ここには、100年後の人から、過去あての手紙が届く。</span><span class="t-body">このお願いに応えられそうな物を、身の回りから1つ見つけて送ってください。</span></div>
+      <div class="type-row"><span class="t-cap">手紙　差出人ごとの手書き</span>
+        <div class="hands">
+          <div class="paper"><p class="paper-to">透（41歳）　ダーツフォント</p><p>うちの会社では、AI秘書がみんなの予定を組んでくれます。</p></div>
+          <div class="paper"><p class="paper-to">美月（26歳）　ダーツフォント（ふい字に差し替え予定）</p><p>来週は、親友の誕生日です。</p></div>
+          <div class="paper" data-hand="bold"><p class="paper-to">ひなた（9歳）　ひとりゴシック</p><p>あしたの夜、街のAIがぜんぶ止まる『アップデートの1時間』があります。</p></div>
+        </div></div>
     </div>
+  </section>
+
+  <section class="sheet-sec">
+    <h3 class="sec-h">揃えるルール</h3>
+    <ul class="motion t-body">
+      <li>線は2種類だけ。区切りは1pxの罫線、郵便番号枠だけ2pxのオレンジ</li>
+      <li>角はすべて四角。丸いのは、物理ボタンを表す丸いキーだけ</li>
+      <li>ラベル（差出し・宛先など）は、補足の文字色の小さい日本語。英語の飾りラベルは付けない</li>
+      <li>英数字は、大きくても小さくてもNidus Sans。数字が並ぶところは、1文字ずつ同じ幅にそろえる</li>
+      <li>オレンジは、押せる物・受信中・宛先（郵便番号枠）だけ</li>
+      <li>文章は左ぞろえ。中央ぞろえは便せんの中だけ</li>
+    </ul>
   </section>
 
   <section class="sheet-sec">
@@ -133,17 +146,17 @@
       <div class="part part--wide"><span class="t-cap">項目：枠の線の上にラベルを置く（郵便の伝票の形）</span>
         <div class="field-pair"><div class="field"><span class="field-label">差出人</span><p class="t-lead">美月（26歳・会社員）</p></div><div class="field"><span class="field-label">お願い</span><p class="t-lead">AIのおすすめじゃない物を渡したい。</p></div></div></div>
       <div class="part part--wide"><span class="t-cap">便せん：ここだけアナログ。罫線と手書きの文字</span>
-        <div class="paper" style="max-width:52em"><p style="font-size:.8em;color:#8a6a45">過去の、だれかへ</p><p>来週は、親友の誕生日です。プレゼントは3年連続で、AIがすすめる同じハンドクリーム。</p></div></div>
+        <div class="paper" style="max-width:52em"><p class="paper-to">過去の、だれかへ</p><p>来週は、親友の誕生日です。プレゼントは3年連続で、AIがすすめる同じハンドクリーム。</p></div></div>
     </div>
   </section>
 
   <section class="sheet-sec">
     <h3 class="sec-h">動き</h3>
     <ul class="motion t-body">
-      <li><b class="t-data">160ms</b>押したときの反応。ボタンが2px沈む</li>
-      <li><b class="t-data">480ms</b>文字や部品が出る。下から1.2%浮き上がる</li>
-      <li><b class="t-data">1100ms</b>線が引かれる・場面が切り替わる</li>
-      <li>動きは「配達が進んだ」ことを伝えるときにだけ使う。待機中は、ルートのカードが出るたびに荷物が2026から2126へ渡り、宛先の枠が光る</li>
+      <li><b class="t-data">160MS</b>押したときの反応。ボタンが2px沈む</li>
+      <li><b class="t-data">480MS</b>文字や部品が出る。下から1.2%浮き上がる</li>
+      <li><b class="t-data">1100MS</b>線が引かれる・場面が切り替わる</li>
+      <li>動きは「時空をつないで配達している」ことを伝えるときにだけ使う。待機中は、ルートのカードが出るたびに、手紙が2126から2026へ、物が2026から2126へ渡り、宛先の枠が光る</li>
       <li>展示はスクロールしないので、スクロールやマウスに連動する動きは使わない</li>
     </ul>
   </section>

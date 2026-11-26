@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>時間郵便局</title>
+<title>時空郵便局</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@700;900&family=Klee+One:wght@600&family=Noto+Sans+JP:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap">
 <style>
@@ -175,7 +175,7 @@ a.btn{text-decoration:none}
 .quote.nolabel{font-size:clamp(18px,4.4vw,24px);margin-top:4px}
 .speaker{align-items:flex-start}
 
-/* ===== 時間郵便局 ===== */
+/* ===== 時空郵便局 ===== */
 .title{font-family:var(--f-disp);font-weight:900;font-size:clamp(40px,11vw,84px);line-height:1.15;margin:0;letter-spacing:.01em;text-wrap:balance}
 .title .ch{display:inline-block;opacity:0;transform:translateY(.3em);animation:chin .5s cubic-bezier(.2,1.4,.4,1) forwards}
 @keyframes chin{to{opacity:1;transform:none}}
@@ -587,7 +587,7 @@ body.exhibit .push.auto{overflow:hidden}
 <div class="hud l" id="hudL" aria-hidden="true" data-fx="css"></div><div class="hud r" id="hudR" aria-hidden="true" data-fx="css"></div>
 <div class="static" id="static" aria-hidden="true"></div>
 <div class="wrap">
-  <header><div class="logo" data-fx="css">時間郵便局<em>.</em></div><div class="hr"><button class="snd" id="snd" aria-pressed="false">SOUND OFF</button><div class="lbl" data-fx="text">TOKYO 2126</div></div></header>
+  <header><div class="logo" data-fx="css">時空郵便局<em>.</em></div><div class="hr"><button class="snd" id="snd" aria-pressed="false">SOUND OFF</button><div class="lbl" data-fx="text">TOKYO 2126</div></div></header>
   <main class="card" id="card"></main>
   <div class="idle" id="idle" hidden></div>
   <div class="push" id="push" hidden aria-live="polite"><i></i><span>PUSH TO</span> <b id="pushL">START</b></div>
@@ -803,7 +803,7 @@ function pageTitle(){
   stopCam();document.body.classList.remove("desat");
   const t1="時間",t2="郵便局";
   let k=0;const chars=s=>[...s].map(c=>`<span class="ch" style="animation-delay:${(k++)*80}ms">${esc(c)}</span>`).join("");
-  render(`<div class="lbl fade-in" data-fx="text">TIME POST OFFICE · SHIBUYA · 2026 → 2126</div>
+  render(`<div class="lbl fade-in" data-fx="text">SPACETIME POST OFFICE · SHIBUYA · 2026 → 2126</div>
     <h1 class="title">${chars(t1)}<em>${chars(t2)}</em></h1>
     <p class="subtitle fade-in" style="animation-delay:700ms">2126年の誰かの日常を、ちょっと変える。</p>
     <div class="tally fade-in" style="animation-delay:900ms">
@@ -822,8 +822,8 @@ function pageTitle(){
   setPush("START",pageIntro);
 }
 
-/* 2. minatoの自己紹介：時間郵便局のイラスト（時空の穴から手紙が飛んでくる） */
-const INTRO=["2126年の時間郵便局で働いてる、minato。","ここには、未来で困ってる人から、過去あての手紙が届く。それを2026年のあなたに届けるのが、私の仕事。"];
+/* 2. minatoの自己紹介：時空郵便局のイラスト（時空の穴から手紙が飛んでくる） */
+const INTRO=["2126年の時空郵便局で働いてる、minato。","ここには、未来で困ってる人から、過去あての手紙が届く。それを2026年のあなたに届けるのが、私の仕事。"];
 const UNBOX_LINE="おお！何これ、どう使うんだ？";
 const ENV_G=`<rect x="-24" y="-15" width="48" height="30" rx="3"/><path d="M-24 -15 l24 17 l24 -17"/>`;
 const POST_ART=`<ellipse cx="170" cy="150" rx="124" ry="46"/><ellipse cx="170" cy="150" rx="88" ry="31"><animate attributeName="rx" values="88;104;88" dur="3s" repeatCount="indefinite"/><animate attributeName="ry" values="31;37;31" dur="3s" repeatCount="indefinite"/></ellipse><ellipse cx="170" cy="150" rx="50" ry="17"/>
@@ -882,7 +882,7 @@ function sayPage({page,art,cap,lines,next,onArt}){
 function pageIntro(){
   pickStory();
   INTRO.forEach(l=>VOICE.prepare(l));VOICE.prepare(story.arrive);
-  sayPage({page:"intro",art:svgEl(POST_ART),cap:"LIVE · 2126 · 時間郵便局 渋谷窓口",lines:INTRO,next:pageArrive});
+  sayPage({page:"intro",art:svgEl(POST_ART),cap:"LIVE · 2126 · 時空郵便局 渋谷窓口",lines:INTRO,next:pageArrive});
 }
 
 /* 3. 手紙が届く：依頼主の世界の線画に、封筒が飛んでくる（minatoはまだ開けていないので、封筒でわかることだけ言う） */
@@ -895,7 +895,7 @@ function pageArrive(){
 /* 4. 手紙を読む：便せんに1文ずつ出し、minatoが読み上げる。読み終わったら、minatoがひとこと（手紙にない視点の皮肉） */
 const ENV_SVG=`<svg class="env-svg" viewBox="0 0 300 190" aria-hidden="true"><rect class="e-b" x="4" y="4" width="292" height="182" rx="8"/><path class="e-l" d="M4 4 L150 108 L296 4"/><rect class="e-s" x="236" y="18" width="44" height="54" rx="2"/><circle class="e-p" cx="226" cy="60" r="24"/><path class="e-p" d="M190 52 q10 -6 20 0 t20 0 t20 0 M190 64 q10 -6 20 0 t20 0 t20 0"/></svg>`;
 const REQ_HEAD="お願いがあります。";
-function paperHead(){return `<div class="pp-stamp"><b>2126</b><span>TIME POST</span></div><i class="pp-mark"></i>`}
+function paperHead(){return `<div class="pp-stamp"><b>2126</b><span>SPACETIME POST</span></div><i class="pp-mark"></i>`}
 function pageLetter(){
   SND.mood("base");
   const sent=story.letter.match(/[^。]+。?/g)||[story.letter],GAP=1500,T0=1700;
@@ -1071,7 +1071,7 @@ async function send(srcCanvas){
   const img=scaled(srcCanvas,1024),thumb=square(srcCanvas,360),gthumb=crop32(srcCanvas,450);
   render(`<div class="tx"><canvas id="txc"></canvas>
     <div class="tx-top"><div class="status" id="st">品物を粒子に分解中</div><div class="coord" id="co">YEAR 2026.00</div></div>
-    <div class="tx-arr" id="txa" hidden data-fx="text">ARRIVED · 2126 SHIBUYA TIME POST OFFICE</div>
+    <div class="tx-arr" id="txa" hidden data-fx="text">ARRIVED · 2126 SHIBUYA SPACETIME POST OFFICE</div>
     <div class="tx-min" id="txm" hidden>${FIG("sm")}<div class="bubble" id="txb" hidden><div class="figname">MINATO-2126</div><p class="r-tk" id="txl"></p></div></div></div>`);
   card.dataset.page="warp";FXB.set("warp");
   let alive=true;cleanup.push(()=>alive=false);
@@ -1967,7 +1967,7 @@ const GAL=(()=>{
   async function showView(){
     if(open)return;open=true;VOICE.stop?.();
     el=document.createElement("div");el.id="archive";
-    el.innerHTML=`<div class="gv-hd"><img class="arc-logo" src="assets/mvmnt-logo.png" alt="MVMNT"><div class="gv-t"><b>時間郵便局 渋谷窓口</b><span>TIME POST OFFICE · SHIBUYA ／ 2026 → 2126 配達の判定</span></div><div class="gv-cnt" id="gvCnt"></div></div>
+    el.innerHTML=`<div class="gv-hd"><img class="arc-logo" src="assets/mvmnt-logo.png" alt="MVMNT"><div class="gv-t"><b>時空郵便局 渋谷窓口</b><span>SPACETIME POST OFFICE · SHIBUYA ／ 2026 → 2126 配達の判定</span></div><div class="gv-cnt" id="gvCnt"></div></div>
       <div class="gv-desk" id="gvDesk"><div class="arc-empty">読み込んでいます…</div></div>`;
     ($("#stage")&&getComputedStyle($("#stage")).display!=="contents"&&!ARCHIVE_ONLY?$("#stage"):document.body).appendChild(el);
     merge(local());drawCounts();

@@ -3,6 +3,9 @@
    ========================================================= */
 /* Nidus Sans（1ウェイトなので、どの太さで指定しても太字の合成をさせない） */
 @font-face{font-family:"Nidus Sans";src:url("../../assets/fonts/nidus-sans.woff2") format("woff2"),url("../../assets/fonts/nidus-sans.woff") format("woff");font-weight:100 900;font-display:swap}
+/* 手紙の書体（手紙に出てくる文字だけに絞ったファイル） */
+@font-face{font-family:"Letter Darts";src:url("../../assets/fonts/letter-darts.woff") format("woff");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Letter Hitori";src:url("../../assets/fonts/letter-hitori.woff") format("woff");font-weight:100 900;font-display:swap}
 *,*::before,*::after{box-sizing:border-box}
 html,body{margin:0;height:100%}
 body{background:var(--c-ink);color:var(--c-text);font-family:var(--f-ja);font-size:var(--fs-body);line-height:1.7;
@@ -18,9 +21,10 @@ button{font:inherit;color:inherit}
 .t-lead{font-family:var(--f-ja);font-weight:500;font-size:var(--fs-lead);line-height:1.6;margin:0}
 .t-body{font-size:var(--fs-body);line-height:1.75;margin:0}
 .t-cap{font-size:var(--fs-cap);line-height:1.6;color:var(--c-mute);margin:0}
-.t-en{font-family:var(--f-latin);font-weight:600;font-variation-settings:"wdth" 100;letter-spacing:.01em}
-.t-data{font-family:var(--f-data);font-weight:400;font-variant-numeric:tabular-nums;letter-spacing:.02em}
-.t-hand{font-family:var(--f-hand);font-weight:600;color:var(--c-hand)}
+/* 動いている数値（時刻・受信率・件数）。Nidus Sans の数字は幅がそろっていないので、1文字ずつ同じ幅の箱に入れる（.digits） */
+.t-data{font-family:var(--f-display);letter-spacing:.06em}
+.digits>i{display:inline-block;width:.74em;text-align:center;font-style:normal}
+.digits>i.sep{width:.38em}
 
 /* ---- 16:9 の舞台 ----
    展示のモニターでもノートPCでも、中身は16:9のまま拡大縮小する */

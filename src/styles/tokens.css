@@ -19,17 +19,14 @@
   --c-paper-line:rgba(120,92,58,.22);
   --c-hand:#3A2A1B;         /* 便せんの文字 */
 
-  /* ---- 書体 ----
-     印象的な英数字（年号・TIME POST OFFICE・判定の英語）：Nidus Sans（大文字だけの角ばった書体。1ウェイト）
-     そのほかの英数字：Archivo（幅を変えられる）
-     日本語：Zen Kaku Gothic New
-     動いている数値（時刻・受信率・件数）：IBM Plex Mono
-     手紙：Klee One */
-  --f-display:"Nidus Sans","Archivo",sans-serif;
-  --f-latin:"Archivo","Helvetica Neue",Arial,sans-serif;
+  /* ---- 書体 ---- 画面は2つだけ。手紙だけ、差出人ごとの手書きの書体を使う
+     英数字すべて（年号・時刻・件数・英語の見出し）：Nidus Sans（大文字だけの角ばった書体）
+     日本語すべて：Zen Kaku Gothic New
+     手紙：差出人ごとに1つ（data-hand で切り替える） */
+  --f-display:"Nidus Sans","Zen Kaku Gothic New",sans-serif;
   --f-ja:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;
-  --f-data:"IBM Plex Mono",ui-monospace,Menlo,monospace;
-  --f-hand:"Klee One","Hiragino Mincho ProN",serif;
+  --f-hand-thin:"Letter Darts","Zen Kaku Gothic New",sans-serif;   /* 大人の手紙：細い手書き（ダーツフォント） */
+  --f-hand-bold:"Letter Hitori","Zen Kaku Gothic New",sans-serif;  /* 子どもの手紙：太い手書き（ひとりゴシック） */
 
   /* ---- 大きさの単位 ----
      --u は16:9の画面の幅の1/100。展示（1920×1080）では約19px。

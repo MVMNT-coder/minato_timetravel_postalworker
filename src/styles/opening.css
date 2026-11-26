@@ -21,12 +21,17 @@
 .route-end{display:flex;flex-direction:column;gap:var(--s-2)}
 .route-to{align-items:flex-end}
 .route-line{position:relative;height:calc(var(--fs-num)*.74*1.22);align-self:end}
-.route-line::before{content:"";position:absolute;left:0;right:0;top:50%;border-top:1px dashed var(--c-line-strong);transform-origin:left;transform:scaleX(0);transition:transform var(--t-slow) var(--ease-inout) .3s}
+.route-line::before{content:"";position:absolute;left:0;right:0;top:50%;border-top:1px solid var(--c-line-strong);transform-origin:left;transform:scaleX(0);transition:transform var(--t-slow) var(--ease-inout) .3s}
 .op-frame.is-on .route-line::before{transform:scaleX(1)}
-.route-line .packet{position:absolute;top:50%;left:0;width:calc(var(--u)*1.6);height:calc(var(--u)*1.1);margin-top:calc(var(--u)*-.55);background:var(--c-signal);opacity:0}
-.route-line .packet::after{content:"";position:absolute;inset:0;background:linear-gradient(150deg,transparent 47%,var(--c-signal-ink) 48% 54%,transparent 55%),linear-gradient(30deg,transparent 47%,var(--c-signal-ink) 48% 54%,transparent 55%);background-size:100% 200%;opacity:.5}
-.route-line .packet.is-moving{animation:packet-go 2.4s var(--ease-inout) forwards}
-@keyframes packet-go{0%{left:0;opacity:0}8%{opacity:1}92%{opacity:1}100%{left:calc(100% - var(--u)*1.6);opacity:0}}
+/* 2つの荷物が行き来する：手紙は2126→2026（便せんの色）、物は2026→2126（オレンジ） */
+.route-line .packet{position:absolute;top:50%;left:0;width:calc(var(--u)*1.6);height:calc(var(--u)*1.1);margin-top:calc(var(--u)*-.55);opacity:0}
+.route-line .packet--letter{background:var(--c-paper);margin-top:calc(var(--u)*-1.6)}
+.route-line .packet--letter::after{content:"";position:absolute;inset:0;background:linear-gradient(150deg,transparent 47%,#8A6A45 48% 54%,transparent 55%),linear-gradient(30deg,transparent 47%,#8A6A45 48% 54%,transparent 55%);background-size:100% 200%;opacity:.6}
+.route-line .packet--object{background:var(--c-signal);margin-top:calc(var(--u)*.5)}
+.route-line .packet--letter.is-moving{animation:packet-back 1.9s var(--ease-inout) forwards}
+.route-line .packet--object.is-moving{animation:packet-go 1.9s var(--ease-inout) forwards}
+@keyframes packet-go{0%{left:0;opacity:0}10%{opacity:1}90%{opacity:1}100%{left:calc(100% - var(--u)*1.6);opacity:0}}
+@keyframes packet-back{0%{left:calc(100% - var(--u)*1.6);opacity:0}10%{opacity:1}90%{opacity:1}100%{left:0;opacity:0}}
 .route-note{margin-top:var(--s-5)}
 .boxes--year>b{opacity:0;transform:scale(.8);transition:opacity var(--t-fast),transform var(--t-base) var(--ease-out)}
 .op-frame.is-on .boxes--year>b{opacity:1;transform:none;transition-delay:var(--d,0ms)}
