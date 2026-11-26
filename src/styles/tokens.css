@@ -24,7 +24,7 @@
      日本語すべて：Zen Kaku Gothic New
      手紙：差出人ごとに1つ（data-hand で切り替える） */
   --f-display:"Nidus Sans","Zen Kaku Gothic New",sans-serif;
-  --f-ja:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;
+  --f-ja:"Nidus Latin","Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;
   --f-hand-thin:"Letter Darts","Zen Kaku Gothic New",sans-serif;   /* 透：細い手書き（ダーツフォント） */
   --f-hand-soft:"Letter Hui","Zen Kaku Gothic New",sans-serif;     /* 美月：やわらかい手書き（ふい字） */
   --f-hand-bold:"Letter Hitori","Zen Kaku Gothic New",sans-serif;  /* ひなた：太い手書き（ひとりゴシック） */

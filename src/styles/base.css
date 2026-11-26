@@ -3,6 +3,9 @@
    ========================================================= */
 /* Nidus Sans（1ウェイトなので、どの太さで指定しても太字の合成をさせない） */
 @font-face{font-family:"Nidus Sans";src:url("../../assets/fonts/nidus-sans.woff2") format("woff2"),url("../../assets/fonts/nidus-sans.woff") format("woff");font-weight:100 900;font-display:swap}
+/* 日本語の文の中の英字も Nidus Sans にする（英字だけを受け持つ書体として登録）。
+   文の中の数字は、Nidus Sans の「1」が「l」に見えて読みにくいので、日本語の書体のまま。数字だけで見せるときは .t-num／.t-data／郵便番号枠で Nidus Sans にする */
+@font-face{font-family:"Nidus Latin";src:url("../../assets/fonts/nidus-sans.woff2") format("woff2"),url("../../assets/fonts/nidus-sans.woff") format("woff");font-weight:100 900;font-display:swap;unicode-range:U+0041-005A,U+0061-007A}
 /* 手紙の書体（手紙に出てくる文字だけに絞ったファイル） */
 @font-face{font-family:"Letter Darts";src:url("../../assets/fonts/letter-darts.woff") format("woff");font-weight:100 900;font-display:swap}
 @font-face{font-family:"Letter Hui";src:url("../../assets/fonts/letter-hui.woff") format("woff");font-weight:100 900;font-display:swap}
@@ -10,7 +13,7 @@
 *,*::before,*::after{box-sizing:border-box}
 html,body{margin:0;height:100%}
 body{background:var(--c-ink);color:var(--c-text);font-family:var(--f-ja);font-size:var(--fs-body);line-height:1.7;
-  font-feature-settings:"palt";-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  font-feature-settings:"palt";word-break:auto-phrase;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 button{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--c-signal);outline-offset:4px}
 

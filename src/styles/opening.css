@@ -33,9 +33,10 @@
 @keyframes packet-go{0%{left:0;opacity:0}10%{opacity:1}90%{opacity:1}100%{left:calc(100% - var(--u)*1.6);opacity:0}}
 @keyframes packet-back{0%{left:calc(100% - var(--u)*1.6);opacity:0}10%{opacity:1}90%{opacity:1}100%{left:0;opacity:0}}
 .route-note{margin-top:var(--s-5)}
-.boxes--year>b{opacity:0;transform:scale(.8);transition:opacity var(--t-fast),transform var(--t-base) var(--ease-out)}
+.op-frame .boxes--year>b{opacity:0;transform:scale(.8);transition:opacity var(--t-fast),transform var(--t-base) var(--ease-out)}
 .op-frame.is-on .boxes--year>b{opacity:1;transform:none;transition-delay:var(--d,0ms)}
 .boxes--year.is-arrived>b{animation:box-flash .9s var(--ease-out)}
+.op-frame.is-on .boxes--year.is-arrived>b{opacity:1}
 @keyframes box-flash{0%{background:var(--c-signal);color:var(--c-signal-ink)}100%{background:transparent}}
 
 /* 3. ひとこと */
