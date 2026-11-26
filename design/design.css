@@ -1,0 +1,26 @@
+/* デザインのルールを見せるページ用（アプリ本体では使わない） */
+.sheet{max-width:1180px;margin:0 auto;padding:var(--s-6) var(--g-margin) calc(var(--s-6)*1.5);border-top:var(--line)}
+.sheet-head{max-width:46em;margin-bottom:var(--s-6)}
+.sheet-head .t-body{margin-top:var(--s-3);color:var(--c-mute)}
+.sheet-sec{display:grid;grid-template-columns:minmax(120px,1fr) 4fr;gap:var(--s-4);padding:var(--s-5) 0;border-top:var(--line)}
+.sec-h{margin:0;font-size:var(--fs-body);font-weight:700}
+.sec-note{color:var(--c-mute);max-width:44em;margin-bottom:var(--s-3)}
+.sheet-sec>.sec-note,.sheet-sec>.grid-demo{grid-column:2}
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:var(--s-3)}
+.swatches figure{margin:0}.swatches i{display:block;aspect-ratio:4/3}
+.swatches figcaption{display:flex;flex-direction:column;margin-top:.6em;font-size:var(--fs-cap)}
+.swatches figcaption .t-data{color:var(--c-mute)}
+.type-rows{display:grid;gap:var(--s-4)}
+.type-row{display:grid;gap:var(--s-1)}
+.grid-demo{display:grid;grid-template-columns:repeat(12,1fr);gap:var(--g-gutter);height:90px;padding:0 var(--g-margin);border:var(--line)}
+.grid-demo span{background:var(--c-signal-soft);border-left:1px solid var(--c-signal);border-right:1px solid var(--c-signal)}
+.parts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s-5) var(--s-4)}
+.part{display:grid;gap:var(--s-2);align-content:start;justify-items:start}
+.part--wide{grid-column:1/-1;justify-items:stretch}
+.field-pair{display:grid;grid-template-columns:1fr 2fr;gap:var(--s-3)}
+.motion{margin:0;padding:0;list-style:none;display:grid;gap:var(--s-2)}
+.motion b{display:inline-block;min-width:6em;color:var(--c-signal);font-weight:500}
+@media (max-width:720px){.sheet-sec{grid-template-columns:1fr}.sheet-sec>.sec-note,.sheet-sec>.grid-demo{grid-column:1}.parts,.field-pair{grid-template-columns:1fr}}
+.type-row .t-h1,.type-row .t-num{white-space:nowrap}
+.field-pair .t-lead{font-size:var(--fs-body)}
+.part .cta{white-space:nowrap}

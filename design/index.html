@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>時間郵便局 デザインシステム</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500&family=Klee+One:wght@600&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../src/styles/tokens.css">
+<link rel="stylesheet" href="../src/styles/base.css">
+<link rel="stylesheet" href="../src/styles/components.css">
+<link rel="stylesheet" href="../src/styles/opening.css">
+<link rel="stylesheet" href="design.css">
+</head>
+<body>
+
+<!-- ============ タイトル画面（新デザインの基準） ============ -->
+<main class="stage opening" id="opening" aria-label="タイトル画面">
+  <header class="bar" data-in style="--d:0ms">
+    <span class="bar-brand">Time Post Office</span>
+    <div class="bar-meta"><span class="status">受付中</span><span>渋谷窓口</span><span class="t-data" id="clock">--:--:--</span></div>
+  </header>
+
+  <section class="route" aria-label="2026年から21XX年へ配達します">
+    <div class="route-end" data-in style="--d:150ms"><span class="t-cap">差出し</span><span class="t-num">2026</span></div>
+    <div class="route-line" id="routeLine" style="--draw:0"><i class="packet" id="packet"></i></div>
+    <div class="route-end route-to"><span class="t-cap" data-in style="--d:900ms">宛先</span>
+      <span class="boxes boxes--year" id="year"><b style="--d:950ms">2</b><b style="--d:1030ms">1</b><b class="is-open" style="--d:1110ms">X</b><b class="is-open" style="--d:1190ms">X</b></span></div>
+  </section>
+
+  <section class="hero">
+    <h1 class="t-h1"><span class="mask"><span style="--d:1300ms">時間郵便局</span></span></h1>
+    <p class="t-lead" data-in style="--d:1600ms">21XX年の誰かの日常を、ちょっと変える。</p>
+  </section>
+
+  <footer class="opening-foot" data-in style="--d:1900ms">
+    <button class="cta" type="button"><span class="cta-key" aria-hidden="true"></span>ボタンを押して、はじめる</button>
+    <dl class="tally" aria-label="これまでの配達の結果">
+      <div><dt>日常が変わった</dt><dd class="boxes boxes--sm"><b>0</b><b>1</b><b>2</b></dd></div>
+      <div><dt>ちょっと変わった</dt><dd class="boxes boxes--sm"><b>0</b><b>0</b><b>8</b></dd></div>
+      <div><dt>変わらなかった</dt><dd class="boxes boxes--sm"><b>0</b><b>0</b><b>5</b></dd></div>
+    </dl>
+    <p class="t-cap opening-note">撮影した写真と結果は、記録のため保存されます。人の顔が写らないように撮ってください。</p>
+  </footer>
+</main>
+
+<!-- ============ デザインのルール ============ -->
+<div class="sheet">
+  <header class="sheet-head">
+    <h2 class="t-h2">デザインのルール</h2>
+    <p class="t-body">大胆な文字組みと余白を土台に、時刻・受信率・件数など「いま動いている情報」だけをシステムの表示として細部に入れます。オレンジは日本の郵便番号枠の色として扱い、押せる物・受信中・宛先にだけ使います。</p>
+  </header>
+
+  <section class="sheet-sec">
+    <h3 class="sec-h">色</h3>
+    <div class="swatches">
+      <figure><i style="background:var(--c-ink);border:var(--line)"></i><figcaption><b>背景</b><span class="t-data">#0A0A09</span></figcaption></figure>
+      <figure><i style="background:var(--c-panel);border:var(--line)"></i><figcaption><b>面</b><span class="t-data">#151514</span></figcaption></figure>
+      <figure><i style="background:var(--c-line)"></i><figcaption><b>罫線</b><span class="t-data">#34332F</span></figcaption></figure>
+      <figure><i style="background:var(--c-mute)"></i><figcaption><b>補足の文字</b><span class="t-data">#8F8C85</span></figcaption></figure>
+      <figure><i style="background:var(--c-text)"></i><figcaption><b>本文</b><span class="t-data">#ECE8DF</span></figcaption></figure>
+      <figure><i style="background:var(--c-signal)"></i><figcaption><b>シグナル</b><span class="t-data">#FF5C00</span></figcaption></figure>
+      <figure><i style="background:var(--c-paper)"></i><figcaption><b>便せん</b><span class="t-data">#F1ECE1</span></figcaption></figure>
+    </div>
+  </section>
+
+  <section class="sheet-sec">
+    <h3 class="sec-h">文字</h3>
+    <div class="type-rows">
+      <div class="type-row"><span class="t-cap">年号・大きな数字　Archivo 800（幅112）</span><span class="t-num">21XX</span></div>
+      <div class="type-row"><span class="t-cap">大見出し　Zen Kaku Gothic New 900</span><span class="t-h1">時間郵便局</span></div>
+      <div class="type-row"><span class="t-cap">中見出し・判定　700</span><span class="t-h2">美月の日常が、ちょっと変わった</span></div>
+      <div class="type-row"><span class="t-cap">リード・セリフ　500</span><span class="t-lead">ここには、未来で困ってる人から、過去あての手紙が届く。</span></div>
+      <div class="type-row"><span class="t-cap">本文　400</span><span class="t-body">このお願いに応えられそうな物を、身の回りから1つ見つけて送ってください。</span></div>
+      <div class="type-row"><span class="t-cap">動いている数値　IBM Plex Mono</span><span class="t-data" style="font-size:var(--fs-lead)">受信 63%　14:32:07　配達番号 000042</span></div>
+      <div class="type-row"><span class="t-cap">手紙　Klee One</span><span class="t-hand" style="font-size:var(--fs-lead);color:var(--c-paper)">来週は、親友の誕生日です。</span></div>
+    </div>
+  </section>
+
+  <section class="sheet-sec">
+    <h3 class="sec-h">グリッド</h3>
+    <p class="t-body sec-note">16:9の画面を12列に分けます。左右の余白は画面幅の4.6%、列の間は1.6%。文章は左ぞろえを基本にし、中央ぞろえは便せんだけに使います。</p>
+    <div class="grid-demo"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  </section>
+
+  <section class="sheet-sec">
+    <h3 class="sec-h">部品</h3>
+    <div class="parts">
+      <div class="part"><span class="t-cap">押す場所（展示では物理ボタン）</span><button class="cta" type="button"><span class="cta-key" aria-hidden="true"></span>ボタンを押して、はじめる</button></div>
+      <div class="part"><span class="t-cap">自動で次へ進むとき（下の線が残り時間）</span><button class="btn-quiet" type="button" data-auto style="--auto:4s">次の便せん</button></div>
+      <div class="part"><span class="t-cap">郵便番号枠：宛先・件数・配達番号</span><span class="boxes boxes--sm"><b>0</b><b>0</b><b>0</b><b>0</b><b>4</b><b>2</b></span></div>
+      <div class="part"><span class="t-cap">状態</span><span class="status">21XX年と通信中</span></div>
+      <div class="part part--wide"><span class="t-cap">項目：枠の線の上にラベルを置く（郵便の伝票の形）</span>
+        <div class="field-pair"><div class="field"><span class="field-label">差出人</span><p class="t-lead">美月（26歳・会社員）</p></div><div class="field"><span class="field-label">お願い</span><p class="t-lead">AIのおすすめじゃない物を渡したい。</p></div></div></div>
+      <div class="part part--wide"><span class="t-cap">便せん：ここだけアナログ。罫線と手書きの文字</span>
+        <div class="paper" style="max-width:52em"><p style="font-size:.8em;color:#8a6a45">過去の、だれかへ</p><p>来週は、親友の誕生日です。プレゼントは3年連続で、AIがすすめる同じハンドクリーム。</p></div></div>
+    </div>
+  </section>
+
+  <section class="sheet-sec">
+    <h3 class="sec-h">動き</h3>
+    <ul class="motion t-body">
+      <li><b class="t-data">160ms</b>押したときの反応。ボタンが2px沈む</li>
+      <li><b class="t-data">480ms</b>文字や部品が出る。下から1.2%浮き上がる</li>
+      <li><b class="t-data">1100ms</b>線が引かれる・場面が切り替わる</li>
+      <li>動きは「配達が進んだ」ことを伝えるときにだけ使う。タイトル画面では、7秒ごとに荷物がルートを渡り、宛先の枠が光る</li>
+      <li>展示はスクロールしないので、スクロールやマウスに連動する動きは使わない</li>
+    </ul>
+  </section>
+</div>
+
+<script src="opening.js"></script>
+</body>
+</html>

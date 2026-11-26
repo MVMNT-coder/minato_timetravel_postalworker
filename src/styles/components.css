@@ -1,0 +1,56 @@
+/* =========================================================
+   部品
+   ========================================================= */
+
+/* ---- 上の帯：ブランド・状態・時刻 ---- */
+.bar{display:flex;align-items:center;justify-content:space-between;gap:var(--s-3);padding:var(--s-3) 0;border-bottom:var(--line);font-size:var(--fs-cap)}
+.bar-brand{font-family:var(--f-latin);font-weight:700;font-variation-settings:"wdth" 108;font-size:calc(var(--fs-cap)*1.25);letter-spacing:.01em}
+.bar-meta{display:flex;align-items:center;gap:var(--s-4);color:var(--c-mute)}
+.bar-meta .t-data{color:var(--c-text)}
+
+/* ---- 状態：小さな四角＋言葉。受信中・受付中など、いま動いていることを示す ---- */
+.status{display:inline-flex;align-items:center;gap:.6em;color:var(--c-text)}
+.status::before{content:"";width:.62em;height:.62em;background:var(--c-signal);animation:status-blink 1.6s steps(1) infinite}
+@keyframes status-blink{50%{opacity:.25}}
+
+/* ---- 郵便番号枠：数字を1文字ずつ四角に入れる。宛先・件数・配達番号に使う ---- */
+.boxes{display:inline-flex;gap:calc(var(--u)*.35)}
+.boxes>b{display:grid;place-items:center;width:1.18em;height:1.36em;border:var(--line-signal);font-family:var(--f-latin);font-weight:700;
+  font-variation-settings:"wdth" 104;font-variant-numeric:tabular-nums;line-height:1;color:var(--c-text)}
+.boxes--year{font-size:calc(var(--fs-num)*.74)}
+.boxes--year>b{border-width:calc(var(--u)*.22);width:1.06em;height:1.22em;font-weight:800;font-variation-settings:"wdth" 112;letter-spacing:-.02em}
+.boxes--year>b.is-open{color:var(--c-signal)}          /* 未確定の桁（X） */
+.boxes--sm{font-size:var(--fs-lead)}
+.boxes>b.is-empty{color:transparent;border-color:var(--c-line-strong)}
+
+/* ---- 項目：郵便の伝票のように、枠の線の上にラベルを置く ---- */
+.field{position:relative;border:var(--line);padding:var(--s-3) var(--s-3) var(--s-2)}
+.field-label{position:absolute;top:0;left:var(--s-2);transform:translateY(-50%);padding:0 .5em;background:var(--c-ink);font-size:var(--fs-cap);color:var(--c-mute)}
+
+/* ---- ボタン ----
+   展示では物理ボタンで押すので、画面のボタンには「何を押すか」の印（丸いキー）をつける */
+.cta{display:inline-flex;align-items:center;gap:var(--s-2);padding:calc(var(--u)*1.05) calc(var(--u)*2) calc(var(--u)*1.05) calc(var(--u)*1.2);
+  background:var(--c-signal);color:var(--c-signal-ink);border:0;cursor:pointer;font-family:var(--f-ja);font-weight:700;font-size:var(--fs-lead);line-height:1;
+  position:relative;overflow:hidden;transition:transform var(--t-fast) var(--ease-out),background-color var(--t-fast)}
+.cta-key{width:1.25em;height:1.25em;border-radius:50%;border:.16em solid currentColor;display:grid;place-items:center}
+.cta-key::after{content:"";width:.42em;height:.42em;border-radius:50%;background:currentColor;animation:key-press 2.4s var(--ease-inout) infinite}
+@keyframes key-press{0%,70%,100%{transform:scale(1)}80%{transform:scale(.55)}}
+.cta:hover{background:#FF7424}
+.cta:active{transform:translateY(2px)}
+.btn-quiet{display:inline-flex;align-items:center;gap:var(--s-2);padding:calc(var(--u)*.9) calc(var(--u)*1.6);background:transparent;border:var(--line);color:var(--c-text);
+  font-weight:500;font-size:var(--fs-body);line-height:1;cursor:pointer;transition:border-color var(--t-fast)}
+.btn-quiet:hover{border-color:var(--c-text)}
+/* 自動で次へ進むとき：ボタンの下に残り時間の線 */
+.cta[data-auto]::before,.btn-quiet[data-auto]::before{content:"";position:absolute;left:0;bottom:0;height:3px;width:100%;background:currentColor;opacity:.55;transform-origin:left;
+  animation:auto-bar var(--auto,4s) linear forwards}
+.btn-quiet[data-auto]{position:relative;overflow:hidden}
+@keyframes auto-bar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+
+/* ---- パネル：面で区切るときだけ使う。角は丸めない ---- */
+.panel{background:var(--c-panel);border:var(--line);padding:var(--s-4)}
+
+/* ---- 便せん：ここだけアナログ ---- */
+.paper{--lh:calc(var(--fs-body)*2.05);background:var(--c-paper);color:var(--c-hand);font-family:var(--f-hand);font-weight:600;font-size:var(--fs-body);line-height:var(--lh);
+  padding:var(--s-5) var(--s-5) var(--s-4);background-image:repeating-linear-gradient(transparent 0 calc(var(--lh) - 1px),var(--c-paper-line) calc(var(--lh) - 1px) var(--lh));
+  background-origin:content-box;box-shadow:0 calc(var(--u)*1.2) calc(var(--u)*3.4) rgba(0,0,0,.55)}
+.paper p{margin:0}

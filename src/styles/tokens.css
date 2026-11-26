@@ -1,0 +1,68 @@
+/* =========================================================
+   時間郵便局 デザイントークン
+   色・文字・余白・動きの値は、すべてここで決める。
+   画面ごとのCSSでは、ここにある変数だけを使う。
+   ========================================================= */
+:root{
+  /* ---- 色 ----
+     オレンジは「郵便番号枠の色」。押せる物、受信中、宛先（21XX）だけに使い、文章には使わない。 */
+  --c-ink:#0A0A09;          /* 背景 */
+  --c-panel:#151514;        /* 面（パネル・カメラの外側） */
+  --c-line:#34332F;         /* 罫線 */
+  --c-line-strong:#5A5852;  /* 強い罫線・無効な枠 */
+  --c-mute:#8F8C85;         /* 補足の文字 */
+  --c-text:#ECE8DF;         /* 本文・見出し */
+  --c-signal:#FF5C00;       /* シグナル（郵便番号枠） */
+  --c-signal-ink:#1A0A00;   /* シグナルの上に乗る文字 */
+  --c-signal-soft:rgba(255,92,0,.16);
+  --c-paper:#F1ECE1;        /* 便せん */
+  --c-paper-line:rgba(120,92,58,.22);
+  --c-hand:#3A2A1B;         /* 便せんの文字 */
+
+  /* ---- 書体 ----
+     英数字：Archivo（幅を変えられる。大きな数字は少し広げる）
+     日本語：Zen Kaku Gothic New
+     動いている数値（時刻・受信率・件数）：IBM Plex Mono
+     手紙：Klee One */
+  --f-latin:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-ja:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;
+  --f-data:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --f-hand:"Klee One","Hiragino Mincho ProN",serif;
+
+  /* ---- 大きさの単位 ----
+     --u は16:9の画面の幅の1/100。展示（1920×1080）では約19px。
+     プロジェクターで2〜3m離れて読めるよう、本文は最小でも --fs-body。 */
+  --u:min(1vw,1.778vh);
+  --fs-cap:max(13px,calc(var(--u)*1.05));   /* 注記 */
+  --fs-body:max(16px,calc(var(--u)*1.55));  /* 本文 */
+  --fs-lead:max(19px,calc(var(--u)*2.2));   /* リード・セリフ */
+  --fs-h2:max(24px,calc(var(--u)*3.3));     /* 中見出し・判定 */
+  --fs-h1:max(40px,calc(var(--u)*6.4));     /* 大見出し */
+  --fs-num:max(56px,calc(var(--u)*11.5));   /* 年号などの大きな数字 */
+
+  /* ---- 余白（--u の倍数） ---- */
+  --s-1:calc(var(--u)*.5);
+  --s-2:calc(var(--u)*1);
+  --s-3:calc(var(--u)*1.6);
+  --s-4:calc(var(--u)*2.6);
+  --s-5:calc(var(--u)*4.2);
+  --s-6:calc(var(--u)*6.8);
+
+  /* ---- グリッド ---- 12列。外側の余白は左右同じ */
+  --g-margin:calc(var(--u)*4.6);
+  --g-gutter:calc(var(--u)*1.6);
+
+  /* ---- 線 ---- */
+  --line:1px solid var(--c-line);
+  --line-signal:2px solid var(--c-signal);
+
+  /* ---- 動き ---- 使う速さは3つだけ */
+  --ease-out:cubic-bezier(.16,.84,.24,1);
+  --ease-inout:cubic-bezier(.65,0,.25,1);
+  --t-fast:160ms;   /* 押したときの反応 */
+  --t-base:480ms;   /* 文字や部品が出る */
+  --t-slow:1100ms;  /* 線が引かれる・場面の切り替え */
+}
+@media (prefers-reduced-motion:reduce){
+  :root{--t-fast:1ms;--t-base:1ms;--t-slow:1ms}
+}

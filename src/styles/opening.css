@@ -1,0 +1,52 @@
+/* =========================================================
+   場面：タイトル（Opening）
+   主役は「2026 → 21XX」の配達ルート。宛先の年を郵便番号枠に書く。
+   ========================================================= */
+.opening{grid-template-rows:auto 1fr auto auto}
+
+/* 配達ルート：差出しの年 ─── 宛先の年（郵便番号枠） */
+.route{align-self:center;display:grid;grid-template-columns:auto minmax(var(--s-6),1fr) auto;align-items:end;column-gap:var(--s-3)}
+.route-end{display:flex;flex-direction:column;gap:var(--s-2)}
+.route-end .t-cap{font-size:var(--fs-cap)}
+.route-to{align-items:flex-end}
+.route-line{position:relative;height:calc(var(--fs-num)*.74*1.22);align-self:end}
+.route-line::before{content:"";position:absolute;left:0;right:0;top:50%;border-top:1px dashed var(--c-line-strong);transform-origin:left;transform:scaleX(var(--draw,1));transition:transform var(--t-slow) var(--ease-inout)}
+.route-line .packet{position:absolute;top:50%;left:0;width:calc(var(--u)*1.6);height:calc(var(--u)*1.1);margin-top:calc(var(--u)*-.55);background:var(--c-signal);opacity:0}
+.route-line .packet::after{content:"";position:absolute;inset:0;background:linear-gradient(135deg,transparent 46%,var(--c-signal-ink) 47% 53%,transparent 54%),linear-gradient(45deg,transparent 46%,var(--c-signal-ink) 47% 53%,transparent 54%);background-size:100% 200%;background-position:0 0;opacity:.55}
+.route-line .packet.is-moving{animation:packet-go 2.6s var(--ease-inout) forwards}
+@keyframes packet-go{0%{left:0;opacity:0}8%{opacity:1}92%{opacity:1}100%{left:calc(100% - var(--u)*1.6);opacity:0}}
+.route-line .ticks{position:absolute;left:0;right:0;top:calc(50% + var(--u)*1.4);display:flex;justify-content:space-between;font-family:var(--f-data);font-size:var(--fs-cap);color:var(--c-mute)}
+
+/* 見出しとリード */
+.hero{align-self:end;padding-bottom:var(--s-4)}
+.hero .t-lead{margin-top:var(--s-3)}
+
+/* 下の段：ボタン（左）と、これまでの結果（右） */
+.opening-foot{display:grid;grid-template-columns:repeat(12,1fr);column-gap:var(--g-gutter);align-items:end;padding:var(--s-3) 0 var(--s-4);border-top:var(--line)}
+.opening-foot .cta{grid-column:1/span 6;grid-row:1;justify-self:start}
+.tally{grid-column:8/-1;grid-row:1/span 2;margin:0;display:grid;gap:var(--s-1)}
+.tally>div{display:flex;align-items:center;justify-content:space-between;gap:var(--s-3)}
+.tally dt{font-size:var(--fs-body);color:var(--c-mute)}
+.tally dd{margin:0}
+.opening-foot .opening-note{grid-column:1/span 6;grid-row:2;margin-top:var(--s-2)}
+
+/* ---- 起動の動き（1回だけ） ---- */
+.opening [data-in]{opacity:0;transform:translateY(calc(var(--u)*1.2));transition:opacity var(--t-base) var(--ease-out),transform var(--t-base) var(--ease-out)}
+.opening.is-on [data-in]{opacity:1;transform:none;transition-delay:var(--d,0ms)}
+.opening .t-h1 .mask{display:inline-block;overflow:hidden;vertical-align:bottom}
+.opening .t-h1 .mask>span{display:inline-block;transform:translateY(105%);transition:transform var(--t-slow) var(--ease-out)}
+.opening.is-on .t-h1 .mask>span{transform:none;transition-delay:var(--d,0ms)}
+.opening .boxes--year>b{opacity:0;transform:scale(.8);transition:opacity var(--t-fast),transform var(--t-base) var(--ease-out)}
+.opening.is-on .boxes--year>b{opacity:1;transform:none;transition-delay:var(--d,0ms)}
+.opening .boxes--year.is-arrived>b{animation:box-flash .9s var(--ease-out)}
+@keyframes box-flash{0%{background:var(--c-signal);color:var(--c-signal-ink)}100%{background:transparent}}
+
+/* スマホなど縦長の画面：ルートを縦に積む */
+@media (max-aspect-ratio:1/1){
+  .stage{width:100vw;height:auto;min-height:100vh}
+  .route{grid-template-columns:1fr;row-gap:var(--s-3)}
+  .route-to{align-items:flex-start}
+  .route-line{height:var(--s-5)}
+  .opening-foot .cta,.tally{grid-column:1/-1}
+  .tally{margin-top:var(--s-4)}
+}
