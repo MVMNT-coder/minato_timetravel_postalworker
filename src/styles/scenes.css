@@ -178,6 +178,56 @@ body.desat .scene{filter:grayscale(1) brightness(.85);transition:filter 1.2s}
 @keyframes gen-in{from{opacity:0;filter:blur(8px) brightness(1.6)}to{opacity:1;filter:none}}
 @media (prefers-reduced-motion:reduce){.cam-art,.cam-scan::after{animation:none}}
 
+/* ---------- 4. 未来を選ぶ ---------- */
+.sc-select{row-gap:var(--s-4);align-content:center}
+.sl-q{margin:0;font-size:var(--fs-h2);font-weight:700;line-height:1.35}
+.sl-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--g-gutter);list-style:none;margin:0;padding:0}
+.sl-card{position:relative;display:flex;flex-direction:column;gap:var(--s-2);padding:var(--s-4);border:var(--line);background:var(--c-panel);cursor:pointer;
+  transition:border-color var(--t-fast),background var(--t-fast),color var(--t-fast),opacity var(--t-base),transform var(--t-base) var(--ease-out)}
+.sl-key{font-size:calc(var(--fs-h1)*.62);font-weight:900;line-height:1.1}
+.sl-title{font-size:var(--fs-lead);font-weight:700;line-height:1.4}
+.sl-line{margin:0;font-size:var(--fs-body);color:var(--c-mute);line-height:1.6}
+/* 光っている未来＝押せる（オレンジ） */
+.sl-card.is-on{border-color:var(--c-signal);box-shadow:inset 0 0 0 calc(var(--u)*.12) var(--c-signal);transform:translateY(calc(var(--u)*-.6))}
+.sl-card.is-on .sl-key{color:var(--c-signal)}
+.sl-card.is-picked{background:var(--c-signal);color:var(--c-signal-ink)}
+.sl-card.is-picked .sl-key,.sl-card.is-picked .sl-line{color:var(--c-signal-ink)}
+.sl-card.is-off{opacity:.25}
+.sl-hint{color:var(--c-mute)}
+
+/* ---------- 8. お願いと選び方 ---------- */
+.rq-hint{display:flex;flex-direction:column;gap:var(--s-1);margin-top:var(--s-3);padding-top:var(--s-3);border-top:var(--line);max-width:60em}
+.rq-shelf{color:var(--c-mute)}
+
+/* ---------- 11. 返事を待つ：封筒が右（2045年）から戻ってくる ---------- */
+.sc-wait{position:relative;display:block;padding:0}
+.wt-env{position:absolute;left:50%;top:42%;width:min(36%,calc(var(--u)*30));transform:translate(110vw,-50%) rotate(10deg);filter:drop-shadow(0 calc(var(--u)*.6) calc(var(--u)*1.2) rgba(0,0,0,.6))}
+.wt-env.is-in{transition:transform 1.1s var(--ease-out);transform:translate(-50%,-50%) rotate(-3deg)}
+.wt-env .env-from{position:absolute;left:10%;bottom:14%;font-family:var(--f-hand-thin);font-size:calc(var(--fs-lead)*.95);color:var(--c-hand)}
+.wt-env[data-hand="soft"] .env-from{font-family:var(--f-hand-soft)}
+.wt-env[data-hand="bold"] .env-from{font-family:var(--f-hand-bold)}
+.wt-msg{position:absolute;left:0;bottom:var(--s-5);margin:0;font-size:var(--fs-h2);font-weight:700;display:flex;align-items:center;gap:.5em}
+.wt-msg::before{content:"";width:.4em;height:.4em;background:var(--c-signal);animation:status-blink 1s steps(1) infinite}
+
+/* ---------- 14. 同封の写真 ---------- */
+.ph-say{margin-top:var(--s-4)}
+.mi-line2{margin:0;font-size:calc(var(--fs-lead)*1.2);font-weight:700;line-height:1.55;min-height:3.1em}
+
+/* ---------- 15. 判定の理由 ---------- */
+.vd-reason{margin:0;font-size:calc(var(--fs-lead)*1.15);line-height:1.6;max-width:40em}
+
+/* ---------- 16. あなたの当たり前：カードが左の画面へ飛ぶ ---------- */
+.sc-gap{row-gap:var(--s-4)}
+.gp-card{grid-column:1/11;display:flex;flex-direction:column;gap:var(--s-3);padding:var(--s-5);background:var(--c-panel);border:var(--line);
+  transition:transform .9s cubic-bezier(.6,0,.4,1),opacity .9s ease-in}
+.gp-line{margin:0;font-size:calc(var(--fs-h1)*.78);font-weight:900;line-height:1.28;text-wrap:balance}
+.gp-from{display:flex;align-items:center;gap:var(--s-2);color:var(--c-mute);margin:0}
+.gp-card.is-fly{transform:translateX(-150%) scale(.5) rotate(-4deg);opacity:0}
+.gp-note{margin:0;display:flex;align-items:center;gap:.6em;font-size:var(--fs-h2);font-weight:700;animation:sc-in var(--t-base) var(--ease-out) both}
+.gp-arrow{color:var(--c-signal);font-size:1.2em;animation:gp-arrow 1.2s var(--ease-inout) infinite}
+@keyframes gp-arrow{50%{transform:translateX(-.25em)}}
+@media (prefers-reduced-motion:reduce){.gp-card{transition:opacity .3s}.gp-card.is-fly{transform:none}.gp-arrow{animation:none}}
+
 /* ---------- 19. おわり・送れなかったとき ---------- */
 .sc-end{row-gap:var(--s-4)}
 .er-detail{word-break:break-all;max-width:60em}
@@ -198,6 +248,9 @@ body.desat .scene{filter:grayscale(1) brightness(.85);transition:filter 1.2s}
   .wp-year{align-items:flex-start}
   .wp-min{width:100%}
   .sc-photo .ph-view{height:auto;width:100%}
+  .sl-cards{grid-template-columns:minmax(0,1fr)}
+  .sl-key{font-size:var(--fs-h2)}
+  .gp-line{font-size:var(--fs-h2)}
   .foot{flex-direction:column;align-items:flex-start;gap:var(--s-2);padding-bottom:calc(var(--s-3) + env(safe-area-inset-bottom,0px))}
   .chapters{width:100%}
   .chapters li{min-width:0;flex:1}

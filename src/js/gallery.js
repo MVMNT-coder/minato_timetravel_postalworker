@@ -1,129 +1,145 @@
-/* ===== ギャラリー（サブディスプレイ）：判定のスタンプを押していく作業台 =====
-   左＝依頼主の世界のイラスト、右＝送られた物の写真、真ん中＝「変わった／ちょっと変わった／変わらなかった」のスタンプを押す
-   ・メイン画面で G キー、またはサブディスプレイ用に URL に ?view=archive を付けて開く
-   ・メインで結果が出ると、次の1件として割り込む */
+/* ===== 左の画面：配達レポート =====
+   メイン画面の左に置くサブディスプレイ（横向き）。URL に ?view=archive を付けて開く（メイン画面でも G キーで開閉できる）
+   ・メインの最後の画面で「あなたの当たり前」のカードが左へ飛ぶと、その回のレポートが右端から入ってきて、判定の印が押される
+   ・同じPCなら、ウィンドウどうしの知らせ（BroadcastChannel）でぴったり合わせる。別のPCなら、シートを5秒ごとに確かめて届いたものから出す
+   ・新しい配達がない間は、過去のレポートを順に流す。1件は3ページ（返信と総評／ギャップの核心と比較表／揺らぎ・兆し・問い）を自動でめくる */
 const ARCHIVE_ONLY=new URLSearchParams(location.search).get("view")==="archive";
 if(ARCHIVE_ONLY)document.body.classList.add("archive-only");
 const GAL=(()=>{
-  const LK="mirai_archive_local_v4",HOLD=7500;
-  let el=null,open=false,items=[],totals=null,maxRow=0,poll=null,ipoll=null,idx=-1,timer=null,tl=0,express=[],hold={};
+  const LK="mirai_archive_local_v5",PAGE_NEW=20000,PAGE=12000,POLL=5000,FLY_WAIT=55000;
+  let el=null,open=false,items=[],totals=null,maxRow=0,poll=null,idx=-1,timer=null,tl=0,queue=[],pending={},curKey="";
   const bc=("BroadcastChannel" in window)?new BroadcastChannel("mirai_archive"):null;
   const keyOf=x=>x.row?"r"+x.row:"t"+x.at;
   function local(){try{return JSON.parse(lsGet(LK,"[]"))||[]}catch{return[]}}
   function saveLocal(a){let k=a.slice(0,30);while(k.length){try{localStorage.setItem(LK,JSON.stringify(k));return}catch{k=k.slice(0,k.length-3)}}}
-  // メイン側：結果が出たら控えを残し、ギャラリーに知らせる
+  function patchLocal(rec,obj){const a=local();const x=a.find(y=>keyOf(y)===keyOf(rec));if(x){Object.assign(x,obj);saveLocal(a)}}
+
+  /* ---------- メイン側から呼ぶ ---------- */
+  // 結果が出たら控えを残し、左の画面に知らせる（まだ出さない。カードが飛んだときに出す）
   function remember(rec){const a=local().filter(x=>keyOf(x)!==keyOf(rec));a.unshift(rec);saveLocal(a);bc?.postMessage({type:"new",rec})}
-  function attachSvg(){}
-  // メイン側：想像図が届いたら控えに足して、ギャラリーに知らせる
-  function attachIll(rec,ill){const a=local();const x=a.find(y=>keyOf(y)===keyOf(rec));if(x){x.ill=ill;saveLocal(a)}bc?.postMessage({type:"ill",key:keyOf(rec),ill})}
-  // メイン側：想像図が描けなかったときも知らせる（ギャラリーが待つのをやめる）
+  function attachIll(rec,ill){patchLocal(rec,{ill});bc?.postMessage({type:"ill",key:keyOf(rec),ill})}
   function illFail(rec){bc?.postMessage({type:"illfail",key:keyOf(rec)})}
-  let curKey="";
-  const capOf=(x,st)=>x.ill?`<b>${esc(st.name)}</b>のその後<small>AIが描いた想像図</small>`:`<b>${esc(st.name)}</b>（${esc(st.who)}）の手紙`;
-  function swapIll(x){const a=$("#gdArt");if(a&&curKey===keyOf(x)&&x.ill){a.innerHTML=`<img class="gd-ill" src="${x.ill}" alt="">`;$(".gd-l .gd-cap").innerHTML=capOf(x,STORIES[x.story]||STORIES[0])}}
-  // 新着は、その回の想像図が届くまで待ってから出す（届かなければ最大 WAIT_ILL ミリ秒で、世界の線画のまま出す）
-  const WAIT_ILL=60000;
-  function release(k){if(!express.includes(k))return;hold[k]=0;if(open){clearTimeout(timer);next()}}
-  async function pollIll(){
-    for(const k of express){const x=items.find(y=>keyOf(y)===k);
-      if(!x||x.ill||!x.row||!(hold[k]>Date.now()))continue;
-      if(x._illTry&&Date.now()-x._illTry<6000)continue;x._illTry=Date.now();
-      const d=await get(`?ill=${x.row}`);if(d&&d.ill&&!x.ill){x.ill="data:image/jpeg;base64,"+d.ill;release(k);return}}
-  }
+  function attachReport(rec,report){patchLocal(rec,{report});bc?.postMessage({type:"report",key:keyOf(rec),report})}
+  function reportFail(rec){bc?.postMessage({type:"reportfail",key:keyOf(rec)})}
+  // 「あなたの当たり前」のカードが左へ飛んだ瞬間
+  function fly(rec){bc?.postMessage({type:"fly",key:keyOf(rec)});if(open)arrive(keyOf(rec))}
+
+  /* ---------- 左の画面 ---------- */
   async function get(q){if(!window.GAS_URL)return null;try{const r=await fetch(window.GAS_URL+q,{signal:AbortSignal.timeout(12000)});const d=await r.json();return d.ok?d:null}catch{return null}}
   function merge(list){
     const m=new Map(items.map(x=>[keyOf(x),x]));
-    for(const x of list){
-      const dup=[...m.values()].find(y=>!y.row&&x.row&&y.item===x.item&&Math.abs(y.at-x.at)<180000);
-      if(dup)m.delete(keyOf(dup));
-      m.set(keyOf(x),{...m.get(keyOf(x)),...x});
-      if(x.row)maxRow=Math.max(maxRow,x.row);
-    }
+    for(const x of list){m.set(keyOf(x),{...m.get(keyOf(x)),...x});if(x.row)maxRow=Math.max(maxRow,x.row)}
     items=[...m.values()].sort((a,b)=>b.at-a.at).slice(0,60);
   }
+  const find=k=>items.find(x=>keyOf(x)===k);
   const VJ={saved:["変わった","日常が"],partial:["ちょっと変わった","日常が"],lost:["変わらなかった","日常は"]};
-  function counts(){
-    if(totals)return totals.outcomes;
-    const c={saved:0,partial:0,lost:0};items.forEach(x=>{if(c[x.outcome]!==undefined)c[x.outcome]++});return c;
-  }
-  function drawCounts(){const c=counts();$("#gvCnt").innerHTML=`<span class="c-s">変わった<b class="digits">${digits(c.saved)}</b></span><span class="c-p">ちょっと変わった<b class="digits">${digits(c.partial)}</b></span><span class="c-l">変わらなかった<b class="digits">${digits(c.lost)}</b></span>`}
-  /* ---------- 1件分：左に世界、右に送られた物、真ん中でスタンプ ---------- */
+  function counts(){if(totals)return totals.outcomes;const c={saved:0,partial:0,lost:0};items.forEach(x=>{if(c[x.outcome]!==undefined)c[x.outcome]++});return c}
+  function drawCounts(){const c=counts();const e=$("#gvCnt");if(e)e.innerHTML=`<span class="c-s">変わった<b class="digits">${digits(c.saved)}</b></span><span class="c-p">ちょっと変わった<b class="digits">${digits(c.partial)}</b></span><span class="c-l">変わらなかった<b class="digits">${digits(c.lost)}</b></span>`}
+  const gapCls=g=>g==="大きい"?"g-l":g==="小さい"?"g-s":"g-m";
+  const pending1=`<p class="rp-wait">レポートを作成しています…</p>`;
+  // 3ページ：返信と総評／比較表とギャップの核心／揺らいだ瞬間・現在の兆し・問い
+  const PAGES=[
+    (x,f)=>`<div class="rp-to"><span class="t-cap">受け取った人</span><b>${esc(f.name)}</b><span>${f.age}歳・${esc(f.job)}／2045年・${esc(f.title)}</span></div>
+      <div class="rp-reply"><span class="t-cap">${esc(f.name)}からの返信</span><p>${(x.reply||[]).map(esc).join("")}</p></div>
+      ${x.report&&x.report.summary?`<div class="rp-blk"><span class="t-cap">総評</span><p>${esc(x.report.summary)}</p></div>`:x.report?"":pending1}`,
+    (x,f)=>{const r=x.report;if(!r)return pending1;
+      return `<div class="rp-core"><span class="t-cap">ギャップの核心</span><p>${esc(r.core||x.gap_line||"")}</p></div>
+      ${r.rows&&r.rows.length?`<table class="rp-table"><thead><tr><th>観点</th><th>あなた（2026年）</th><th>${esc(f.name)}（2045年）</th><th>ギャップ</th></tr></thead><tbody>
+        ${r.rows.map(w=>`<tr><th>${esc(w.aspect)}</th><td>${esc(w.now)}</td><td>${esc(w.future)}</td><td><span class="gap ${gapCls(w.gap)}">${esc(w.gap)}</span></td></tr>`).join("")}</tbody></table>`:""}`},
+    (x,f)=>{const r=x.report;if(!r)return pending1;
+      return `${r.wobble?`<div class="rp-blk rp-pad"><span class="t-cap">${esc(f.name)}が揺らいだ瞬間</span><p>${esc(r.wobble)}</p></div>`:""}
+      ${r.signals&&r.signals.length?`<div class="rp-blk"><span class="t-cap">この未来は、もう始まっているかもしれません</span><ul>${r.signals.map(s=>`<li>${esc(s.text)}<small>出典：${esc(s.source)}</small></li>`).join("")}</ul></div>`:""}
+      ${r.questions&&r.questions.length?`<div class="rp-blk"><span class="t-cap">あなたへの問い</span><ol class="rp-q">${r.questions.map(q=>`<li>${esc(q)}</li>`).join("")}</ol></div>`:""}`}
+  ];
+  // 1件分：左に同封の写真と送った物、右にレポート（2ページ）
   function show(x,isNew){
-    if(!open)return;const my=++tl;const st=STORIES[x.story]||STORIES[0],v=VJ[x.outcome]||VJ.lost;
-    $("#gvDesk").innerHTML=`
-      <div class="gd-l"><div class="gd-cap">${capOf(x,st)}</div><div class="gd-art" id="gdArt"></div><p class="gd-req">「${esc(st.q)}」</p></div>
-      <div class="gd-c"><div class="gd-pad"><div class="ink ${x.outcome}" style="--r:${-9+Math.random()*6}deg"><span>${v[1]}</span><b>${v[0]}</b></div>
-        <div class="tool ${x.outcome}"><i class="knob"></i><i class="neck"></i><i class="base"></i></div></div>
-        ${isNew?'<div class="gd-new">新しい配達</div>':""}</div>
-      <div class="gd-r"><div class="gd-cap">送られてきた物</div><div class="gd-ph"><img src="${x.thumb}" alt=""></div><p class="gd-item">${esc(x.item)}</p></div>`;
-    curKey=keyOf(x);
-    const art=worldArtEl(x.story);
-    if(x.ill)$("#gdArt").innerHTML=`<img class="gd-ill" src="${x.ill}" alt="">`;else $("#gdArt").append(art);
-    // 別のPCで描いた想像図は、シートから取りにいく（1分に1回まで）
-    if(!x.ill&&x.row&&(!x._illTry||Date.now()-x._illTry>60000)){x._illTry=Date.now();get(`?ill=${x.row}`).then(d=>{if(d&&d.ill){x.ill="data:image/jpeg;base64,"+d.ill;swapIll(x)}})}
-    const desk=$("#gvDesk"),alive=()=>open&&my===tl;
-    desk.className="gv-desk in";
-    if(!x.ill)drawIn(art,110,1300);
-    (async()=>{
-      await sleep(10000);if(!alive())return;     // 左右をじっくり見せてから、ハンコを出す
-      desk.classList.add("lift");                 // スタンプを持ち上げる
-      await sleep(1300);if(!alive())return;
-      desk.classList.add("press");                // ドン
-      desk.classList.remove("shake");void desk.offsetWidth;desk.classList.add("shake");
-      await sleep(420);if(!alive())return;
-      desk.classList.add("done");                 // 持ち上げると判定が残る
-      clearTimeout(timer);timer=setTimeout(next,isNew?HOLD+4000:HOLD);
-    })();
-    clearTimeout(timer);timer=setTimeout(next,20000);
+    if(!open)return;const my=++tl,alive=()=>open&&my===tl;
+    const f=FUTURES[x.story]||FUTURES[0],v=VJ[x.outcome]||VJ.lost;curKey=keyOf(x);
+    $("#gvDesk").innerHTML=`<div class="rp ${isNew?"is-new":""}">
+      <div class="rp-l">
+        <figure class="rp-ill" id="rpIll"></figure>
+        <div class="rp-item"><img src="${x.thumb}" alt=""><div><span class="t-cap">2026年から送った物</span><b>${esc(x.item)}</b></div></div>
+      </div>
+      <div class="rp-r">
+        <div class="ink ${x.outcome}" style="--r:${-8+Math.random()*5}deg"><span>${v[1]}</span><b>${v[0]}</b></div>
+        <div class="rp-page" id="rpPage"></div>
+        <ol class="rp-dots" aria-hidden="true">${PAGES.map((_,i)=>`<li class="${i?"":"is-on"}"></li>`).join("")}</ol>
+      </div></div>`;
+    drawIll(x);
+    let p=0;
+    const render=()=>{if(!alive())return;const c=find(curKey)||x;$("#rpPage").innerHTML=PAGES[p](c,f);$("#rpPage").classList.remove("is-in");void $("#rpPage").offsetWidth;$("#rpPage").classList.add("is-in");[...$(".rp-dots").children].forEach((d,i)=>d.classList.toggle("is-on",i===p))};
+    render();x._render=()=>{if(curKey===keyOf(x))render()};
+    // レポートがまだなら、シートに取りにいく（別のPCで作られた場合）
+    if(!x.report&&x.row)fetchReport(x);
+    const hold=isNew?PAGE_NEW:PAGE;
+    clearTimeout(timer);
+    const turn=()=>{if(!alive())return;if(p>=PAGES.length-1)return next();p++;render();timer=setTimeout(turn,hold)};
+    timer=setTimeout(turn,hold);
+  }
+  function drawIll(x){
+    const e=$("#rpIll");if(!e||curKey!==keyOf(x))return;
+    if(x.ill){e.innerHTML=`<img class="gd-ill" src="${x.ill}" alt="AIが描いた想像図"><figcaption>同封されていた写真（AIが描いた想像図）</figcaption>`;return}
+    e.innerHTML=`<figcaption>${pending[keyOf(x)]?"写真が届くのを待っています…":"差出人の世界"}</figcaption>`;
+    const art=worldArtEl(x.story);e.prepend(art);drawIn(art,60,900);
+    if(x.row&&(!x._illTry||Date.now()-x._illTry>20000)){x._illTry=Date.now();get(`?ill=${x.row}`).then(d=>{if(d&&d.ill&&!x.ill){x.ill="data:image/jpeg;base64,"+d.ill;drawIll(x)}})}
+  }
+  async function fetchReport(x){
+    if(x._repTry&&Date.now()-x._repTry<6000)return;x._repTry=Date.now();
+    const d=await get(`?report=${x.row}`);if(d&&d.report&&!x.report){x.report=d.report;x._render?.()}
+  }
+  // 新しい配達を、右端から入れて出す
+  function arrive(k){
+    const x=find(k);if(!x){pending[k]=pending[k]||Date.now();return}
+    delete pending[k];queue=queue.filter(y=>y!==k);idx=-1;show(x,true);
   }
   function next(){
     if(!open)return;
-    const ready=express.filter(k=>!(hold[k]>Date.now()));
-    if(ready.length){const k=ready[0];express=express.filter(y=>y!==k);const x=items.find(y=>keyOf(y)===k);if(x)return show(x,true)}
-    if(!items.length){$("#gvDesk").innerHTML=`<div class="arc-empty">まだ配達がありません。<br>最初の挑戦を待っています。</div>`;clearTimeout(timer);timer=setTimeout(next,8000);return}
-    // 想像図を待っている新着は、届いてから「NEW DELIVERY」として出すので、ふだんの順番では飛ばす
-    for(let i=0;i<items.length;i++){idx=(idx+1)%items.length;if(!express.includes(keyOf(items[idx])))return show(items[idx],false)}
-    $("#gvDesk").innerHTML=`<div class="arc-empty">2126年から、写真が届くのを待っています…</div>`;clearTimeout(timer);timer=setTimeout(next,3000);
+    // 別のPCから届いた新着は、メインでカードが飛ぶころ（結果から約55秒後）に出す
+    const due=queue.find(k=>{const x=find(k);return x&&Date.now()-x.at>=FLY_WAIT});
+    if(due){queue=queue.filter(y=>y!==due);return show(find(due),true)}
+    if(!items.length){$("#gvDesk").innerHTML=`<div class="arc-empty">まだ配達がありません。<br>最初のレポートを待っています。</div>`;clearTimeout(timer);timer=setTimeout(next,8000);return}
+    idx=(idx+1)%items.length;show(items[idx],false);
   }
   async function refresh(){
     const [a,b]=await Promise.all([get(`?archive=60${maxRow?"&after="+maxRow:""}`),get("?totals=1")]);
     if(a&&Array.isArray(a.items)&&a.items.length){
       const known=new Set(items.map(keyOf)),list=a.items.map(x=>({...x,thumb:"data:image/jpeg;base64,"+x.thumb}));
-      const before=maxRow;merge(list);
-      // 別のPCから届いた新着は、次の1件として割り込ませる
-      // 想像図が届くまで待つ（シートから取りにいく）
-      if(before)list.filter(x=>!known.has(keyOf(x))&&!items.some(y=>!y.row&&y.item===x.item&&Math.abs(y.at-x.at)<180000&&y!==x)).forEach(x=>{const k=keyOf(x);if(!express.includes(k)){express.push(k);if(Date.now()-x.at<120000)hold[k]=Date.now()+WAIT_ILL-10000}});
+      const first=!maxRow;merge(list);
+      // このPCのメインからの知らせがない新着（別のPC）は、少し待ってから出す
+      if(!first)list.filter(x=>!known.has(keyOf(x))&&Date.now()-x.at<180000).forEach(x=>{const k=keyOf(x);if(!queue.includes(k))queue.push(k)});
     }
     if(b&&b.totals)totals=b.totals;
-    if(open)drawCounts();
+    drawCounts();
+    // 表示中のレポートや写真が、まだ届いていなければ取りにいく
+    const c=find(curKey);if(c&&c.row){if(!c.report)fetchReport(c);if(!c.ill&&(!c._illTry||Date.now()-c._illTry>20000))drawIll(c)}
+    // カードが飛ぶ知らせを待ちすぎたら、出してしまう
+    for(const k of Object.keys(pending))if(find(k)&&Date.now()-pending[k]>90000)arrive(k);
   }
   function onMsg(e){
-    const d=e.data||{};
-    if(open&&d.type==="ill"&&d.ill){const x=items.find(y=>keyOf(y)===d.key);if(x){x.ill=d.ill;if(express.includes(d.key))release(d.key);else swapIll(x)}return}
-    if(open&&d.type==="illfail"){release(d.key);return}
-    if(!open||d.type!=="new"||!d.rec)return;
-    merge([d.rec]);const k=keyOf(d.rec);if(!express.includes(k))express.unshift(k);hold[k]=Date.now()+(d.rec.wait?WAIT_ILL:5800);
-    if(totals)totals.outcomes[d.rec.outcome]=(totals.outcomes[d.rec.outcome]||0)+1;
-    // 想像図を描かない設定なら、結果画面の判定が出るころに割り込む（描く設定なら、届いたときに release で割り込む）
-    setTimeout(()=>{if(!open)return;drawCounts();if(!d.rec.wait&&express.includes(k)){clearTimeout(timer);next()}},6000);
-    if(d.rec.wait)setTimeout(()=>{if(open&&express.includes(k)&&!(hold[k]>Date.now())){clearTimeout(timer);next()}},WAIT_ILL+200);
+    const d=e.data||{};if(!open)return;
+    if(d.type==="new"&&d.rec){merge([d.rec]);const k=keyOf(d.rec);pending[k]=Date.now();queue=queue.filter(y=>y!==k);if(totals)totals.outcomes[d.rec.outcome]=(totals.outcomes[d.rec.outcome]||0)+1;drawCounts();return}
+    const x=d.key&&find(d.key);
+    if(d.type==="ill"&&x){x.ill=d.ill;drawIll(x);return}
+    if(d.type==="illfail"&&x){drawIll(x);return}
+    if(d.type==="report"&&x){x.report=d.report;x._render?.();return}
+    if(d.type==="fly"){arrive(d.key);return}
   }
   async function showView(){
     if(open)return;open=true;VOICE.stop?.();
     el=document.createElement("div");el.id="archive";
-    el.innerHTML=`<div class="gv-hd"><img class="arc-logo" src="assets/mvmnt-logo.png" alt="MVMNT"><div class="gv-t"><b>時空郵便局 渋谷窓口</b><span>2026年から2126年への配達と、その判定</span></div><div class="gv-cnt" id="gvCnt"></div></div>
+    el.innerHTML=`<div class="gv-hd"><img class="arc-logo" src="assets/mvmnt-logo.png" alt="MVMNT"><div class="gv-t"><b>時空郵便局 配達レポート</b><span>2026年から2045年へ送った物と、届いた返事</span></div><div class="gv-cnt" id="gvCnt"></div></div>
       <div class="gv-desk" id="gvDesk"><div class="arc-empty">読み込んでいます…</div></div>`;
     ($("#stage")&&getComputedStyle($("#stage")).display!=="contents"&&!ARCHIVE_ONLY?$("#stage"):document.body).appendChild(el);
     merge(local());drawCounts();
     await refresh();if(!open)return;
     idx=-1;next();
-    poll=setInterval(()=>{refresh();pollIll()},15000);ipoll=setInterval(pollIll,6000);bc&&(bc.onmessage=onMsg);
+    poll=setInterval(refresh,POLL);bc&&(bc.onmessage=onMsg);
   }
-  function close(){if(!open)return;open=false;clearTimeout(timer);clearInterval(poll);clearInterval(ipoll);if(bc)bc.onmessage=null;express=[];el?.remove();el=null}
+  function close(){if(!open)return;open=false;clearTimeout(timer);clearInterval(poll);if(bc)bc.onmessage=null;queue=[];el?.remove();el=null}
   document.addEventListener("keydown",e=>{
     if(ARCHIVE_ONLY||staffOpen()||e.ctrlKey||e.metaKey||e.altKey)return;
     if(e.code==="KeyG"&&!e.repeat){e.preventDefault();open?close():showView()}
     else if(e.code==="Escape"&&open){close()}
   });
-  return{remember,attachSvg,attachIll,illFail,show:showView,close,isOpen:()=>open,keyOf};
+  return{remember,attachIll,illFail,attachReport,reportFail,fly,show:showView,close,isOpen:()=>open,keyOf};
 })();

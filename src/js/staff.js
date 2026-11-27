@@ -10,11 +10,11 @@ function staffOpen(){return !!$("#staff")&&!$("#staff").hidden}
       <div class="sp-st" id="spKeySt">最後に押されたキー：-</div></section>
     <section><h3>音</h3><div class="sp-row"><button id="spSnd">テスト音を鳴らす</button>
         <label>全体の音量 <input type="range" id="spVol" min="0" max="1.5" step="0.05"></label></div><div class="sp-st" id="spSndSt"></div></section>
-    <section><h3>minatoの声（VOICEVOX）</h3><div class="sp-st" id="spVvSt">確認中…</div>
+    <section><h3>ミナトの声（VOICEVOX）</h3><div class="sp-st" id="spVvSt">確認中…</div>
       <div class="sp-row"><select id="spVvSpk"></select><button id="spVvTest">声をテスト</button>
         <label>声の音量 <input type="range" id="spVvVol" min="0" max="1" step="0.05"></label></div>
-      <div class="sp-st">手紙の差出人の声（世界ごと）</div>
-      ${STORIES.map((st,i)=>`<div class="sp-row"><label>${esc(st.name)}（${esc(st.who)}） <select id="spVvS${i}"></select></label><button data-vt="${i}">テスト</button></div>`).join("")}
+      <div class="sp-st">手紙の差出人の声（未来ごと）</div>
+      ${FUTURES.map((st,i)=>`<div class="sp-row"><label>${esc(st.name)}（${st.age}歳・${esc(st.job)}） <select id="spVvS${i}"></select></label><button data-vt="${i}">テスト</button></div>`).join("")}
       <div class="sp-st">VOICEVOXを起動し、設定の「CORS Policy Mode」を all にしてください。起動していないときは、ブラウザ内蔵の声で代用します。</div></section>
     <section><h3>想像図（結果画面のイラスト）</h3>
       <div class="sp-row"><label>描くAI <select id="spIll"><option value="claude">Claude（線画）</option><option value="gemini">Gemini（画像）</option><option value="off">描かない</option></select></label>
@@ -25,9 +25,9 @@ function staffOpen(){return !!$("#staff")&&!$("#staff").hidden}
       <div class="sp-row"><button id="spFx">${FXMODE?"OFFにする":"ONにする"}</button>
       <label>外周の幅（片側） <select id="spFxM">${[3,5,8,10,12,15].map(v=>`<option value="${v}">${v}%</option>`).join("")}</select></label>
       <button id="spFxTest">演出を順番にテスト</button></div></section>
-    <section><h3>表示する時間・自動リセット</h3><div class="sp-row"><label>想像図を表示する時間 <select id="spRes">${[8,12,20,30,45].map(v=>`<option value="${v}">${v}秒</option>`).join("")}</select></label></div>
+    <section><h3>表示する時間・自動リセット</h3><div class="sp-row"><label>同封の写真を表示する時間 <select id="spRes">${[5,7,10,15,20].map(v=>`<option value="${v}">${v}秒</option>`).join("")}</select></label></div>
       <div class="sp-st">撮影の画面は、操作がないまま60秒たつと最初の画面に戻ります。ほかの画面は自動で進みます。</div></section>
-    <section><h3>配達記録（ギャラリー）</h3><div class="sp-row"><button id="spGal">配達記録を開く（G キー）</button></div><div class="sp-st">サブディスプレイには、URLに ?view=archive を付けて別のウィンドウで開きます。</div></section>
+    <section><h3>配達レポート（左の画面）</h3><div class="sp-row"><button id="spGal">配達レポートを開く（G キー）</button></div><div class="sp-st">サブディスプレイには、URLに ?view=archive を付けて別のウィンドウで開きます。</div></section>
     <section><h3>リセット</h3><div class="sp-row"><button id="spReset" class="warn">TOPへ強制リセット</button><button id="spReload">ページを再読み込み</button></div></section>
     </div>`;
   document.body.appendChild(el);
@@ -60,14 +60,14 @@ function staffOpen(){return !!$("#staff")&&!$("#staff").hidden}
     const st=await VOICE.status();
     $("#spVvSt").textContent=st.ok?`接続OK（${st.base}）　今の声：${st.spkName||"ID "+st.spk}`:`VOICEVOXに接続できません（${st.base}）。ブラウザ内蔵の声で代用中`;
     if(st.ok){try{const list=await VOICE.speakers(),opts=sel=>list.map(x=>`<option value="${x.id}"${x.id===sel?" selected":""}>${esc(x.name)}</option>`).join("");
-      $("#spVvSpk").innerHTML=opts(st.spk);STORIES.forEach((_,i)=>$("#spVvS"+i).innerHTML=opts(VOICE.storySpk(i)))}catch{}}
-    else{$("#spVvSpk").innerHTML="<option>（未接続）</option>";STORIES.forEach((_,i)=>$("#spVvS"+i).innerHTML="<option>（未接続）</option>")}
+      $("#spVvSpk").innerHTML=opts(st.spk);FUTURES.forEach((_,i)=>$("#spVvS"+i).innerHTML=opts(VOICE.storySpk(i)))}catch{}}
+    else{$("#spVvSpk").innerHTML="<option>（未接続）</option>";FUTURES.forEach((_,i)=>$("#spVvS"+i).innerHTML="<option>（未接続）</option>")}
   }
   $("#spVvSpk").onchange=e=>{VOICE.setSpeaker(e.target.value);setTimeout(fillVoice,600)};
-  $("#spVvTest").onclick=()=>{SND.unlock();VOICE.say(UNBOX_LINE)};
-  STORIES.forEach((st,i)=>{
+  $("#spVvTest").onclick=()=>{SND.unlock();VOICE.say(INTRO[0])};
+  FUTURES.forEach((st,i)=>{
     $("#spVvS"+i).onchange=e=>VOICE.setStorySpeaker(i,e.target.value);
-    $(`[data-vt="${i}"]`).onclick=()=>{SND.unlock();VOICE.say((st.letter.match(/[^。]+。/)||[st.letter])[0],{story:i})};
+    $(`[data-vt="${i}"]`).onclick=()=>{SND.unlock();VOICE.say(sentences(st.letter[0])[0],{story:i})};
   });
   $("#spVvVol").value=String(VOICE.vol());$("#spVvVol").oninput=e=>VOICE.setVol(Number(e.target.value));
   $("#spVol").value=String(SND.vol());$("#spVol").oninput=e=>SND.setVol(Number(e.target.value));

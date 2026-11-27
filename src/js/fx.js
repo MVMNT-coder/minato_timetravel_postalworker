@@ -13,7 +13,7 @@ const FXB=(()=>{
   let P=[];
   api.set=v=>{if(v===mode)return;mode=v;t0=performance.now();if(v!=="warp")P=P.filter(p=>p.k!=="streak")};
   // ページの切り替わりを見て、演出を自動で切り替える
-  const MAP={title:"idle",intro:"comm",arrive:"comm",letter:"comm",react:"comm",request:"comm",todo:"comm",camera:"scan",accept:"scan",warp:"warp",happened:"suspense",tsukkomi:"suspense",error:"idle"};
+  const MAP={title:"idle",intro:"comm",select:"comm",arrive:"comm",letter:"comm",request:"comm",camera:"scan",warp:"warp",wait:"suspense",reply:"comm",photo:"suspense",error:"idle"};
   new MutationObserver(()=>{const pg=card.dataset.page;if(MAP[pg])api.set(MAP[pg])}).observe(card,{attributes:true,attributeFilter:["data-page"]});
   const R=()=>({x0:W*m/100,y0:H*m/100,x1:W*(1-m/100),y1:H*(1-m/100)});
   // 外周上の位置 p(0〜1) → 画面の縁の座標と外向きの向き

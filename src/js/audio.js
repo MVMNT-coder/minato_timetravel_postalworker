@@ -190,7 +190,7 @@ const SND=(()=>{
 const VOICE=(()=>{
   let base=lsGet("mirai_vv_url","http://127.0.0.1:50021"),spk=Number(lsGet("mirai_vv_speaker","6")),vol=Number(lsGet("mirai_voice_vol","1"));
   let ok=null,cur=null,token=0,spkName="",names={};const cache=new Map();
-  // 差出人の声（世界ごと）。既定：透＝玄野武宏、美月＝冥鳴ひまり、ひなた＝ずんだもん。スタッフ用パネルで変えられる
+  // 差出人の声（未来ごと）。既定：ミノリ＝玄野武宏、ツムギ＝冥鳴ひまり、ソラ＝ずんだもん。スタッフ用パネルで変えられる
   const SPK_DEF=[11,14,3],PITCH=[.78,1.15,1.45]; // PITCH はブラウザ内蔵の声で代用するときの高さ
   const storySpk=i=>Number(lsGet("mirai_vv_speaker_s"+i,String(SPK_DEF[i]??spk)));
   async function check(){
@@ -206,7 +206,7 @@ const VOICE=(()=>{
   function credit(){const el=$("#vvcredit");if(!el)return;
     const ch=[...new Set([spk,...SPK_DEF.map((_,i)=>storySpk(i))].map(id=>names[id]?.chara).filter(Boolean))];
     el.textContent=ok&&ch.length?`音声：VOICEVOX:${ch.join("、VOICEVOX:")}`:""}
-  const READ=[[/minato/gi,"ミナト"],[/美月/g,"みづき"],[/透(?!明)/g,"とおる"]];
+  const READ=[[/minato/gi,"ミナト"],[/衣類枠/g,"いるいわく"],[/6畳/g,"ろくじょう"]];
   function clean(t){let r=String(t);READ.forEach(([a,b])=>r=r.replace(a,b));return r.replace(/[「」『』]/g,"").replace(/…+/g,"、").replace(/！？|!\?/g,"？")}
   function synth(text,id=spk){
     const key=id+"|"+text;if(cache.has(key))return cache.get(key);

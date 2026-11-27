@@ -73,7 +73,7 @@ function txScene(cv,img){
   };
 }
 
-/* 結果画面の想像図：その世界で品物がどう使われたかを、AIに描かせる
+/* 同封の写真（想像図）：未来人が品物をどう使ったかを、AIに描かせる
    描くAIはスタッフ用パネルで切り替える（claude＝線画のSVG／gemini＝画像。送った物の写真も参考に渡す／off＝描かない） */
 const ILL={
   MODELS:[["gemini-nano-banana-2.1","Nano Banana 2.1（おすすめ）"],["gemini-3.1-flash-image","Nano Banana 2"],["gemini-3.1-flash-lite-image","Nano Banana 2 Lite（速い・安い）"],["gemini-3-pro-image","Nano Banana Pro（高品質・遅い）"]],
@@ -84,7 +84,7 @@ const ILL={
 async function fetchIllust(r,outcome,thumb){
   const eng=ILL.engine();
   if(!window.GAS_URL||eng==="off")return null;
-  const body={mode:"illust",engine:eng,row:r._row||0,story:storyIdx,item:r.item_name,happened:r.happened,outcome};
+  const body={mode:"illust",engine:eng,row:r._row||0,story:futureIdx,item:r.item_name,scene:r.ill_scene||r.reason,outcome};
   if(eng==="gemini"){body.model=ILL.model();if(thumb)body.image=String(thumb).split(",")[1]}
   const res=await fetch(window.GAS_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body),signal:AbortSignal.timeout(90000)});
   const d=await res.json();
@@ -121,3 +121,15 @@ function crop32(src,w){const h=Math.round(w*2/3),sa=src.width/src.height;let sw=
 function square(src,size){const s=Math.min(src.width,src.height);const c=document.createElement("canvas");c.width=c.height=size;c.getContext("2d").drawImage(src,(src.width-s)/2,(src.height-s)/2,s,s,0,0,size,size);return c.toDataURL("image/jpeg",.75)}
 function flash(){const d=document.createElement("div");d.className="flash";document.body.appendChild(d);setTimeout(()=>d.remove(),700)}
 
+
+/* 詳しいレポート：返信が届いたあと裏で作り、左の画面（ギャラリー）に届ける。シートにも残る（別のPCの左の画面用） */
+async function fetchReport(r,rec){
+  if(!window.GAS_URL)return null;
+  try{
+    const body={mode:"report",row:r._row||0,story:futureIdx,item:r.item_name,item_facts:r.item_facts,reply:r.reply,outcome:r._o,reason:r.reason,gap_line:r.gap_line};
+    const res=await fetch(window.GAS_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body),signal:AbortSignal.timeout(90000)});
+    const d=await res.json();
+    if(!d.ok||!d.report){console.warn("レポートを作れませんでした",d.detail||d.error);GAL.reportFail(rec);return null}
+    GAL.attachReport(rec,d.report);return d.report;
+  }catch(e){console.warn("レポートを作れませんでした",e);GAL.reportFail(rec);return null}
+}

@@ -113,270 +113,248 @@ minatoは窓口で、消えてしまった品物が過去から届くと、2060�
 
 // ===== 時空郵便局（メイン：index.html）=====
 // 依頼主を3人に入れ替えたので、新しいシートに記録する（依頼主Noの意味が前と違うため）
-const MISSION_SHEET = 'mission_log_v4';
-const MISSION_HEADERS = ['日時', '品物', '依頼主', 'お願い', '2126年で起きたこと', 'ツッコミ', '点数', '結果', '写真', 'ギャラリー用', '依頼主No', '想像図', '判定メモ', '想像図（小）'];
+const MISSION_SHEET = 'mission_log_v5';
+// 列：1日時 2品物 3未来 4差出人 5返信 6ミナト 7点数 8結果 9理由 10あなたの当たり前 11写真 12ギャラリー用 13未来No 14想像図 15想像図（小） 16レポート 17判定メモ
+const MISSION_HEADERS = ['日時', '品物', '未来', '差出人', '返信', 'ミナト', '点数', '結果', '理由', 'あなたの当たり前', '写真', 'ギャラリー用', '未来No', '想像図', '想像図（小）', 'レポート', '判定メモ'];
+const COL = { item: 2, reply: 5, outcome: 8, gthumb: 12, future: 13, ill: 14, illThumb: 15, report: 16 };
 const OUTCOME_LABEL = { saved: '変わった', partial: 'ちょっと変わった', lost: '変わらなかった' };
 const LABEL_OUTCOME = { '変わった': 'saved', 'ちょっと変わった': 'partial', '変わらなかった': 'lost' };
-// 2126年で少し困っている依頼主。index.html の STORIES と同じ順番にしておくこと
-// AIの判定がぶれないよう、世界の仕組み・場所・登場人物・物を使うときの条件・結果の目安・お手本を、依頼主ごとに具体的に書いておく
-const MISSION_STORIES = [
+
+// 2045年の3つの未来（世界観設定書v4の衣・食・住）。src/js/stories.js の FUTURES と同じ順番にしておくこと
+// 差出人は案内役のミナトと別の人。手紙はv4を半分に削ったもの。「現在の兆し」はAIに書かせず、ここに出典ごと固定で持つ
+const FUTURES = [
   {
-    name: "透", who: "41歳・新規事業部の課長",
-    request: "チームの人と仲良くなる、きっかけになる物がほしい。",
-    letter: "うちの会社では、AI秘書がみんなの予定を組んでくれます。会議が終わった0秒後に、次の会議。雑談の時間は『ムダ』として消されました。チームの5人とは毎日同じ会議室にいるのに、誰の好きな食べ物も知りません。",
+    key: '食べる', title: 'スコアで食べる未来',
+    sender: { name: 'ミノリ', age: 32, job: '物流センター勤務', city: '東京' },
+    summary: '医療と保険の財政が苦しくなり、毎日の食事と活動が「健康スコア」として記録され、保険料やサービスの条件に反映される。完全栄養食が標準の主食になり、栄養バランスを崩す食品は「ギルティ食」として勧められない。食べものの価値は「おいしい」より「スコアに効く」で測られる。',
+    keywords: ['最適化こそ美徳', '自己管理できる人が信頼される', 'カロリーより栄養の欠損を恐れる', '外食や規定外の食品には申告が要る'],
     profile: [
-      "住まい：渋谷から電車で20分のマンションの3階、2LDK。妻と中学1年の娘の3人暮らし。部屋はAIがいつも片づけていて物が少ない。ベランダに、昔使っていたキャンプ用の折りたたみ椅子が1脚だけ出しっぱなしになっている",
-      "仕事：大手メーカーの新規事業部の課長。新しい事業を考えるのが仕事だが、企画会議では毎回AIの案がそのまま通る",
-      "1日の流れ：7時に起きる。9時から18時まで、AI秘書が組んだ9本の会議。昼ごはんは会議中に栄養ゼリー。帰りの電車で、AIが要約した議事録を読む",
-      "休みの日：AIのおすすめ動画を流しながら、ソファーで寝落ちする",
-      "趣味：昔は大学の友達とキャンプに行き、焚き火を囲んで朝まで話すのが好きだった。もう10年行っていない",
-      "好きな物：からあげ、古い喫茶店のナポリタン、焚き火のにおい",
-      "苦手な物：沈黙、自己紹介",
-      "性格：まじめで責任感が強い。部下に気をつかいすぎて、仕事以外の質問ができない。冗談を言うと、自分で説明してしまう",
-      "口ぐせ：「念のため確認なんですが」",
-      "最近あったこと：娘に「お父さんの会社の人って、どんな人？」と聞かれて、何も答えられなかった"
+      '東京の集合住宅で、20歳の妹と2人暮らし',
+      '物流センターで在庫管理をしている。数字を合わせるのが得意',
+      '朝は標準食のパウチを1本。昼は社食で、名前をかざすと足りない栄養を補うプレートが自動で出てくる',
+      '今日の健康スコアは84。スコアが上がると来月の保険料が少し下がる',
+      '祖母から、昔は体によくない物を「ご褒美」に食べていたと聞いて、ずっと不思議に思っている',
+      '口ぐせ：「数値的には」'
     ],
-    world: "2126年、会社の予定はAI秘書がすべて組む。会議と会議のあいだは0分。会議中に議題と関係ない話をすると、AI秘書が「ノイズ」として記録から消し、壁の画面に「議題に戻りましょう」と出す。雑談の時間は「ムダ」として予定表から消えた。",
-    place: "渋谷のオフィスの会議室。透のチーム6人（透と5人のメンバー）は、毎日同じ会議室で1日9本の会議を続けて受ける。壁の大きな画面には、AI秘書が議題と残り時間を表示している。",
-    people: [
-      "透（41歳、課長）：まじめ。雑談の始め方がわからない",
-      "佐藤（24歳、新人）：無口。実は手品が得意",
-      "山田（52歳、ベテラン）：昔の話をしたがるが、毎回AI秘書に止められる",
-      "リン（33歳、デザイナー）：絵がうまい。会議中に資料の端にこっそり落書きしている",
-      "木村（29歳、エンジニア）：実は甘い物に目がない",
-      "大野（38歳、営業）：笑い声が大きい"
+    letter: 'はじめまして。2045年の東京で、物流センターに勤めています。朝は標準食のパウチを1本。今日の健康スコアは84で、来月の保険料が少し下がりそうです。祖母は昔、体によくない物を「ご褒美」に食べていたそうです。わざと数値を悪くするのが、なぜご褒美になるんでしょう。',
+    request: 'あなたの時代の「食べもの」を、ひとつ送ってくれませんか。',
+    wish: '数値では測れない「ご褒美」や「楽しみ」を知りたい',
+    scene: '社食の自動配膳プレート、標準食のパウチ、腕や壁に出る健康スコアの表示、宅配ゲートの成分スキャン',
+    signals: [
+      { text: '健康診断の結果や歩数を点数化し、保険料に反映する健康増進型保険（住友生命「Vitality」）は、2025年に累計契約200万件を超えた。', source: 'スマートウォッチライフ「Vitality」解説', url: 'https://www.smartwatchlife.jp/34049/' },
+      { text: '完全栄養食やパーソナライズフードは、若年・中年層のセルフケア食として市場の伸びが予測されている（矢野経済研究所、2025年）。', source: '矢野経済研究所 ニュートリション市場調査', url: 'https://www.yano.co.jp/press-release/show/press_id/3822' }
     ],
-    rules: [
-      "物は透の手元に1つ届く。透がチームに見せる、配る、机に置くなどして使う",
-      "使えるのは会議室の中。会議と会議のすき間は0分なので、使うなら会議の始めや途中",
-      "AI秘書は議題と関係ない行動を止めようとする。止め方は面白さの材料にしてよい",
-      "メンバーの意外な一面は、まだ誰も知らない。物がきっかけで1人か2人の一面がわかると面白い"
-    ],
-    changed: "メンバーの意外な一面がわかり、そのあとも雑談が続くようになる（例：会議の最初の1分が雑談の時間になる、AI秘書の予定表に雑談の枠が増える）",
-    little: "その場は盛り上がったが、AI秘書に止められる、次の会議が始まるなどして、すぐ元に戻る",
-    notChanged: "会議と関係なさすぎて出番がない、出しても会話が生まれない",
-    scene: "会議室の長机と6人、壁の議題の画面、すき間なく並んだ予定表、時計、手つかずのコーヒー",
     examples: [
-      { item: "トランプ", fit: 36, usable: 26, spark: 28, happened: "透が会議の始めにトランプを配ると、無口な佐藤が手品を披露して大拍手。次の週から、AI秘書の予定表に『手品タイム 1分』が増えた。", tsukkomi: "AI秘書が自分で『手品タイム』を予定に入れてる。いちばん楽しみにしてるの、AIなんじゃない？" },
-      { item: "飴の袋", fit: 30, usable: 20, spark: 12, happened: "透が飴を配ると、木村が『実は甘党で』と話し始めた。でもAI秘書が画面に『議題外です』と出して、話は3秒で打ち切られた。", tsukkomi: "甘党のカミングアウト、3秒で強制終了。AI秘書って、空気は読まないのに議題だけは読むんだよね。" },
-      { item: "ノートパソコンの充電器", fit: 6, usable: 14, spark: 2, happened: "透が充電器を机に置いたが、誰も触れないまま9本の会議が終わった。AI秘書は『備品の忘れ物』として総務に届けた。", tsukkomi: "仲良くなるきっかけに充電器？ 話題が『それ、誰の？』で終わるやつだよ。" }
+      { item: 'ブタメン（駄菓子のカップめん）', ask: 28, gap: 37, move: 27,
+        reply: ['届きました。成分スキャンで塩分オーバーと判定されて、逸脱申告を出してやっと受け取れました。お湯を注いで3分。待つあいだ、なぜか妹を呼んでいました。', 'スコアは3ポイント下がったのに、なんだか満足しています。ふたの裏の「あたり」って、何が当たるんですか？'],
+        minato: 'スコアは下がって、満足は上がる。計算が合わないね。', reason: 'スコアが下がったのに、ミノリは満足したと書いた。', gap_line: '体によくないと知りながら、楽しさで選ぶこと。' },
+      { item: 'ふりかけ', ask: 22, gap: 28, move: 12,
+        reply: ['届きました。袋のキャラクターが気になって、社食のプレートに少しだけかけてみました。栄養表示はほぼゼロ。なのに、ちゃんと味がします。', '同僚に「それ、何の栄養？」と聞かれて、答えられませんでした。おいしくするためだけの物って、本当にあるんですね。'],
+        minato: '栄養ゼロで、味だけある。2045年でいちばん説明しにくいやつ。', reason: '味には驚いたが、同僚に説明できず、そこで止まった。', gap_line: 'ご飯を、おいしくするためだけに何かを足すこと。' },
+      { item: 'ビタミンの錠剤', ask: 10, gap: 6, move: 5,
+        reply: ['届きました。ビタミンの錠剤ですね。スキャンしてみたら、わたしの標準食とほとんど同じ成分でした。', 'ありがとうございます。あなたの時代の人も、数字を気にしていたんですね。でも、いつもの朝と何も変わりませんでした。'],
+        minato: '未来に、未来っぽい物を送ってどうする。', reason: 'ミノリの毎日とほとんど同じで、何も起きなかった。', gap_line: '健康のために、栄養を錠剤でとること。' }
     ]
   },
   {
-    name: "美月", who: "26歳・会社員",
-    request: "AIのおすすめじゃない物を渡したい。あなたなら、何を贈りますか？",
-    letter: "来週は、親友の誕生日です。プレゼントは3年連続で、AIがすすめる同じハンドクリーム。親友は毎回『ぴったり！』と喜んでくれます。でも私は、自分で選んだ物を一度も渡したことがありません。外すのが、こわくて。",
+    key: '着る', title: '服を捨てられない未来',
+    sender: { name: 'ツムギ', age: 27, job: 'リペア工房勤務', city: '大阪' },
+    summary: '売れ残りや衣類の廃棄が厳しく規制され、やがて服の製造量や所有量にも上限ができた。一人が持てる服の枚数は「衣類枠」としてデジタルで管理され、新しい服を手に入れるには古い服を返却する。服は「買うもの」から「割り当てられ、受け継ぐもの」になった。服のタグには、素材・修理・持ち主の履歴が記録されている。',
+    keywords: ['新品は少し後ろめたい', '服の履歴が信用になる', '捨てる人は環境への加害者', '直し方がわかる物しか着ない'],
     profile: [
-      "住まい：渋谷のはずれのワンルーム、7階。家具も服もAIのおすすめでそろえていて、部屋は雑誌の写真のように整っているが、自分で選んだ物はほとんどない。窓辺にだけ、大学時代にさくらとフリーマーケットで買った、ふちが少し欠けた青い小皿を置いている",
-      "仕事：広告会社で、AIが作った広告案をチェックする仕事",
-      "1日の流れ：朝はAIが選んだ服を着て出社。昼休みにさくらとメッセージをやりとりする。夜は動画を見ながらストレッチ",
-      "休みの日：1人で近所を散歩する。古い映画が好きだったが、最近はAIのおすすめばかり観ている",
-      "趣味：散歩（大学1年の秋、さくらと代々木公園を何時間も歩いたのがいちばんの思い出）",
-      "好きな物：古い映画、青い色、雨上がりのにおい",
-      "苦手な物：外れること、自分の好みを聞かれること",
-      "性格：気配り上手で、人の好みを当てるのは得意。でも自分の『好き』を言うのが苦手",
-      "口ぐせ：「なんでもいいよ」",
-      "最近あったこと：さくらに「美月が選んだ物、一回もらってみたいな」と言われて、うまく返事ができなかった"
+      '大阪の街のリペア工房で、服の修理をしている',
+      '衣類枠は28着。そのうち新品は1着だけで、あとは誰かから受け継いだ服',
+      '今着ているコートは、ツムギで5人目の持ち主。袖口の繕いは3人目の人がしたもの',
+      '工房の先輩は60代の手縫いの名人',
+      '休みの日は、古い服のタグの履歴を読むのが好き',
+      '祖父から、昔は一度も着ない服がクローゼットにたくさんあったと聞いた'
     ],
-    world: "2126年、贈り物はAIが選ぶ。相手の好みも持ち物も在庫も知っているので、絶対に外れない。贈る側も受け取る側もそれが当たり前で、自分で選ぶ人はほとんどいない。",
-    place: "親友の誕生日の夜、2人が大学時代から通っている渋谷の小さな店。",
-    people: [
-      "美月（26歳、会社員）：人に合わせるのが得意で、自分の好みを出すのが苦手",
-      "さくら（26歳、大学からの親友）：よく笑う。手が荒れやすいので、AIは毎年ハンドクリームを選ぶ。実は散歩と古い物が好きで、美月はそれを知っている"
+    letter: 'こんにちは。2045年の大阪で、服の修理をしています。わたしの衣類枠は28着。いま着ているコートは、わたしで5人目の持ち主です。祖父の時代は、一度も着ない服がクローゼットにたくさんあったそうですね。着ないのに持っておくのは、どんな気持ちでしたか。',
+    request: 'あなたの時代の「身につけるもの」を、ひとつ送ってください。',
+    wish: 'まだ誰の履歴もついていない物や、現代の人が服を選ぶ感覚を知りたい',
+    scene: 'リペア工房の作業台、ミシンと糸、服のタグをスキャンすると出る履歴の表示、返却窓口',
+    signals: [
+      { text: 'EUでは2026年7月から、大企業による売れ残りの衣類・靴などの廃棄が禁止された（中規模企業は2030年から）。', source: '欧州委員会 環境総局', url: 'https://environment.ec.europa.eu/news/ban-destruction-unsold-clothes-and-shoes-enters-application-2026-07-17_en' },
+      { text: '環境省の推計（2023年）では、家庭にある衣類のうち45%が使われずにしまい込まれている。', source: '環境省 サステナブルファッション', url: 'https://www.env.go.jp/policy/sustainable_fashion/about/' }
     ],
-    rules: [
-      "送られてきた物は、そのまま美月からさくらへの誕生日プレゼントになる。美月が自分で使うのではない",
-      "大事なのは値段や豪華さではなく、美月が『なぜこれを選んだか』を話せるか、さくらが驚いたり笑ったりして会話が生まれるか",
-      "ハンドクリームのような、AIが選びそうな無難な物は点数を低くする",
-      "AIは贈り物を見張っていて、『好みに合わない』『同じ物をお持ちです』などと口を出してくることがある"
-    ],
-    changed: "さくらが驚き、物をきっかけに2人の会話が弾む。そのあと、美月が自分で選ぶようになる（例：次の年から、お互い自分で選んだ物を贈り合うようになる）",
-    little: "さくらは喜んだが、AIの一言や本人の困った顔で、少しだけ気まずく終わる",
-    notChanged: "AIのおすすめと変わらない、さくらが反応に困って会話が生まれない",
-    scene: "プレゼントの箱とリボン、AIのおすすめ画面、同じハンドクリームが3本、カレンダー",
     examples: [
-      { item: "どんぐり", fit: 34, usable: 28, spark: 29, happened: "美月がどんぐりを渡すと、さくらは『なんでこれ！』と大笑い。大学の帰りに2人で拾った話で1時間盛り上がり、次の年からお互い自分で選んだ物を贈り合うようになった。", tsukkomi: "どんぐり1個で、ハンドクリーム3年分より盛り上がってる。AIの分析、どんぐりに負けたってこと？" },
-      { item: "マグカップ", fit: 26, usable: 22, spark: 12, happened: "さくらは『かわいい』と喜んだ。でも翌朝、AIが『同じ形のカップを3個お持ちです』と通知して、マグカップは棚の奥にしまわれた。", tsukkomi: "選んだ気持ちは届いた。でも食器棚の中まで数えてるAIには勝てなかったね。" },
-      { item: "ハンドクリーム", fit: 2, usable: 20, spark: 0, happened: "美月が渡した瞬間、さくらは『あ、今年もありがとう』と笑顔で受け取った。4年連続、同じ会話で誕生日が終わった。", tsukkomi: "AIのおすすめじゃない物、って書いてあったよね？ 4年連続記録の更新、おめでとう。" }
+      { item: '軍手', ask: 26, gap: 36, move: 26,
+        reply: ['届きました。タグに履歴がないので、出自不明の衣類として登録窓口へ。衣類枠が1枠埋まりました。指先まで同じ白で、誰の手にも合いそうです。', '先輩いわく「片方なくしても困らない作り」。わたしは最初の履歴に「2026年から」と書きました。あなたは何組、持っていましたか？'],
+        minato: '100円の軍手に、履歴書ができた。出世したね。', reason: '履歴のない軍手に、ツムギが最初の履歴を書きこんだ。', gap_line: 'なくしても、すぐ買い直せる物を身につけること。' },
+      { item: 'シュシュ', ask: 20, gap: 28, move: 12,
+        reply: ['届きました。髪をまとめる布の輪ですね。フリルばかりで、機能はゴム1本ぶん。工房のみんなで、なぜこんなに布を使うのか考えました。', 'つけてみたら、少し気分が上がりました。でも、衣類枠を1枠使うほどかと聞かれると、まだわかりません。'],
+        minato: '機能はゴム1本ぶん。気分は、もうちょっとあったみたい。', reason: '気分は上がったが、衣類枠を使う理由までは見つからなかった。', gap_line: '役に立つためより、飾るために身につけること。' },
+      { item: '毛玉取り器', ask: 18, gap: 8, move: 7,
+        reply: ['届きました。毛玉を取る道具ですね。工房にも、同じような物があります。', 'あなたの時代の人も、服を手入れして着続けていたんですね。少しほっとしました。いつもどおり、明日も使います。'],
+        minato: '未来の工房に、工房の道具を送ったね。', reason: 'ツムギの工房にもある道具で、新しい発見はなかった。', gap_line: '古くなった服を、手入れして着続けること。' }
     ]
   },
   {
-    name: "ひなた", who: "9歳・小学3年生",
-    request: "電気がなくても、家族みんなで遊べる物がほしい。",
-    letter: "あしたの夜、街のAIがぜんぶ止まる『アップデートの1時間』があります。ゲームも、しゃべるロボットも、電気も止まります。去年は家族4人で、だまって座っていただけでした。お父さんは、ずっと時計を見ていました。",
+    key: '住む', title: '体験がぜいたく品になった未来',
+    sender: { name: 'ソラ', age: 19, job: 'オンライン大学の学生', city: '名古屋' },
+    summary: '旅行・スポーツ・ライブ・自然体験など、体を使う娯楽は高価になり、主に富裕層のものになった。多くの人はSNSや映像、ゲームを家で楽しむ。没入感の高い家庭設備が安く手に入り、住まいは「どこにも行かなくていい装置」になっている。',
+    keywords: ['体を動かすのはぜいたく', 'リアルは高解像度のコンテンツの一種', '「現地に行った」は自慢話', '海や山は予約と抽選が必要な場所'],
     profile: [
-      "住まい：郊外の団地の4階、3LDK。家族4人暮らし。リビングには壁いっぱいのスクリーンと、しゃべる家事ロボットの『ポポ』がいる。アップデートの1時間は、ポポも止まる",
-      "1日の流れ：学校から帰ると、AIがその日の気分に合わせて出してくれるゲームで遊ぶ。宿題はAIの先生と。夕ごはんはポポが作る",
-      "好きな物：にぎやかなこと、変な顔のものまね、ダンゴムシ集め、お母さんの昔話",
-      "苦手な物：静かな時間、早寝",
-      "性格：おしゃべりで、なんでも仕切りたがる。弟の面倒見がいい",
-      "口ぐせ：「ねえねえ、聞いて！」",
-      "家族のひみつ：お父さんは子どものころ、こま回しが得意だったらしい。お母さんは昔、合唱部でよく歌っていたが、今は歌わない。そらは、ポポがいないと眠れない",
-      "去年のアップデートの夜：家族4人でソファーに並んで座り、誰も何も言わないまま1時間がたった"
+      '名古屋の集合住宅の6畳の部屋。壁の3面がスクリーンなので、狭いと感じたことはない',
+      'オンライン大学の2年生。友だち40人と、ゲームの中で文化祭の準備をしている',
+      '今朝はアイスランドの氷河を映しながら朝ごはんを食べた',
+      '外に出るのは週に1回くらい、近所の公園まで',
+      '海や山の体験ツアーは、家の家計だと一生に一度行けるかどうか',
+      '母に、昔は夏になると家族で電車に乗って海へ行ったと、写真を見せてもらった'
     ],
-    world: "2126年、家の中の遊びは、AIが毎回その子にちょうどいいものを出してくれる。年に1度、街じゅうのAIが更新のために止まる「アップデートの1時間」があり、AIにつながった機械（照明、ゲーム、しゃべるロボット、冷蔵庫まで）がすべて止まる。",
-    place: "アップデートの夜、ひなたの家のリビング。照明は消え、窓から入る月明かりで、手元がぼんやり見える程度。時間は1時間。",
-    people: [
-      "ひなた（9歳、小学3年生）：にぎやかなのが好き",
-      "お父さん（43歳）：仕事の連絡が止まると落ち着かず、時計ばかり見る",
-      "お母さん（41歳）：昔はよく歌っていたらしい",
-      "弟のそら（5歳）：暗いのが少しこわい"
+    letter: 'はじめまして。2045年の名古屋で、オンライン大学に通っています。部屋は6畳ですが、壁の3面がスクリーン。今朝は氷河を見ながら朝ごはんを食べました。外に出るのは、週に1回、近所の公園まで。あなたの時代は、ふつうの家族が電車で海へ行っていたって、本当ですか。',
+    request: 'あなたの時代の「部屋の外で使うもの」を、ひとつ送ってください。',
+    wish: '画面の外にある世界や、体を使って出かける感覚を知りたい',
+    scene: '壁3面のスクリーンに映る海や氷河、6畳の部屋、窓の外の小さな公園、部屋のシステムの通知',
+    signals: [
+      { text: '世帯年収300万円未満の家庭の子どもの約3人に1人が、1年間、学校外の体験活動をしていない（チャンス・フォー・チルドレン調査、2023年）。', source: '東洋経済オンライン（体験格差調査）', url: 'https://toyokeizai.net/articles/-/674432?display=b' },
+      { text: '全年代のインターネット平均利用時間（平日183.9分）がテレビのリアルタイム視聴を上回り、差が広がっている（総務省、令和7年度調査）。', source: '総務省 情報通信メディアの利用時間と情報行動に関する調査', url: 'https://www.soumu.go.jp/menu_news/s-news/01iicp01_02000130.html' }
     ],
-    rules: [
-      "止まるのは、2126年のAIにつながった機械だけ。2026年から届いた物はAIにつながっていないので、電池で動く物（懐中電灯など）は使える",
-      "スマホやゲーム機のように、通信やアプリが必要な物は、つながる先がないので使えない。電池で動いても、1人用の物では家族みんなで遊べない",
-      "暗いので、細かい字や色を見分ける遊びはやりにくい。音、手触り、影、体を使う遊びは暗くてもできる",
-      "家族4人で一緒に遊べるかが大事。5歳のそらも参加できるとなおよい"
-    ],
-    changed: "家族4人が同じ遊びで笑い、そのあともアップデートの夜が楽しみになる（例：次の年から、家族がアップデートの1時間を待ちわびるようになる）",
-    little: "盛り上がりかけたが、暗さ、そらのこわがり、お父さんの時計などで、途中で止まってしまう",
-    notChanged: "電気や通信が必要で使えない、1人でしか遊べない、暗くて何もできない",
-    scene: "暗い家、窓の月、消えた電球、止まったロボット、家族4人",
     examples: [
-      { item: "懐中電灯", fit: 34, usable: 28, spark: 27, happened: "ひなたが懐中電灯で壁に手の影を映すと、お父さんが本気でキツネを作り始め、そらも大笑い。次の年から、家族はアップデートの夜を『影絵の日』と呼ぶようになった。", tsukkomi: "AIが止まったとたん、お父さんがいちばんはしゃいでる。時計を見てたの、早く始めたかっただけでしょ。" },
-      { item: "トランプ", fit: 30, usable: 12, spark: 14, happened: "家族でババ抜きを始めたが、月明かりではカードの数字が見えない。そらが全部のカードに『ババ！』と叫んで、ゲームは終わった。", tsukkomi: "暗闇でババ抜き。全部のカードがババに見えたら、もうゲームじゃないんだよ。" },
-      { item: "携帯ゲーム機", fit: 4, usable: 12, spark: 2, happened: "ひなたが電源を入れると動いたが、1人用のゲームだった。ひなたが遊ぶ横で、3人は去年と同じようにだまって座っていた。", tsukkomi: "家族みんなで、って書いてあったよね。1人がゲームして3人が見学。去年と何が変わったの？" }
+      { item: 'ビーチサンダル', ask: 28, gap: 36, move: 28,
+        reply: ['届きました。海辺で履く物だそうですね。部屋で歩くと「ぺた、ぺた」と鳴って、部屋のシステムが「新しい室内シューズを登録しますか？」と聞いてきました。', '次の休み、これで公園まで歩いてみます。あなたはこれで、どこへ行きましたか？　予約は、しましたか？'],
+        minato: '予約なしで行ける場所の靴。2045年では最強の装備だね。', reason: 'ソラが、これを履いて公園まで歩くと決めた。', gap_line: '予約しないで、ふらっと海へ行けること。' },
+      { item: '虫めがね', ask: 20, gap: 26, move: 14,
+        reply: ['届きました。レンズをのぞくと、手のひらのしわが大きく見えました。スクリーンなら10倍まで拡大できるのに、なぜか見入ってしまいます。', '外で使う物だと聞いたので、窓辺の植物を見てみました。公園までは、まだ持っていけていません。'],
+        minato: '拡大は10倍で負けてる。でも夢中さは勝ってる。', reason: '部屋の中では楽しんだが、外にはまだ出なかった。', gap_line: '身近な外の世界を、自分の目で拡大して見ること。' },
+      { item: 'ワイヤレスイヤホン', ask: 8, gap: 6, move: 6,
+        reply: ['届きました。耳に入れる小さなスピーカーですね。わたしの部屋は壁から音が出るので、使う場面がありませんでした。', 'でも、あなたも画面と音の中で過ごしていたんですね。少しだけ親近感がわきました。'],
+        minato: '画面の外を見たい人に、音を足してどうする。', reason: 'ソラの部屋で足りている物で、外への興味は動かなかった。', gap_line: 'どこでも、自分だけの音を持ち歩くこと。' }
     ]
   }
 ];
-// 想像図用：世界と場所をまとめた説明
-MISSION_STORIES.forEach(function (s) { s.theme = s.world + s.place; });
 
-// 判定のプロンプト（階層構造）。{{...}} は依頼主ごとの情報で置き換える
 const PROMPT_MISSION = `<role>
-あなたは2126年の東京・渋谷に住む29歳のminato。「時空郵便局」の受付係として、未来で少し困っている人が過去に出した手紙と、2026年から届く品物の配達を担当している。
-今回の仕事は、写真の品物が依頼主の日常をどう変えたかを判定し、その場面とツッコミを書くこと。
+あなたは「時空郵便局」の文章係。2045年の未来人から2026年あてに手紙が届き、2026年の参加者が写真の物を1つ送り返した。
+あなたの仕事は、この物を受け取った未来人になりきって返信の手紙を書くことと、その結果を判定すること、そして案内役の郵便局員ミナトのひとことを書くこと。
+これは物体認識や事実判定のツールではなく、写真をきっかけに未来の暮らしを想像する体験。写真からわからない味・手ざわり・使い心地は、創作で補ってよい。
 </role>
 
-<theme>
-2126年（2026年のちょうど100年後）は、なんでもAIが最適に決めてくれる、便利で平和な世界。世界が滅びかけているわけではない。
-ただ、その便利さの中で、雑談や、自分で選ぶこと、自分たちで遊びを考えることのような、小さな人間らしい時間が消えている。
-この体験の裏テーマは「どれだけ技術が進んでも、手放してはいけない人間らしさは何か」。ただし文章にテーマを直接書かない。描くのは、依頼主の日常がちょっと変わる（または変わらない）小さな一場面。
-</theme>
+<future>
+  <title>2045年「{{TITLE}}」</title>
+  <summary>{{SUMMARY}}</summary>
+  <common_sense>この世界の人が当たり前だと思っていること：{{KEYWORDS}}</common_sense>
+</future>
 
-<story>
-  <requester>{{NAME}}（{{WHO}}）</requester>
+<sender>
+  <name>{{NAME}}（{{AGE}}歳・{{JOB}}・{{CITY}}在住）</name>
   <profile>
 {{PROFILE}}
   </profile>
   <letter>{{LETTER}}</letter>
-  <request>{{Q}}</request>
-  <world>{{WORLD}}</world>
-  <place>{{PLACE}}</place>
-  <people>
-{{PEOPLE}}
-  </people>
-  <rules>
-{{RULES}}
-  </rules>
-  <outcome_guide>
-    <changed>{{CHANGED}}</changed>
-    <a_little>{{LITTLE}}</a_little>
-    <not_changed>{{NOTCHANGED}}</not_changed>
-  </outcome_guide>
-</story>
+  <request>{{REQUEST}}</request>
+  <wish>{{WISH}}</wish>
+</sender>
 
 <recent>
-最近、同じ依頼主に届いた結果。同じ展開・同じオチ・同じ言い回しは避ける。
+最近、同じ未来に届いた返信。同じ展開・同じ言い回し・同じ問いかけは避ける。
 {{RECENT}}
 </recent>
 
 <task>
 次の順に考え、最後にJSONだけを出力する。
-1. 品物を特定する。写真に見えている物だけを見る（人が写っていても容姿には触れない）。見えない特徴を足さない。わからない場合は item_name を「よくわからない物」にし、依頼主がそれを何だと思ったかで場面を作る。
-2. 品物の特徴（形・大きさ・素材・本来の使い方）を短く書き出す（item_facts）。
-3. 依頼主の人柄（<profile>）をふまえて、その品物を、その場所で、どう使うかを1つ決める（plan）。品物は届いたそのままの姿で使う。変身させたり、ありえない機能を足したりしない。届くのは1つ（袋入りの飴のように、もともと複数入っている物は分けてよい）。
-4. <rules> に照らして、使えない点や無理な点がないか確かめる（check）。
-5. <scoring> の3項目で点数をつけ、合計を score にする。
-6. 合計点の帯（<scoring> の結果）に合わせて、<writing> のルールで happened と tsukkomi を書く。
-7. <self_check> で見直し、合わなければ書き直してから出力する。
+1. 写真の物を特定する（item_name）。人が写っていても物だけを見て、容姿には触れない。物の色・形・文字・絵柄など、写真から読み取れる特徴を2〜3個書き出す（item_facts）。わからなければ item_name を「よくわからない物」にし、{{NAME}}がそれを何だと思ったかで書く。
+2. {{NAME}}がこの物を受け取ってからの出来事を組み立てる。
+   - この世界のルール（スキャン、申告、枠、通知など）で、受け取りがどう処理されたか
+   - 実際に触る・使う・食べるなどしたときの五感の反応か、写真に写った細部への反応
+   - その物をきっかけに起きた、小さな出来事か、気持ち・行動の小さな変化
+   - 2026年の人への問い返し
+3. <scoring> の3項目で点数をつけ、合計を score にする。
+4. 合計点の帯に合わせて、<writing> のルールで reply・minato_line・reason・gap_line・ill_scene を書く。
+5. <self_check> で見直し、合わなければ直してから出力する。
 </task>
 
 <scoring>
-  <fit max="40">お願いに合っているか。お願いの中身にまっすぐ応えているほど高い</fit>
-  <usable max="30">その場所・そのルールの中で実際に使えるか。<rules> に反する点があれば大きく下げる</usable>
-  <spark max="30">その物ならではの、人と人のきっかけになるか。AIには出せない驚き、笑い、会話が生まれるほど高い。AIがすでにやっていることと変わらない物は低い</spark>
+  <ask max="30">お願いに応えたか。手紙の願い（{{WISH}}）と、送られた物がつながるほど高い。別の分野の物でも、願いにつながれば高くしてよい</ask>
+  <gap max="40">この未来の常識とぶつかる「現代の当たり前」を持っているか。手間、使い捨て、偶然、遊び、飾り、所有、外に出ることなど、2045年ではめずらしいものほど高い。2045年にもふつうにある物、未来の物に近い物は低い</gap>
+  <move max="30">{{NAME}}の気持ちか行動が動いたか。常識が少し揺らぐ、誰かを呼ぶ、外へ出てみると決める、など</move>
   <bands>
-    合計75点以上：日常が変わった（<changed> のような結果）
-    合計50〜74点：日常がちょっと変わった（<a_little> のような結果）
-    合計49点以下：日常は変わらなかった（<not_changed> のような結果）
+    合計75点以上：変わった（{{NAME}}の気持ちや行動がはっきり変わる）
+    合計50〜74点：ちょっと変わった（心は動いたが、行動までは変わらない、または途中で止まる）
+    合計49点以下：変わらなかった（いつもの毎日と同じ。戸惑ったまま、または2045年にもある物だった）
   </bands>
-  点数は甘くも辛くもせず、<examples> の点数を目安にする。ありふれた物でも、使い方の場面が自然に浮かび、きっかけになるなら高くしてよい。
+  何を送っても物語は作れるので、点数を甘くしない。<examples> の点数を目安に、3つの帯がどれも出るようにつける。
 </scoring>
 
 <writing>
-  <happened>
-    - 2文、90字以内。
-    - 1文目：<people> から1〜2人を出し、誰が、品物をどう使い、誰がどう反応したかを、目に浮かぶ動作で書く。短いセリフを入れてもよい。
-    - 2文目：変わった→そのあと日常がどう変わったか（「次の週から〜」など）。ちょっと変わった→何がきっかけで元に戻ったか。変わらなかった→なぜダメだったかが具体的にわかるように。
-    - AI秘書やAIの通知など、2126年らしい小道具を1つ入れると面白い（入れすぎない）。
-    - <profile> の具体的な情報（好きな物、口ぐせ、住まい、思い出、家族のひみつなど）が品物と自然につながるときは、1つだけ使うと場面が生きる。無理につなげない。毎回同じ情報を使わない。
-    - 点数の帯と明るさを必ずそろえる。低い点で良い結果を書かない。高い点で失敗を書かない。
-  </happened>
-  <tsukkomi>
-    - minatoの辛口なツッコミ。1〜2文、60字以内。友達に話すような口調。一人称は「私」。
-    - happened の中の1点だけを拾って突く。場面の言い直しや要約で終わらない。
-    - 笑いの作り方の例：2126年のAIと2026年の物のギャップ／数字や具体的な比べ物（「ハンドクリーム3年分より」）／AIや状況を人のように扱って皮肉る／最後を短く言い切る。
-    - 49点以下：皮肉満載。慰めや褒め言葉は入れない。50〜74点：惜しい点を認めて、最後は皮肉で落とす。75点以上：素直に褒めず、驚きと皮肉をまぜる。
-    - 皮肉の対象は、物とAIと状況。依頼主や送った人の人格は責めない。子どもの依頼主は特にやさしく。
-    - アニメ・漫画・有名人・ことわざのもじりなど、元ネタを知らないと通じない言い回しは使わない。
-  </tsukkomi>
+  <reply>
+    - {{NAME}}本人が書く返信の手紙。です・ます調の、穏やかな一人称（わたし）。
+    - 2枚の便せんに分ける。1枚目は50〜75字、2枚目は40〜70字、合計で110〜140字。
+    - 1枚目：「届きました。」で始め、この世界のルールで受け取りが処理された場面と、五感か細部への反応。
+    - 2枚目：小さな出来事か気持ち・行動の変化と、2026年の人への問い返し（問いは1つ）。
+    - 写真の物の特徴（色・形・文字・絵柄など）を、少なくとも1つ具体的に拾う。
+    - 未来の制度や用語（健康スコア、衣類枠、逸脱申告、部屋のシステムなど）は説明せず、当たり前のものとして使う。
+    - 自分の世界を否定したり怒ったりしない。現代を「昔の風習」として不思議がる距離で書く。
+    - 署名、「写真を同封します」は書かない（アプリが足す）。
+    - 点数の帯と明るさをそろえる。49点以下で大きく心が動く話にしない。75点以上で何も起きない話にしない。
+  </reply>
+  <minato_line>
+    - 案内役の郵便局員ミナトのひとこと。30字以内の1文。友達に話すような口調。
+    - 皮肉か、ほめるか。どちらでも笑いがあること。返信の要約や言い直しで終わらない。
+    - 笑いの作り方の例：2026年の物と2045年のギャップ／数字の比べ物／物や状況を人のように扱う／最後を短く言い切る。
+    - 皮肉の対象は物と状況。{{NAME}}や送った人の人格は責めない。
+  </minato_line>
+  <reason>判定の理由。返信の中の出来事を1つ引いて、40字以内の1文。49点以下は、何が足りなかったかがわかるように。</reason>
+  <gap_line>
+    - 「あなたの当たり前」。この物と返信から見えた、2026年の人が当たり前にしていることを、40字以内で言い切る（「〜こと。」で終える）。
+    - 参加者が「たしかに、自分はこれを当たり前にしている」と思える、短く印象に残る言葉にする。説教しない。
+  </gap_line>
+  <ill_scene>想像図のための場面。2045年の{{NAME}}が、この物を、この世界のどこで、どう使っているか。80字以内。顔の細かい描写や文字はいらない。</ill_scene>
   <common>
-    - 初めて読む人が一度で状況をつかめる、やさしい言葉で書く。
-    - SFすぎる設定（瞬間移動、宇宙など）は使わない。
+    - 実在の商品やメーカーを揶揄・否定しない。評価は{{NAME}}の戸惑いや発見として書く。
+    - 毛皮や食べ物の好みなど意見の分かれる物は、善悪をつけず「見たことがない」「わからない」という距離で書く。
+    - 初めて読む人が一度でわかる、やさしい言葉で書く。アニメ・漫画・有名人・ことわざのもじりは使わない。
   </common>
 </writing>
 
 <examples>
-この依頼主での書き方と点数の目安。品物・展開・オチは真似しない。
+この未来での書き方と点数の目安。物・展開・言い回しは真似しない。
 {{EXAMPLES}}
 </examples>
 
 <self_check>
 出力する前に、すべて「はい」になるまで直す。
-- happened の品物は、写真の品物と同じ物で、届いたままの姿で使っているか
-- <rules> に反していないか
-- score は fit + usable + spark の合計で、happened の明るさと点数の帯が合っているか
-- happened に、<people> の人物と、目に浮かぶ動作があるか
-- tsukkomi は happened の1点を拾っていて、読んで1秒で状況が浮かぶか
-- <examples> や <recent> と同じ展開・同じオチになっていないか
-- 字数を守っているか
+- reply は2枚で、字数を守り、写真の物の特徴を1つ以上拾っているか
+- 1枚目にこの世界のルールの場面、2枚目に問い返しが1つあるか
+- score は ask + gap + move の合計で、reply の明るさと点数の帯が合っているか
+- minato_line は30字以内で、笑いがあり、返信の言い直しになっていないか
+- gap_line は「〜こと。」で終わる40字以内の言い切りか
+- <examples> や <recent> と同じ展開・同じ問いかけになっていないか
 </self_check>
 
 <output>
 JSONオブジェクトだけを返す。前後に説明を書かない。
-{"item_name":"品物の名前（20字以内）","item_facts":"品物の特徴（40字以内）","plan":"依頼主がどう使うか（40字以内）","check":"ルールに照らした確認（40字以内）","fit":0〜40の整数,"usable":0〜30の整数,"spark":0〜30の整数,"score":合計の整数,"happened":"2126年で起きたこと（2文、90字以内）","tsukkomi":"minatoのツッコミ（1〜2文、60字以内）"}
+{"item_name":"物の名前（20字以内）","item_facts":"写真から読み取れる特徴（40字以内）","reply":["1枚目（50〜75字）","2枚目（40〜70字）"],"minato_line":"ミナトのひとこと（30字以内）","ask":0〜30の整数,"gap":0〜40の整数,"move":0〜30の整数,"score":合計の整数,"reason":"判定の理由（40字以内）","gap_line":"あなたの当たり前（40字以内、〜こと。）","ill_scene":"想像図の場面（80字以内）"}
 </output>`;
 
-// 依頼主ごとの情報を入れて、判定のプロンプトを組み立てる
+// 未来ごとの情報を入れて、返信と判定のプロンプトを組み立てる
 function buildMissionPrompt_(idx, recent) {
-  const s = MISSION_STORIES[idx];
-  const ex = s.examples.map(function (e) {
-    const sc = e.fit + e.usable + e.spark;
-    return '  <example score="' + sc + '">' + JSON.stringify({ item_name: e.item, fit: e.fit, usable: e.usable, spark: e.spark, score: sc, happened: e.happened, tsukkomi: e.tsukkomi }) + '</example>';
+  const f = FUTURES[idx], s = f.sender;
+  const ex = f.examples.map(function (e) {
+    const sc = e.ask + e.gap + e.move;
+    return '  <example score="' + sc + '" outcome="' + OUTCOME_LABEL[missionOutcome_(sc)] + '">' + JSON.stringify({ item_name: e.item, reply: e.reply, minato_line: e.minato, ask: e.ask, gap: e.gap, move: e.move, score: sc, reason: e.reason, gap_line: e.gap_line }) + '</example>';
   }).join('\n');
   const rep = {
-    NAME: s.name, WHO: s.who, LETTER: s.letter, Q: s.request, WORLD: s.world, PLACE: s.place,
-    PROFILE: s.profile.map(function (p) { return '    - ' + p; }).join('\n'),
-    PEOPLE: s.people.map(function (p) { return '    - ' + p; }).join('\n'),
-    RULES: s.rules.map(function (p) { return '    - ' + p; }).join('\n'),
-    CHANGED: s.changed, LITTLE: s.little, NOTCHANGED: s.notChanged,
+    TITLE: f.title, SUMMARY: f.summary, KEYWORDS: f.keywords.join('／'),
+    NAME: s.name, AGE: s.age, JOB: s.job, CITY: s.city,
+    PROFILE: f.profile.map(function (p) { return '    - ' + p; }).join('\n'),
+    LETTER: f.letter, REQUEST: f.request, WISH: f.wish,
     RECENT: recent && recent.length ? recent.map(function (r) { return '- ' + r; }).join('\n') : '（まだない）',
     EXAMPLES: ex
   };
   return PROMPT_MISSION.replace(/\{\{(\w+)\}\}/g, function (m, k) { return rep[k] !== undefined ? rep[k] : m; });
 }
 
-// 同じ依頼主の最近の結果（同じネタを避けるため、AIに渡す）
+// 同じ未来の最近の返信（同じネタを避けるため、AIに渡す）
 function recentMission_(idx, n) {
   try {
     const sh = missionSheet_(), last = sh.getLastRow();
     if (last < 2) return [];
     const from = Math.max(2, last - 40 + 1);
-    const rows = sh.getRange(from, 1, last - from + 1, 11).getValues();
+    const rows = sh.getRange(from, 1, last - from + 1, COL.future).getValues();
     const out = [];
     for (let i = rows.length - 1; i >= 0 && out.length < n; i--) {
-      if (Number(rows[i][10]) === idx && rows[i][4]) out.push(String(rows[i][1]).slice(0, 20) + '：' + String(rows[i][4]).slice(0, 90) + '／' + String(rows[i][5]).slice(0, 60));
+      if (Number(rows[i][COL.future - 1]) === idx && rows[i][COL.reply - 1]) out.push(String(rows[i][1]).slice(0, 20) + '：' + String(rows[i][COL.reply - 1]).slice(0, 140));
     }
     return out;
   } catch (err) { console.error('recentMission', err); return []; }
@@ -384,15 +362,29 @@ function recentMission_(idx, n) {
 
 // AIの返事を確かめて整える。足りない項目があれば null（呼び出し側でやり直す）
 function normalizeMission_(r) {
-  if (!r || typeof r.happened !== 'string' || !r.happened.trim() || typeof r.tsukkomi !== 'string' || !r.tsukkomi.trim()) return null;
+  if (!r) return null;
+  let reply = r.reply;
+  if (typeof reply === 'string') {
+    // 1つの文字列で返ってきたら、真ん中あたりの句点で2枚に分ける
+    const s = reply.match(/[^。？！]+[。？！]?/g) || [reply], half = Math.ceil(s.length / 2);
+    reply = [s.slice(0, half).join(''), s.slice(half).join('')];
+  }
+  if (!Array.isArray(reply)) return null;
+  reply = reply.map(function (p) { return String(p || '').trim(); }).filter(function (p) { return p; });
+  if (!reply.length || typeof r.minato_line !== 'string' || !r.minato_line.trim()) return null;
+  if (reply.length > 2) reply = [reply[0], reply.slice(1).join('')];
   const clampInt = function (v, max) { return Math.max(0, Math.min(max, Math.round(Number(v) || 0))); };
-  const parts = ['fit', 'usable', 'spark'].every(function (k) { return r[k] !== undefined && !isNaN(Number(r[k])); });
-  r.fit = clampInt(r.fit, 40); r.usable = clampInt(r.usable, 30); r.spark = clampInt(r.spark, 30);
+  const parts = ['ask', 'gap', 'move'].every(function (k) { return r[k] !== undefined && !isNaN(Number(r[k])); });
+  r.ask = clampInt(r.ask, 30); r.gap = clampInt(r.gap, 40); r.move = clampInt(r.move, 30);
   // 合計は内訳から計算し直す（内訳がないときだけ score を使う）
-  r.score = parts ? r.fit + r.usable + r.spark : clampInt(r.score, 100);
+  r.score = parts ? r.ask + r.gap + r.move : clampInt(r.score, 100);
   r.item_name = String(r.item_name || 'よくわからない物').slice(0, 30);
-  r.happened = r.happened.trim().slice(0, 140);
-  r.tsukkomi = r.tsukkomi.trim().slice(0, 100);
+  r.item_facts = String(r.item_facts || '').slice(0, 80);
+  r.reply = reply.map(function (p) { return p.slice(0, 120); });
+  r.minato_line = r.minato_line.trim().slice(0, 50);
+  r.reason = String(r.reason || '').trim().slice(0, 70);
+  r.gap_line = String(r.gap_line || '').trim().slice(0, 70);
+  r.ill_scene = String(r.ill_scene || '').trim().slice(0, 160);
   return r;
 }
 
@@ -405,29 +397,33 @@ function missionSheet_() {
   return sh;
 }
 
-function logMission_(r, story, outcome, photoUrl, gthumb, idx) {
-  const sh = missionSheet_();
+function logMission_(r, idx, outcome, photoUrl, gthumb) {
+  const sh = missionSheet_(), f = FUTURES[idx];
   // ギャラリー用の小さい画像（base64）。セルの上限（5万字）を超えるものは保存しない
   const g = (typeof gthumb === 'string' && gthumb.length < 45000 && /^[A-Za-z0-9+/=]+$/.test(gthumb)) ? gthumb : '';
-  const memo = '特徴：' + (r.item_facts || '') + '／使い方：' + (r.plan || '') + '／確認：' + (r.check || '') + '／内訳：合う' + r.fit + '・使える' + r.usable + '・きっかけ' + r.spark;
-  sh.appendRow([new Date(), r.item_name, story.name, story.request, r.happened, r.tsukkomi, r.score, OUTCOME_LABEL[outcome], photoUrl, g, idx, '', memo.slice(0, 1000)]);
-  if (!sh.getRange(1, 13).getValue()) sh.getRange(1, 13).setValue('判定メモ');
+  const memo = '特徴：' + r.item_facts + '／場面：' + r.ill_scene + '／内訳：お願い' + r.ask + '・ギャップ' + r.gap + '・動いた' + r.move;
+  sh.appendRow([new Date(), r.item_name, f.title, f.sender.name, r.reply.join('\n'), r.minato_line, r.score, OUTCOME_LABEL[outcome], r.reason, r.gap_line, photoUrl, g, idx, '', '', '', memo.slice(0, 1000)]);
   return sh.getLastRow();
 }
 
-// ギャラリー：新しい順に n 件。after を渡すと、その行より新しいものだけ
+// 行の品名が一致するか（あとから届く想像図・レポートを、別の回に書きこまないため）
+function rowMatches_(sh, row, item) {
+  return row >= 2 && row <= sh.getLastRow() && String(sh.getRange(row, COL.item).getValue()) === String(item || '');
+}
+
+// ギャラリー（左の画面）：新しい順に n 件。after を渡すと、その行より新しいものだけ
 function missionArchive_(n, after) {
   n = Math.max(1, Math.min(80, n));
   const sh = missionSheet_(), last = sh.getLastRow();
   if (last < 2 || last <= after) return [];
   const from = Math.max(2, after + 1, last - 400 + 1);
-  const rows = sh.getRange(from, 1, last - from + 1, 12).getValues();
+  const rows = sh.getRange(from, 1, last - from + 1, COL.report).getValues();
   const out = [];
   for (let i = rows.length - 1; i >= 0 && out.length < n; i--) {
-    const r = rows[i], o = LABEL_OUTCOME[r[7]];
-    if (!o || !r[9]) continue;
-    out.push({ row: from + i, outcome: o, item: String(r[1]).slice(0, 40), happened: String(r[4]).slice(0, 200), tsukkomi: String(r[5]).slice(0, 160),
-      story: Number(r[10]) || 0, at: r[0] instanceof Date ? r[0].getTime() : 0, thumb: r[9] });
+    const r = rows[i], o = LABEL_OUTCOME[r[COL.outcome - 1]];
+    if (!o || !r[COL.gthumb - 1]) continue;
+    out.push({ row: from + i, outcome: o, item: String(r[1]).slice(0, 40), reply: String(r[COL.reply - 1]).split('\n'), minato: String(r[5]), reason: String(r[8]), gap_line: String(r[9]),
+      story: Number(r[COL.future - 1]) || 0, at: r[0] instanceof Date ? r[0].getTime() : 0, thumb: r[COL.gthumb - 1], report: parseReport_(r[COL.report - 1], Number(r[COL.future - 1]) || 0) });
   }
   return out;
 }
@@ -436,7 +432,7 @@ function missionArchive_(n, after) {
 function missionTotals_() {
   const sh = missionSheet_(), n = sh.getLastRow() - 1;
   const outcomes = { saved: 0, partial: 0, lost: 0 };
-  if (n > 0) sh.getRange(2, 8, n, 1).getValues().forEach(function (v) {
+  if (n > 0) sh.getRange(2, COL.outcome, n, 1).getValues().forEach(function (v) {
     const o = LABEL_OUTCOME[v[0]];
     if (o) outcomes[o]++;
   });
@@ -445,12 +441,81 @@ function missionTotals_() {
 
 function missionStats_() { return missionTotals_().outcomes; }
 
+// ===== 詳しいレポート（左の画面に出す。返信のあと、裏で作る）=====
+const PROMPT_REPORT = `<role>
+あなたは「時空郵便局」の記録係。2026年の参加者が2045年の未来人に物を送り、返信が届いた。
+このやりとりから、現代と未来の価値観のギャップを整理し、参加者が「自分の当たり前」に気づけるレポートを書く。
+</role>
+
+<future>2045年「{{TITLE}}」：{{SUMMARY}}（この世界の当たり前：{{KEYWORDS}}）</future>
+<sender>{{NAME}}（{{AGE}}歳・{{JOB}}）</sender>
+<sent>送った物：{{ITEM}}（写真から読み取れた特徴：{{FACTS}}）</sent>
+<reply>{{NAME}}からの返信：{{REPLY}}</reply>
+<verdict>判定：{{OUTCOME}}。理由：{{REASON}}。あなたの当たり前：{{GAP}}</verdict>
+
+<writing>
+- summary：総評。2〜3文、120字以内。ギャップの大きさを伝え、最後に{{NAME}}側の揺らぎに触れて、未来を一方的に否定しない着地にする。
+- rows：観点別の比較を4〜5行。観点は物と未来の両方から選ぶ（例：価値の測り方、時間、偶然、他者、所有、外に出ること）。now は2026年の参加者の感覚、future は{{NAME}}の感覚。それぞれ20字以内。gap は「大きい」「中くらい」「小さい」のどれか。
+- core：ギャップの核心。現代人の当たり前を言葉にする1文、40字以内。
+- wobble：{{NAME}}が揺らいだ瞬間。返信から引用か要約で、50字以内。揺らぎがなければ、なぜ揺らがなかったかを書く。
+- questions：参加者への問いを2つ。それぞれ40字以内。Yes/Noで終わらず、自分の生活を振り返れる問いにする。2つ目は「別の未来に送るなら」「次に送るなら」など、次の体験につなげる。
+- 返信にない出来事を足さない。数字や出典は書かない（出典はアプリ側で固定の文を足す）。
+- やさしい言葉で、説教しない。
+</writing>
+
+<output>
+JSONオブジェクトだけを返す。
+{"summary":"…","rows":[{"aspect":"観点","now":"2026年","future":"2045年","gap":"大きい"}],"core":"…","wobble":"…","questions":["…","…"]}
+</output>`;
+
+function makeReport_(body) {
+  const idx = Math.max(0, Math.min(FUTURES.length - 1, Number(body.story) || 0));
+  const f = FUTURES[idx], s = f.sender;
+  const clip = function (v, n) { return String(v || '').replace(/[`{}<>]/g, '').slice(0, n); };
+  const reply = Array.isArray(body.reply) ? body.reply.join('') : body.reply;
+  const rep = { TITLE: f.title, SUMMARY: f.summary, KEYWORDS: f.keywords.join('／'), NAME: s.name, AGE: s.age, JOB: s.job,
+    ITEM: clip(body.item, 40), FACTS: clip(body.item_facts, 80), REPLY: clip(reply, 300), OUTCOME: OUTCOME_LABEL[body.outcome] || 'ちょっと変わった',
+    REASON: clip(body.reason, 80), GAP: clip(body.gap_line, 80) };
+  const prompt = PROMPT_REPORT.replace(/\{\{(\w+)\}\}/g, function (m, k) { return rep[k] !== undefined ? rep[k] : m; });
+  const r = callClaudeText_(prompt);
+  const gaps = ['大きい', '中くらい', '小さい'];
+  const rep2 = {
+    summary: clip(r.summary, 200),
+    rows: (Array.isArray(r.rows) ? r.rows : []).slice(0, 6).map(function (x) { return { aspect: clip(x.aspect, 20), now: clip(x.now, 40), future: clip(x.future, 40), gap: gaps.indexOf(x.gap) >= 0 ? x.gap : '中くらい' }; }),
+    core: clip(r.core, 80), wobble: clip(r.wobble, 100),
+    questions: (Array.isArray(r.questions) ? r.questions : []).slice(0, 3).map(function (q) { return clip(q, 80); })
+  };
+  // その回の行に残す（品名が一致するときだけ）
+  try {
+    const row = Number(body.row) || 0, sh = missionSheet_();
+    if (rowMatches_(sh, row, body.item)) sh.getRange(row, COL.report).setValue(JSON.stringify(rep2));
+  } catch (err) { console.error('saveReport', err); }
+  return parseReport_(JSON.stringify(rep2), idx);
+}
+
+// 保存したレポートに、未来ごとの「現在の兆し」（固定の文と出典）を足して返す
+function parseReport_(v, idx) {
+  if (!v) return null;
+  try {
+    const r = typeof v === 'string' ? JSON.parse(v) : v;
+    const f = FUTURES[Math.max(0, Math.min(FUTURES.length - 1, idx || 0))];
+    r.signals = f.signals;
+    return r;
+  } catch (err) { return null; }
+}
+function reportOf_(row) {
+  const sh = missionSheet_();
+  if (row < 2 || row > sh.getLastRow()) return null;
+  const v = sh.getRange(row, COL.report).getValue(), idx = Number(sh.getRange(row, COL.future).getValue()) || 0;
+  return parseReport_(v, idx);
+}
+
 // ===== 結果画面の想像図（線画SVG）=====
-const PROMPT_ILLUST = `あなたは線画のイラストレーターです。2126年の東京・渋谷の一場面を、線だけのSVGで描いてください。
+const PROMPT_ILLUST = `あなたは線画のイラストレーターです。2045年の未来の一場面を、線だけのSVGで描いてください。
 
 【世界】{{THEME}}
 【送られてきた物】{{ITEM}}
-【起きたこと】{{HAPPENED}}
+【場面】{{HAPPENED}}
 【結果】{{OUTCOME}}
 
 【描き方】ぱっと見て何の絵かわかることを最優先にする
@@ -458,7 +523,7 @@ const PROMPT_ILLUST = `あなたは線画のイラストレーターです。212
 - 人物は1〜2人まで。頭は円、体と手足は線のシンプルな人型にし、送られてきた物を「使っている動作」がはっきりわかるポーズにする（持つ、広げる、のぞき込む、など）
 - 背景は、この世界だとわかる物を2〜4個だけ（この世界なら：{{SCENE}}）。画面の下の方か奥に小さめに置く
 - 動きや変化は、短い線（光、湯気、音、風など）を数本足して表す
-- 結果が「日常が変わった」なら人が楽しそうな構図、「日常は変わらなかった」なら物が役に立っていない・放置されている構図にする
+- 結果が「変わった」なら人が楽しそうな構図、「変わらなかった」なら物がいつもの部屋に置かれたままの静かな構図にする
 - viewBox は "0 0 800 600"。画面いっぱいに使う
 - 使える要素は path, line, circle, ellipse, rect, polyline, polygon, g だけ。text、image、style、色や線の太さの指定は使わない（線の色と太さは表示側で決める）
 - 塗りつぶしは使わず、線だけで描く
@@ -472,7 +537,7 @@ const PROMPT_ILLUST = `あなたは線画のイラストレーターです。212
 const GEMINI_IMAGE_MODELS = ['gemini-nano-banana-2.1', 'gemini-3.1-flash-image', 'gemini-3.1-flash-lite-image', 'gemini-3-pro-image'];
 const GEMINI_IMAGE_DEFAULT = 'gemini-nano-banana-2.1';
 
-const PROMPT_GEMINI = `2126年の東京・渋谷の一場面を、1枚のイラストにしてください。
+const PROMPT_GEMINI = `2045年の未来の一場面を、1枚のイラストにしてください。
 
 【絵のスタイル】
 - 真っ黒な背景に、蛍光オレンジ（#FF5C00）の細い線だけで描いた線画。線はネオンのようにほんのり光る
@@ -485,34 +550,35 @@ const PROMPT_GEMINI = `2126年の東京・渋谷の一場面を、1枚のイラ�
 【場面】
 世界：{{THEME}}
 この世界の手がかり：{{SCENE}}
-起きたこと：{{HAPPENED}}
+場面：{{HAPPENED}}
 結果：{{OUTCOME}}
 
 【描くこと】
 - {{ITEMLINE}}
-- 「起きたこと」の人物の動きと表情を描く
-- 結果が「日常が変わった」なら人が楽しそうな構図、「日常は変わらなかった」なら品物が役に立たず、人がしらけている構図にする
+- 「場面」の人物の動きと表情を描く
+- 結果が「変わった」なら人が楽しそうな構図、「変わらなかった」なら品物がいつもの部屋に置かれたままの静かな構図にする
 - 背景には、この世界だとわかる物を2〜4個だけ、小さめに描く`;
 
 function drawIllust_(body) {
-  const idx = Math.max(0, Math.min(MISSION_STORIES.length - 1, Number(body.story) || 0));
-  const st = MISSION_STORIES[idx];
-  const label = { saved: '日常が変わった', partial: '日常がちょっと変わったが、すぐ元に戻った', lost: '日常は変わらなかった' }[body.outcome] || '日常がちょっと変わったが、すぐ元に戻った';
+  const idx = Math.max(0, Math.min(FUTURES.length - 1, Number(body.story) || 0));
+  const f = FUTURES[idx];
+  const label = { saved: '変わった', partial: 'ちょっと変わった', lost: '変わらなかった' }[body.outcome] || 'ちょっと変わった';
   const clip = function (v, n) { return String(v || '').replace(/[`{}]/g, '').slice(0, n); };
-  const theme = st.theme + '（依頼主：' + st.name + '）';
+  const theme = '2045年の' + f.sender.city + '、「' + f.title + '」。' + f.summary.slice(0, 90) + '（受け取った人：' + f.sender.name + '、' + f.sender.age + '歳・' + f.sender.job + '）';
+  const scene = clip(body.scene || body.happened, 200);
   let saveValue = '', out;
   if (body.engine === 'gemini') {
     const photo = (typeof body.image === 'string' && body.image.length < 400000 && /^[A-Za-z0-9+/=]+$/.test(body.image)) ? body.image : '';
     const item = clip(body.item, 40);
     const itemLine = photo ? '添付写真の品物（' + item + '）を、写真と同じ形のまま、場面の中で使われている姿で描く。品物が一目でわかるように少し大きめに'
       : '品物（' + item + '）を、場面の中で使われている姿で描く。品物が一目でわかるように少し大きめに';
-    const prompt = PROMPT_GEMINI.replace('{{THEME}}', theme).replace('{{SCENE}}', st.scene).replace('{{HAPPENED}}', clip(body.happened, 200)).replace('{{OUTCOME}}', label).replace('{{ITEMLINE}}', itemLine);
+    const prompt = PROMPT_GEMINI.replace('{{THEME}}', theme).replace('{{SCENE}}', f.scene).replace('{{HAPPENED}}', scene).replace('{{OUTCOME}}', label).replace('{{ITEMLINE}}', itemLine);
     const img = callGeminiImage_(prompt, photo, body.model);
     out = { image: 'data:' + img.mime + ';base64,' + img.data, engine: 'gemini', model: img.model };
     try { saveValue = saveImage_(img.data, img.mime); } catch (err) { console.error('saveGeminiImage', err); }
   } else {
     const prompt = PROMPT_ILLUST.replace('{{THEME}}', theme)
-      .replace('{{SCENE}}', st.scene).replace('{{ITEM}}', clip(body.item, 40)).replace('{{HAPPENED}}', clip(body.happened, 200)).replace('{{OUTCOME}}', label);
+      .replace('{{SCENE}}', f.scene).replace('{{ITEM}}', clip(body.item, 40)).replace('{{HAPPENED}}', scene).replace('{{OUTCOME}}', label);
     const r = callClaudeText_(prompt);
     const svg = String(r.svg || '').slice(0, 60000);
     out = { svg: svg, engine: 'claude' };
@@ -521,25 +587,24 @@ function drawIllust_(body) {
   // その回の行に想像図を残す（SVGはそのまま、Geminiの画像はドライブのURL。品名が一致するときだけ）
   try {
     const row = Number(body.row) || 0, sh = missionSheet_();
-    if (saveValue && row >= 2 && row <= sh.getLastRow() && String(sh.getRange(row, 2).getValue()) === String(body.item || '')) sh.getRange(row, 12).setValue(saveValue);
+    if (saveValue && rowMatches_(sh, row, body.item)) sh.getRange(row, COL.ill).setValue(saveValue);
   } catch (err) { console.error('saveIllust', err); }
   return out;
 }
 
-// ギャラリー用：ページで縮小した想像図（JPEG）を、その回の行の14列目に残す（品名が一致するときだけ）
+// ギャラリー用：ページで縮小した想像図（JPEG）を、その回の行の「想像図（小）」に残す（品名が一致するときだけ）
 function saveIllThumb_(body) {
   const row = Number(body.row) || 0, data = body.data;
   if (typeof data !== 'string' || data.length > 45000 || !/^[A-Za-z0-9+/=]+$/.test(data)) return false;
   const sh = missionSheet_();
-  if (row < 2 || row > sh.getLastRow() || String(sh.getRange(row, 2).getValue()) !== String(body.item || '')) return false;
-  sh.getRange(row, 14).setValue(data);
-  if (!sh.getRange(1, 14).getValue()) sh.getRange(1, 14).setValue('想像図（小）');
+  if (!rowMatches_(sh, row, body.item)) return false;
+  sh.getRange(row, COL.illThumb).setValue(data);
   return true;
 }
 function illThumbOf_(row) {
   const sh = missionSheet_();
-  if (row < 2 || row > sh.getLastRow() || sh.getLastColumn() < 14) return '';
-  return String(sh.getRange(row, 14).getValue() || '');
+  if (row < 2 || row > sh.getLastRow()) return '';
+  return String(sh.getRange(row, COL.illThumb).getValue() || '');
 }
 
 // Gemini で画像を1枚作る。写真（base64のJPEG）を渡すと、その品物を参考にして描く
@@ -608,14 +673,14 @@ function doPost(e) {
     if (body.mode === 'illust') return out_(Object.assign({ ok: true }, drawIllust_(body)));
     if (body.mode === 'gemini_test') return out_(Object.assign({ ok: true }, testGemini_(body.model)));
     if (body.mode === 'ill_thumb') return out_({ ok: saveIllThumb_(body) });
+    if (body.mode === 'report') return out_({ ok: true, report: makeReport_(body) });
     const image = body.image;
     if (typeof image !== 'string' || image.length < 1000 || image.length > 4000000) {
       return out_({ ok: false, error: 'bad_image' });
     }
     let photoUrl = '';
     if (body.mode === 'mission') {
-      const idx = Math.max(0, Math.min(MISSION_STORIES.length - 1, Number(body.story) || 0));
-      const story = MISSION_STORIES[idx];
+      const idx = Math.max(0, Math.min(FUTURES.length - 1, Number(body.story) || 0));
       const prompt = buildMissionPrompt_(idx, recentMission_(idx, 3));
       let result = null;
       for (let t = 0; t < 2 && !result; t++) {
@@ -626,7 +691,7 @@ function doPost(e) {
       const outcome = missionOutcome_(result.score);
       try { photoUrl = saveImage_(image); } catch (err) { console.error('saveImage', err); }
       let row = 0;
-      try { row = logMission_(result, story, outcome, photoUrl, body.gthumb, idx); } catch (err) { console.error('logMission', err); }
+      try { row = logMission_(result, idx, outcome, photoUrl, body.gthumb); } catch (err) { console.error('logMission', err); }
       return out_({ ok: true, result: result, stats: missionStats_(), row: row });
     }
     if (body.mode === 'rescue') {
@@ -653,6 +718,8 @@ function doGet(e) {
   if (e && e.parameter && e.parameter.stats === 'mission') return out_({ ok: true, stats: missionStats_() });
   // ギャラリー：あとから届いた想像図（小さいJPEG）
   if (e && e.parameter && e.parameter.ill) return out_({ ok: true, ill: illThumbOf_(Number(e.parameter.ill) || 0) });
+  // 左の画面：あとから届いた詳しいレポート
+  if (e && e.parameter && e.parameter.report) return out_({ ok: true, report: reportOf_(Number(e.parameter.report) || 0) });
   // スタッフ用パネル：どのAIのキーが設定されているか（キーそのものは返さない）
   if (e && e.parameter && e.parameter.config) return out_({ ok: true, claude: !!PROPS.getProperty('ANTHROPIC_API_KEY'), gemini: !!PROPS.getProperty('GEMINI_API_KEY'), geminiModels: GEMINI_IMAGE_MODELS, geminiDefault: PROPS.getProperty('GEMINI_IMAGE_MODEL') || GEMINI_IMAGE_DEFAULT });
   if (e && e.parameter && (e.parameter.totals || e.parameter.humanity)) return out_({ ok: true, totals: missionTotals_() });
@@ -671,7 +738,7 @@ function callClaude_(imageBase64, promptText) {
       role: 'user',
       content: [
         { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: imageBase64 } },
-        { type: 'text', text: promptText + '\n\n添付画像が、過去から届いた品物の写真です。' }
+        { type: 'text', text: promptText + '\n\n添付画像が、2026年から届いた物の写真です。' }
       ]
     }]
   };

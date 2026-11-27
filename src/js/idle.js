@@ -1,12 +1,12 @@
 /* ===== 自動リセット（展示モード）：操作がないまま時間がたつと待機画面に戻る ===== */
 const IDLE=(()=>{
   // 画面ごとの「操作なしで待つ秒数」。自動で進む画面は、止まったときの保険として長めにする。title は対象外
-  const LIMIT={intro:90,arrive:90,letter:90,react:90,request:90,todo:90,camera:60,accept:30,warp:150,happened:90,tsukkomi:90,verdict:90,photo:120,end:30,error:20};
-  let photo=Number(lsGet("mirai_photo_sec","12"))||12;
+  const LIMIT={intro:60,select:60,arrive:60,letter:90,request:60,camera:60,warp:60,wait:120,reply:90,photo:60,verdict:60,gap:60,error:20};
+  let photo=Number(lsGet("mirai_photo_sec_v5","7"))||7;
   let since=performance.now(),page="";
   const touch=()=>{since=performance.now()};
   // 想像図を表示する秒数（スタッフ用パネルで変える）
-  const api={touch,photoSec:()=>photo,setPhotoSec(v){photo=v;lsSet("mirai_photo_sec",String(v))}};
+  const api={touch,photoSec:()=>photo,setPhotoSec(v){photo=v;lsSet("mirai_photo_sec_v5",String(v))}};
   if(!EXHIBIT)return api;
   ["pointerdown","keydown"].forEach(ev=>document.addEventListener(ev,touch,true));
   setInterval(()=>{

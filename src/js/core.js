@@ -18,8 +18,6 @@ const REDUCE=matchMedia("(prefers-reduced-motion: reduce)").matches;
 function digits(s){return [...String(s)].map(c=>/[0-9]/.test(c)?`<i>${c}</i>`:c===":"?`<i class="sep">:</i>`:esc(c)).join("")}
 /* 郵便番号枠：数字を1文字ずつ四角に入れる（宛先・件数・配達番号） */
 function boxes(s,cls=""){return `<span class="boxes ${cls}" aria-label="${esc(s)}">${[...String(s)].map(c=>`<b>${esc(c)}</b>`).join("")}</span>`}
-/* 上の帯の時計 */
-(function(){const el=$("#clock");if(!el)return;const t=()=>{const d=new Date();el.innerHTML=digits([d.getHours(),d.getMinutes(),d.getSeconds()].map(n=>String(n).padStart(2,"0")).join(":"))};t();setInterval(t,1000)})();
 
 /* ===== 下の段：押す場所・自動で進む・話している人 =====
    ボタンを押す必要があるのは「はじめる」と「撮影」だけ。ほかの画面は声が終わると自動で進む */
@@ -46,7 +44,7 @@ function autoNext(ms,fn,label="次へ"){
   return go;
 }
 // 声が出ないときに、読み終わるまで待つ目安（ゲームに慣れていない人が読める速さ）
-const readMs=t=>String(t).length*190+2000;
+const readMs=t=>String(t).length*140+1200;
 function pushCodes(){try{const c=JSON.parse(lsGet("mirai_push_codes","null"));if(Array.isArray(c)&&c.length)return c}catch{}return["Enter","NumpadEnter","Space"]}
 function firePush(){
   const now=performance.now();if(now-lastPush<800)return; // 連打・二重入力を防ぐ
@@ -82,7 +80,7 @@ function setChapter(n){
   [...ol.children].forEach((li,i)=>{li.classList.toggle("is-on",i===n-1);li.classList.toggle("is-done",i<n-1)});
 }
 function setStatus(t){$("#barStatus").textContent=t}
-function scene(page,html,{chapter=0,status="2126年と通信中"}={}){
+function scene(page,html,{chapter=0,status="2045年と通信中"}={}){
   const alive=render(html);card.dataset.page=page;setChapter(chapter);setStatus(status);
   return alive;
 }
