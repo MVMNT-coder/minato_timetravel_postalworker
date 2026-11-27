@@ -245,8 +245,8 @@ function startMission(img,thumb,gthumb){
       // 同封の写真は、返信を読んでいるあいだに描いてもらう
       res._illP=fetchIllust(res,res._o,thumb).catch(()=>null);
       res._illP.then(a=>{res._ill=a});
-      res.reply.forEach(p=>sentences(p).forEach(s=>VOICE.prepare(s,{story:futureIdx})));VOICE.prepare(ENCLOSE,{story:futureIdx});VOICE.prepare(res.minato_line);
-      const rec={wait:ILL.engine()!=="off",row:res._row,outcome:res._o,item:res.item_name,reply:res.reply,reason:res.reason,gap_line:res.gap_line,minato:res.minato_line,story:futureIdx,at:Date.now(),thumb:gthumb,report:null};
+      res.reply.forEach(p=>sentences(p).forEach(s=>VOICE.prepare(s,{story:futureIdx})));VOICE.prepare(ENCLOSE,{story:futureIdx});
+      const rec={wait:ILL.engine()!=="off",row:res._row,outcome:res._o,item:res.item_name,reply:res.reply,reason:res.reason,gap_line:res.gap_line,story:futureIdx,at:Date.now(),thumb:gthumb,report:null};
       res._rec=rec;GAL.remember(rec);
       // 想像図とレポートは、届きしだい左の画面へ（メインの画面が先へ進んでいても）
       res._illP.then(a=>{if(a)shareIll(rec,a);else GAL.illFail(rec)}).catch(()=>GAL.illFail(rec));
@@ -299,14 +299,13 @@ function pageReply(r){
   letterPage({page:"reply",text:r.reply.join("")+ENCLOSE,hand:future.hand,to:"2026年の、あなたへ",sign:`2045年　${future.name}より`,next:()=>pagePhoto(r),status:"返事を受信中",chapter:4});
 }
 
-/* ---------- 14. 同封の写真：想像図を大きく。字幕にミナトのひとこと ---------- */
+/* ---------- 13. 同封の写真：想像図を大きく見せるだけ ---------- */
 function pagePhoto(r){
   const alive=scene("photo",`<section class="sc sc-photo">
     <div class="ph-view" id="ill"></div>
     <div class="ph-side">
       <p class="t-cap" id="phCap">同封されていた写真</p>
       <p class="t-body ph-note" id="phNote">AIが描いた想像図です。</p>
-      <div class="say ph-say"><span class="t-cap">ミナト</span><p class="mi-line2" id="line"></p></div>
     </div>
   </section>`,{chapter:4,status:"写真を受信中"});
   document.body.dataset.calm="1";
@@ -323,13 +322,8 @@ function pagePhoto(r){
   if(r._ill)put(r._ill);
   else{const t=setTimeout(fallback,1500);cleanup.push(()=>clearTimeout(t));r._illP?.then(a=>{if(a){clearTimeout(t);if(alive()){shown=false;put(a)}}})}
   const t0=performance.now();
-  (async()=>{
-    await sleep(1600);if(!alive())return;
-    setNote("ミナトの声");await ready(r.minato_line);if(!alive())return;
-    await Promise.all([typeOut($("#line"),r.minato_line,alive),talk(r.minato_line)]);
-    // 写真を見せる時間は、スタッフ用パネルで変えられる（既定7秒）
-    if(alive())autoNext(Math.max(1500,IDLE.photoSec()*1000-(performance.now()-t0)),()=>pageVerdict(r));
-  })();
+  // 写真を見せる時間は、スタッフ用パネルで変えられる（既定7秒）
+  autoNext(Math.max(1500,IDLE.photoSec()*1000-(performance.now()-t0)),()=>pageVerdict(r));
 }
 
 /* ---------- 15. 判定：3段階のどれになったかと、理由 ---------- */

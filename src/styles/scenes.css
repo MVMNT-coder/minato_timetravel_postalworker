@@ -214,8 +214,6 @@ body.desat .scene{filter:grayscale(1) brightness(.85);transition:filter 1.2s}
 .wt-msg::before{content:"";width:.4em;height:.4em;background:var(--c-signal);animation:status-blink 1s steps(1) infinite}
 
 /* ---------- 14. 同封の写真 ---------- */
-.ph-say{margin-top:var(--s-4)}
-.mi-line2{margin:0;font-size:calc(var(--fs-lead)*1.2);font-weight:700;line-height:1.55;min-height:3.1em}
 
 /* ---------- 15. 判定の理由 ---------- */
 .vd-reason{margin:0;font-size:calc(var(--fs-lead)*1.15);line-height:1.6;max-width:40em}
