@@ -26,18 +26,18 @@ body.archive-only .app,body.archive-only #fxb{display:none!important}
 .gv-cnt .c-s b{color:var(--c-signal)}
 .arc-empty{font-size:var(--fs-h2);font-weight:700;color:var(--c-mute);margin:auto;line-height:1.7;grid-column:1/-1}
 .gv-desk{min-height:0;display:grid}
-/* 1件分のレポート：左に同封の写真と送った物、右にレポート（2ページ） */
+/* 1件分のレポート（1画面）：左に同封の写真・送った物・返信、右にギャップの核心・比較表・問い・兆し */
 .rp{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:var(--s-5);min-height:0;height:100%}
 .rp.is-new{animation:rp-in 1.1s cubic-bezier(.2,.8,.2,1) both}
 @keyframes rp-in{from{transform:translateX(105%) rotate(2deg);opacity:0}to{transform:none;opacity:1}}
 .rp-l{display:flex;flex-direction:column;gap:var(--s-3);min-height:0}
-.rp-ill{position:relative;margin:0;aspect-ratio:4/3;width:100%;max-height:calc(100% - var(--u)*9);background:#000;border:var(--line);overflow:hidden}
+.rp-ill{position:relative;margin:0;aspect-ratio:16/8;width:100%;flex:0 1 auto;min-height:0;background:#000;border:var(--line);overflow:hidden}
 .rp-ill img,.rp-ill .art,.rp-ill .artimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .rp-ill .art{object-fit:contain;padding:6%}
 .rp-ill figcaption{position:absolute;left:0;bottom:0;padding:.45em .8em;font-size:var(--fs-cap);background:rgba(10,10,9,.75);color:var(--c-text)}
 .rp-item{display:flex;align-items:center;gap:var(--s-3)}
-.rp-item img{width:calc(var(--u)*11);aspect-ratio:3/2;object-fit:cover;border:var(--line);display:block}
-.rp-item b{display:block;font-size:var(--fs-lead);font-weight:900;line-height:1.35;margin-top:.15em}
+.rp-item img{width:calc(var(--u)*7.5);aspect-ratio:3/2;object-fit:cover;border:var(--line);display:block}
+.rp-item b{display:block;font-size:var(--fs-body);font-weight:900;line-height:1.35;margin-top:.15em}
 .rp-r{position:relative;display:flex;flex-direction:column;min-height:0;padding-right:calc(var(--u)*1)}
 .rp-r .ink{position:absolute;right:0;top:calc(var(--u)*-.6);transform-origin:top right;animation:ink-in .3s ease-out 1.2s forwards}
 .rp-page{flex:1;min-height:0;display:flex;flex-direction:column;gap:var(--s-3);overflow:hidden}
@@ -45,9 +45,10 @@ body.archive-only .app,body.archive-only #fxb{display:none!important}
 .rp-to{display:flex;flex-wrap:wrap;align-items:baseline;gap:.2em .6em;padding-right:calc(var(--u)*17)}
 .rp-to b{font-size:var(--fs-h2);font-weight:900}
 .rp-to span:not(.t-cap){color:var(--c-mute);font-size:var(--fs-body)}
-.rp-reply p{margin:.25em 0 0;font-size:calc(var(--fs-body)*1.12);line-height:1.7}
-.rp-table{width:100%;border-collapse:collapse;font-size:var(--fs-body);line-height:1.5}
-.rp-table th,.rp-table td{border-bottom:var(--line);padding:.45em .6em .45em 0;text-align:left;vertical-align:top}
+.rp-reply{min-height:0;overflow:hidden}
+.rp-reply p{margin:.25em 0 0;font-size:calc(var(--fs-body)*.9);line-height:1.65}
+.rp-table{width:100%;border-collapse:collapse;font-size:calc(var(--fs-body)*.92);line-height:1.5}
+.rp-table th,.rp-table td{border-bottom:var(--line);padding:.35em .6em .35em 0;text-align:left;vertical-align:top}
 .rp-table thead th{font-size:var(--fs-cap);color:var(--c-mute);font-weight:500}
 .rp-table tbody th{font-weight:700;white-space:nowrap}
 .gap{display:inline-block;padding:.05em .6em;border:var(--line);font-size:var(--fs-cap);white-space:nowrap}
@@ -55,16 +56,16 @@ body.archive-only .app,body.archive-only #fxb{display:none!important}
 .gap.g-m{border-color:var(--c-text)}
 .gap.g-s{color:var(--c-mute)}
 .rp-core,.rp-pad{padding-right:calc(var(--u)*17)}
-.rp-q{font-size:var(--fs-lead)!important;font-weight:700}
-.rp-core p{margin:.2em 0 0;font-size:var(--fs-h2);font-weight:900;line-height:1.4}
+.rp-q{font-size:var(--fs-body)!important;font-weight:700}
+.rp-core p{margin:.2em 0 0;font-size:calc(var(--fs-lead)*1.15);font-weight:900;line-height:1.45}
 .rp-blk p{margin:.2em 0 0;font-size:var(--fs-body);line-height:1.7}
 .rp-blk ul,.rp-blk ol{margin:.3em 0 0;padding-left:1.3em;font-size:var(--fs-body);line-height:1.65}
 .rp-blk li+li{margin-top:.3em}
 .rp-blk small{display:block;color:var(--c-mute);font-size:var(--fs-cap)}
 .rp-wait{color:var(--c-mute);font-size:var(--fs-lead);margin:var(--s-3) 0 0}
-.rp-dots{position:absolute;right:0;bottom:0;display:flex;gap:6px;list-style:none;margin:0;padding:0}
-.rp-dots li{width:24px;height:3px;background:var(--c-line)}
-.rp-dots li.is-on{background:var(--c-text)}
+.rp-sig{margin:auto 0 0;padding-top:var(--s-2);border-top:var(--line);font-size:var(--fs-cap);line-height:1.6;color:var(--c-text)}
+.rp-sig .t-cap{display:block;color:var(--c-mute)}
+.rp-sig small{display:inline;color:var(--c-mute);font-size:1em;margin-left:.5em}
 /* 押したあとの判定：四角い二重線の消印 */
 .ink{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:.05em;padding:.4em .8em .35em;border:calc(var(--u)*.4) double currentColor;background:rgba(10,10,9,.35);transform:rotate(var(--r)) scale(1.2);opacity:0}
 .ink span{font-size:calc(var(--u)*1.5);font-weight:700;letter-spacing:.3em}

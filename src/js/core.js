@@ -32,7 +32,7 @@ function setPush(label,fn){
   nextEl.hidden=true;nextEl.removeAttribute("data-auto");
 }
 function clearPush(){setPush(null,null)}
-/* 話している人：声が流れているあいだ、下の段に出す。ボタンは受け付けない（読み飛ばしを防ぐ） */
+/* 話している人：声が流れているあいだ、下の段に出す。ボタンを押すと次の読み上げへ進む（talk） */
 function setNote(text){noteEl.hidden=!text;$("#noteL").textContent=text||""}
 /* 自動で次へ：ms 後に fn を呼ぶ。ボタン（物理ボタンも）を押せばすぐ進む。下の線が残り時間 */
 function autoNext(ms,fn,label="次へ"){
@@ -87,16 +87,25 @@ function scene(page,html,{chapter=0,status="2045年と通信中"}={}){
 
 /* ===== 声 =====
    talk：話し終わると解決する。音なし・声が出ないときは、読める時間だけ待つ */
+/* 読み上げの途中でボタンを押すと、その読み上げを飛ばして次へ進む。
+   talkSkip は飛ばした回数。読み上げと文字出しは、始めたときの値と違えば、すぐ終わる */
+let talkSkip=0;
+function skipTalk(){talkSkip++;VOICE.stop()}
 async function talk(text,opt){
-  const t0=performance.now();
+  const my=talkSkip,t0=performance.now();
+  // 読み上げ中もボタンを受け付ける（押すと次の読み上げへ）。ウェブでは下の段に「次へ」を出す
+  setPush(null,skipTalk);nextEl.textContent="次へ";nextEl.hidden=false;
   await Promise.race([VOICE.say(text,opt),sleep(readMs(text)*2+4000)]);
+  if(talkSkip!==my)return;
   const min=SND.isOn()?String(text).length*70+600:readMs(text);
-  const left=min-(performance.now()-t0);if(left>0)await sleep(left);
+  while(performance.now()-t0<min&&talkSkip===my)await sleep(100);
 }
-// 文字を1つずつ出す
+// 文字を1つずつ出す（読み上げを飛ばしたら、残りを一度に出す）
 async function typeOut(el,text,alive){
+  const my=talkSkip;
   for(let i=1;i<=text.length;i++){
     if(!alive())return;
+    if(talkSkip!==my){el.innerHTML=esc(text);return}
     el.innerHTML=esc(text.slice(0,i))+'<span class="cur"></span>';
     if(i%2)SND.type();
     await sleep("。、？！".includes(text[i-1])?300:REDUCE?0:52);

@@ -85,14 +85,18 @@ body.desat .scene{filter:grayscale(1) brightness(.85);transition:filter 1.2s}
 
 /* ---------- 6〜7. 手紙 ---------- */
 .sc-letter{justify-items:center}
-.sc-letter .paper{grid-column:2/12;position:relative;width:100%;font-size:calc(var(--u)*2.85);max-height:100%;padding:var(--s-4) var(--s-5) var(--s-4)}
+/* 便せん1枚に手紙の全文。文字の大きさと罫線の間隔をそろえる */
+.sc-letter .paper{--fs:calc(var(--u)*2.3);--lh:calc(var(--fs)*1.95);grid-column:1/-1;position:relative;width:100%;font-size:var(--fs);max-height:100%;padding:var(--s-4) var(--s-5)}
 .paper .paper-to{margin-bottom:0}
 .lt-body{text-wrap:pretty}
-.lt-s{opacity:0;transition:opacity var(--t-slow) var(--ease-out)}
-.lt-s.is-on{opacity:1}
-.lt-sign{text-align:right}
-.lt-page{position:absolute;right:var(--s-4);bottom:var(--s-2);font-family:var(--f-display);font-size:var(--fs-cap);color:#8A6A45;line-height:1;letter-spacing:.06em}
-.lt-page>i{display:inline-block;width:.74em;text-align:center;font-style:normal}
+/* 読み上げに合わせて、文字が左から順に浮かび上がる */
+.lt-s i{font-style:normal;opacity:0}
+.lt-s.is-on i{animation:ink-char .55s var(--ease-out) forwards;animation-delay:calc(var(--i)*42ms)}
+.lt-s.is-done i{animation:none;opacity:1}
+@keyframes ink-char{from{opacity:0;filter:blur(3px)}to{opacity:1;filter:none}}
+.lt-sign{text-align:right;opacity:0;transition:opacity var(--t-slow) var(--ease-out)}
+.lt-sign.is-on{opacity:1}
+@media (prefers-reduced-motion:reduce){.lt-s.is-on i{animation:none;opacity:1}}
 
 /* ---------- 9. お願い ---------- */
 .sc-request{align-content:center;row-gap:var(--s-3)}
@@ -259,6 +263,6 @@ body.desat .scene{filter:grayscale(1) brightness(.85);transition:filter 1.2s}
   .bar-brand{font-size:var(--fs-cap);white-space:nowrap}
   .bar-meta{gap:var(--s-3)}
   .status{white-space:nowrap}
-  .sc-letter .paper{font-size:var(--fs-lead)}
+  .sc-letter .paper{--fs:var(--fs-lead)}
   .chapters li{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 }

@@ -2,11 +2,11 @@
    メイン画面の左に置くサブディスプレイ（横向き）。URL に ?view=archive を付けて開く（メイン画面でも G キーで開閉できる）
    ・メインの最後の画面で「あなたの当たり前」のカードが左へ飛ぶと、その回のレポートが右端から入ってきて、判定の印が押される
    ・同じPCなら、ウィンドウどうしの知らせ（BroadcastChannel）でぴったり合わせる。別のPCなら、シートを5秒ごとに確かめて届いたものから出す
-   ・新しい配達がない間は、過去のレポートを順に流す。1件は3ページ（返信と総評／ギャップの核心と比較表／揺らぎ・兆し・問い）を自動でめくる */
+   ・新しい配達がない間は、過去のレポートを順に流す。1件は1画面（同封の写真・返信／ギャップの核心・比較表・問い・現在の兆し） */
 const ARCHIVE_ONLY=new URLSearchParams(location.search).get("view")==="archive";
 if(ARCHIVE_ONLY)document.body.classList.add("archive-only");
 const GAL=(()=>{
-  const LK="mirai_archive_local_v5",PAGE_NEW=20000,PAGE=12000,POLL=5000,FLY_WAIT=55000;
+  const LK="mirai_archive_local_v5",HOLD_NEW=30000,HOLD=15000,POLL=5000,FLY_WAIT=55000;
   let el=null,open=false,items=[],totals=null,maxRow=0,poll=null,idx=-1,timer=null,tl=0,queue=[],pending={},curKey="";
   const bc=("BroadcastChannel" in window)?new BroadcastChannel("mirai_archive"):null;
   const keyOf=x=>x.row?"r"+x.row:"t"+x.at;
@@ -37,21 +37,17 @@ const GAL=(()=>{
   function drawCounts(){const c=counts();const e=$("#gvCnt");if(e)e.innerHTML=`<span class="c-s">変わった<b class="digits">${digits(c.saved)}</b></span><span class="c-p">ちょっと変わった<b class="digits">${digits(c.partial)}</b></span><span class="c-l">変わらなかった<b class="digits">${digits(c.lost)}</b></span>`}
   const gapCls=g=>g==="大きい"?"g-l":g==="小さい"?"g-s":"g-m";
   const pending1=`<p class="rp-wait">レポートを作成しています…</p>`;
-  // 3ページ：返信と総評／比較表とギャップの核心／揺らいだ瞬間・現在の兆し・問い
-  const PAGES=[
-    (x,f)=>`<div class="rp-to"><span class="t-cap">受け取った人</span><b>${esc(f.name)}</b><span>${f.age}歳・${esc(f.job)}／2045年・${esc(f.title)}</span></div>
-      <div class="rp-reply"><span class="t-cap">${esc(f.name)}からの返信</span><p>${(x.reply||[]).map(esc).join("")}</p></div>
-      ${x.report&&x.report.summary?`<div class="rp-blk"><span class="t-cap">総評</span><p>${esc(x.report.summary)}</p></div>`:x.report?"":pending1}`,
-    (x,f)=>{const r=x.report;if(!r)return pending1;
-      return `<div class="rp-core"><span class="t-cap">ギャップの核心</span><p>${esc(r.core||x.gap_line||"")}</p></div>
-      ${r.rows&&r.rows.length?`<table class="rp-table"><thead><tr><th>観点</th><th>あなた（2026年）</th><th>${esc(f.name)}（2045年）</th><th>ギャップ</th></tr></thead><tbody>
-        ${r.rows.map(w=>`<tr><th>${esc(w.aspect)}</th><td>${esc(w.now)}</td><td>${esc(w.future)}</td><td><span class="gap ${gapCls(w.gap)}">${esc(w.gap)}</span></td></tr>`).join("")}</tbody></table>`:""}`},
-    (x,f)=>{const r=x.report;if(!r)return pending1;
-      return `${r.wobble?`<div class="rp-blk rp-pad"><span class="t-cap">${esc(f.name)}が揺らいだ瞬間</span><p>${esc(r.wobble)}</p></div>`:""}
-      ${r.signals&&r.signals.length?`<div class="rp-blk"><span class="t-cap">この未来は、もう始まっているかもしれません</span><ul>${r.signals.map(s=>`<li>${esc(s.text)}<small>出典：${esc(s.source)}</small></li>`).join("")}</ul></div>`:""}
-      ${r.questions&&r.questions.length?`<div class="rp-blk"><span class="t-cap">あなたへの問い</span><ol class="rp-q">${r.questions.map(q=>`<li>${esc(q)}</li>`).join("")}</ol></div>`:""}`}
-  ];
-  // 1件分：左に同封の写真と送った物、右にレポート（2ページ）
+  // 1件を1画面で：左に同封の写真・送った物・返信、右にギャップの核心・比較表・問い・現在の兆し
+  function right(x,f){
+    const r=x.report;
+    if(!r)return `<div class="rp-core"><span class="t-cap">あなたの当たり前</span><p>${esc(x.gap_line||"")}</p></div>${pending1}`;
+    const rows=(r.rows||[]).slice(0,4),q=(r.questions||[])[0],sg=(r.signals||[])[0];
+    return `<div class="rp-core"><span class="t-cap">ギャップの核心</span><p>${esc(r.core||x.gap_line||"")}</p></div>
+      ${rows.length?`<table class="rp-table"><thead><tr><th>観点</th><th>あなた（2026年）</th><th>${esc(f.name)}（2045年）</th><th>ギャップ</th></tr></thead><tbody>
+        ${rows.map(w=>`<tr><th>${esc(w.aspect)}</th><td>${esc(w.now)}</td><td>${esc(w.future)}</td><td><span class="gap ${gapCls(w.gap)}">${esc(w.gap)}</span></td></tr>`).join("")}</tbody></table>`:""}
+      ${q?`<div class="rp-blk"><span class="t-cap">あなたへの問い</span><p class="rp-q">${esc(q)}</p></div>`:""}
+      ${sg?`<p class="rp-sig"><span class="t-cap">この未来は、もう始まっているかもしれません</span>${esc(sg.text)}<small> 出典：${esc(sg.source)}</small></p>`:""}`;
+  }
   function show(x,isNew){
     if(!open)return;const my=++tl,alive=()=>open&&my===tl;
     const f=FUTURES[x.story]||FUTURES[0],v=VJ[x.outcome]||VJ.lost;curKey=keyOf(x);
@@ -59,22 +55,17 @@ const GAL=(()=>{
       <div class="rp-l">
         <figure class="rp-ill" id="rpIll"></figure>
         <div class="rp-item"><img src="${x.thumb}" alt=""><div><span class="t-cap">2026年から送った物</span><b>${esc(x.item)}</b></div></div>
+        <div class="rp-reply"><span class="t-cap">${esc(f.name)}（${f.age}歳・${esc(f.job)}／${esc(f.title)}）からの返信</span><p>${(x.reply||[]).map(esc).join("")}</p></div>
       </div>
       <div class="rp-r">
         <div class="ink ${x.outcome}" style="--r:${-8+Math.random()*5}deg"><span>${v[1]}</span><b>${v[0]}</b></div>
-        <div class="rp-page" id="rpPage"></div>
-        <ol class="rp-dots" aria-hidden="true">${PAGES.map((_,i)=>`<li class="${i?"":"is-on"}"></li>`).join("")}</ol>
+        <div class="rp-page" id="rpPage">${right(x,f)}</div>
       </div></div>`;
     drawIll(x);
-    let p=0;
-    const render=()=>{if(!alive())return;const c=find(curKey)||x;$("#rpPage").innerHTML=PAGES[p](c,f);$("#rpPage").classList.remove("is-in");void $("#rpPage").offsetWidth;$("#rpPage").classList.add("is-in");[...$(".rp-dots").children].forEach((d,i)=>d.classList.toggle("is-on",i===p))};
-    render();x._render=()=>{if(curKey===keyOf(x))render()};
+    x._render=()=>{if(curKey===keyOf(x)&&alive()){const c=find(curKey)||x;$("#rpPage").innerHTML=right(c,f);$("#rpPage").classList.remove("is-in");void $("#rpPage").offsetWidth;$("#rpPage").classList.add("is-in")}};
     // レポートがまだなら、シートに取りにいく（別のPCで作られた場合）
     if(!x.report&&x.row)fetchReport(x);
-    const hold=isNew?PAGE_NEW:PAGE;
-    clearTimeout(timer);
-    const turn=()=>{if(!alive())return;if(p>=PAGES.length-1)return next();p++;render();timer=setTimeout(turn,hold)};
-    timer=setTimeout(turn,hold);
+    clearTimeout(timer);timer=setTimeout(()=>alive()&&next(),isNew?HOLD_NEW:HOLD);
   }
   function drawIll(x){
     const e=$("#rpIll");if(!e||curKey!==keyOf(x))return;

@@ -1,4 +1,4 @@
-/* ===== 画面：体験の流れ（16画面・約2分20秒） =====
+/* ===== 画面：体験の流れ（14画面・約2分20秒） =====
    1画面に1つのことだけを出す。ボタンを押すのは「はじめる」「未来を選ぶ」「撮影して送る」の3回。
    ほかは声が終わると自動で進む（下の段の「次へ」の線が残り時間。押せばすぐ進む）。声が流れているあいだはボタンを受け付けない */
 
@@ -8,7 +8,6 @@ const PICK_LINE="じゃあ、これにしよう。";
 const SHELF_LINE="右の棚の物でも、自分の持ち物でもいいよ。";
 const ENCLOSE="写真を1枚、同封します。";
 const FIG_HTML=`<div class="fig"><canvas id="fig"></canvas></div>`;
-const pageNo=(p,n)=>`<p class="lt-page">${digits(`${p+1}/${n}`)}</p>`;
 
 /* ---------- 1. 待機：名前 → 2026と2045をつなぐ → ひとこと → 配達数 をくり返す ---------- */
 function pageTitle(){
@@ -135,37 +134,37 @@ function pageArrive(){
   })();
 }
 
-/* ---------- 6〜7. 手紙：便せん2枚。差出人の手書きの書体で、1文ずつ差出人の声で読む ---------- */
-function letterPage({page,paper,hand,to,sign,next,status}){
-  const n=paper.length;
-  const run=p=>{
-    const sent=sentences(paper[p]),last=p===n-1;
-    const alive=scene(page,`<section class="sc sc-letter">
-      <article class="paper letter" data-hand="${hand}">
-        ${p===0&&to?`<p class="paper-to">${esc(to)}</p>`:""}
-        <p class="lt-body">${sent.map(s=>`<span class="lt-s">${esc(s)}</span>`).join("")}</p>
-        ${last&&sign?`<p class="lt-sign">${esc(sign)}</p>`:""}
-        ${pageNo(p,n)}
-      </article>
-    </section>`,{chapter:page==="reply"?4:2,status});
-    document.body.dataset.calm="1";
-    setNote(`${future.name}の声`);
-    (async()=>{
-      await sleep(p?400:800);
-      const els=$$(".lt-s");
-      for(let i=0;i<sent.length;i++){
-        await ready(sent[i],{story:futureIdx});if(!alive())return;
-        els[i].classList.add("is-on");if(!i)SND.tick();
-        await talk(sent[i],{story:futureIdx});if(!alive())return;
-        await sleep(180);
-      }
-      if(alive())autoNext(1400,()=>last?next():run(p+1));
-    })();
-  };
-  run(0);
+/* ---------- 6. 手紙：便せん1枚。差出人の手書きの書体で、読み上げに合わせて1文ずつ文字が浮かび上がる ---------- */
+// 文を1文字ずつ <i> に入れる（文字が順に浮かび上がるアニメーション用）
+const inkChars=t=>[...t].map((c,i)=>`<i style="--i:${i}">${esc(c)}</i>`).join("");
+function letterPage({page,text,hand,to,sign,next,status,chapter}){
+  const sent=sentences(text);
+  const alive=scene(page,`<section class="sc sc-letter">
+    <article class="paper letter" data-hand="${hand}">
+      ${to?`<p class="paper-to">${esc(to)}</p>`:""}
+      <p class="lt-body">${sent.map(s=>`<span class="lt-s">${inkChars(s)}</span>`).join("")}</p>
+      ${sign?`<p class="lt-sign">${esc(sign)}</p>`:""}
+    </article>
+  </section>`,{chapter,status});
+  document.body.dataset.calm="1";
+  setNote(`${future.name}の声`);
+  (async()=>{
+    await sleep(700);
+    const els=$$(".lt-s");
+    for(let i=0;i<sent.length;i++){
+      await ready(sent[i],{story:futureIdx});if(!alive())return;
+      els[i].classList.add("is-on");if(!i)SND.tick();
+      const my=talkSkip;
+      await talk(sent[i],{story:futureIdx});if(!alive())return;
+      if(talkSkip!==my)els[i].classList.add("is-done"); // 飛ばしたら、その文を一度に出す
+      await sleep(160);
+    }
+    $(".lt-sign")?.classList.add("is-on");
+    if(alive())autoNext(1600,next);
+  })();
 }
 function pageLetter(){
-  letterPage({page:"letter",paper:future.letter,hand:future.hand,to:"2026年の、だれかへ",sign:`2045年　${future.name}より`,next:pageRequest,status:"2045年と通信中"});
+  letterPage({page:"letter",text:future.letter.join(""),hand:future.hand,to:"2026年の、だれかへ",sign:`2045年　${future.name}より`,next:pageRequest,status:"2045年と通信中",chapter:2});
 }
 
 /* ---------- 8. お願いと選び方 ---------- */
@@ -295,10 +294,9 @@ async function pageWait(d){
   pageReply(res);
 }
 
-/* ---------- 12〜13. 返信の手紙：便せん2枚。最後に「写真を1枚、同封します。」 ---------- */
+/* ---------- 12. 返信の手紙：便せん1枚。最後に「写真を1枚、同封します。」 ---------- */
 function pageReply(r){
-  const paper=[r.reply[0]||"",(r.reply[1]||"")+ENCLOSE];
-  letterPage({page:"reply",paper,hand:future.hand,to:"2026年の、あなたへ",sign:`2045年　${future.name}より`,next:()=>pagePhoto(r),status:"返事を受信中"});
+  letterPage({page:"reply",text:r.reply.join("")+ENCLOSE,hand:future.hand,to:"2026年の、あなたへ",sign:`2045年　${future.name}より`,next:()=>pagePhoto(r),status:"返事を受信中",chapter:4});
 }
 
 /* ---------- 14. 同封の写真：想像図を大きく。字幕にミナトのひとこと ---------- */
